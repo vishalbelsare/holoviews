@@ -115,7 +115,10 @@ class ElementPlot(BokehPlot, GenericElementPlot):
                                             "left", "right", "disable", None],
                                    doc="""
         The toolbar location, must be one of 'above', 'below',
-        'left', 'right', None.""")
+        'left', 'right', 'disable', or None.""")
+
+    toolbar_autohide = param.Boolean(default=True, doc="""
+        Whether to autohide the toolbar when curser isn't over the plot.""")
 
     xformatter = param.ClassSelector(
         default=None, class_=(util.basestring, TickFormatter, FunctionType), doc="""
@@ -401,9 +404,13 @@ class ElementPlot(BokehPlot, GenericElementPlot):
             # Bokeh raises warnings about duplicate tools but these
             # are not really an issue
             warnings.simplefilter('ignore', UserWarning)
-            return bokeh.plotting.Figure(x_axis_type=x_axis_type,
+            plot = bokeh.plotting.Figure(x_axis_type=x_axis_type,
                                          y_axis_type=y_axis_type, title=title,
                                          **properties)
+
+        if self.toolbar != 'disable':
+            plot.toolbar.autohide = self.toolbar_autohide
+        return plot
 
 
     def _plot_properties(self, key, plot, element):
@@ -1649,7 +1656,7 @@ class OverlayPlot(GenericOverlayPlot, LegendPlot):
                           'title', 'title_format', 'legend_position', 'legend_offset',
                           'legend_cols', 'gridstyle', 'legend_muted', 'padding',
                           'xlabel', 'ylabel', 'xlim', 'ylim', 'zlim',
-                          'xformatter', 'yformatter', 'active_tools']
+                          'xformatter', 'yformatter', 'active_tools', 'toolbar_autohide']
 
     def __init__(self, overlay, **params):
         super(OverlayPlot, self).__init__(overlay, **params)
