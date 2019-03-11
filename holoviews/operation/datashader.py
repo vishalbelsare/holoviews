@@ -801,6 +801,31 @@ class quadmesh_rasterize(trimesh_rasterize):
         return super(quadmesh_rasterize, self)._precompute(element.trimesh(), agg)
 
 
+class spikes_rasterize(aggregate):
+
+    aggregator = param.ClassSelector(default=ds.mean(),
+                                     class_=(ds.reductions.Reduction, basestring))
+
+    def _process(self, element, key=None):
+        info = self._get_sampling(element, element.kdims[0], None)
+        (x_range, y_range), (xs, ys), (width, height), (xtype, ytype) = info
+        agg = self.p.aggregator
+        vdim = 'Count' if isinstance(agg, ds.count) else 'Any'
+        agg =  ds.count()
+        params = dict(get_param_values(element),
+                      kdims=[Dimension('x'), Dimension('y')],
+                      datatype=['xarray'], vdims=[])
+
+        xs = element.array([0])[:,0]
+        arr = np.vstack([xs, -0.5*np.ones(len(xs)), xs, 0.5*np.ones(len(xs))]).T
+        x_range = (arr.min(), arr.max())
+        cvs = ds.Canvas(plot_width=width, plot_height=height,
+                        x_range=x_range, y_range=y_range)
+        segments = pd.DataFrame(arr, columns=['x0', 'y0', 'x1', 'y1'])
+        agg = cvs.line(segments, x=['x0', 'x1'], y=['y0', 'y1'], axis=1,
+                       agg=agg)
+        return Image(agg, **params)
+
 
 class rasterize(AggregationOperation):
     """
