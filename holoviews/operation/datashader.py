@@ -26,7 +26,7 @@ from ..core.sheetcoords import BoundingBox
 from ..core.util import (
     LooseVersion, basestring, cftime_types, cftime_to_timestamp,
     datetime_types, dt_to_int, get_param_values)
-from ..element import (Image, Path, Curve, RGB, Graph, TriMesh, QuadMesh, Contours)
+from ..element import (Image, Path, Curve, RGB, Graph, TriMesh, QuadMesh, Contours, Spikes)
 from ..streams import RangeXY, PlotSize
 
 ds_version = LooseVersion(ds.__version__)
@@ -818,7 +818,6 @@ class spikes_rasterize(aggregate):
 
         xs = element.array([0])[:,0]
         arr = np.vstack([xs, -0.5*np.ones(len(xs)), xs, 0.5*np.ones(len(xs))]).T
-        x_range = (arr.min(), arr.max())
         cvs = ds.Canvas(plot_width=width, plot_height=height,
                         x_range=x_range, y_range=y_range)
         segments = pd.DataFrame(arr, columns=['x0', 'y0', 'x1', 'y1'])
@@ -861,6 +860,7 @@ class rasterize(AggregationOperation):
 
     _transforms = [(Image, regrid),
                    (TriMesh, trimesh_rasterize),
+                   (Spikes, spikes_rasterize),
                    (QuadMesh, quadmesh_rasterize),
                    (lambda x: (isinstance(x, NdOverlay) and
                                issubclass(x.type, Dataset)
