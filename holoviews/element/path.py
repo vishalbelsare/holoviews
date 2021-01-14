@@ -8,7 +8,7 @@ quickly draw common shapes.
 import numpy as np
 
 import param
-from ..core import Dataset
+from ..core import Dataset, Interface
 from ..core.data import MultiDriver
 from ..core.dimension import Dimension, asdim
 from ..core.util import OrderedDict, disable_constant
@@ -56,7 +56,7 @@ class Path(SelectionPolyExpr, Geometry):
 
     group = param.String(default="Path", constant=True)
 
-    datatype = param.ObjectSelector(default=['geometry'])
+    datatype = param.ObjectSelector(default=Interface.get_datatypes_for_kinds(['geometry']))
 
     def __init__(self, data, kdims=None, vdims=None, **params):
         if isinstance(data, tuple) and len(data) == 2:

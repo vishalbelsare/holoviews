@@ -6,7 +6,7 @@ import param
 
 from ..core import util, config, Dimension, Element2D, Overlay, Dataset
 from ..core.data import ImageDriver, GridDriver
-from ..core.data.interface import DataError
+from ..core.data.interface import DataError, Interface
 from ..core.dimension import dimension_name
 from ..core.boundingregion import BoundingRegion, BoundingBox
 from ..core.sheetcoords import SheetCoordinateSystem, Slice
@@ -243,7 +243,7 @@ class Image(Selection2DExpr, Dataset, Raster, SheetCoordinateSystem):
     bounds = param.ClassSelector(class_=BoundingRegion, default=BoundingBox(), doc="""
         The bounding region in sheet coordinates containing the data.""")
 
-    datatype = param.List(default=['gridded', 'image', 'tabular'])
+    datatype = param.List(default=Interface.get_datatypes_for_kinds(['gridded', 'image', 'tabular']))
 
     group = param.String(default='Image', constant=True)
 

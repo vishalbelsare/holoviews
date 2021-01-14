@@ -238,7 +238,7 @@ class Driver(param.Parameterized):
             vdims = pvals.get('vdims') if vdims is None else vdims
 
         # Process Element data
-        if (hasattr(data, 'interface') and issubclass(data.interface, Driver)):
+        if (hasattr(data, 'interface') and isinstance(data.interface, Interface)):
             if datatype is None:
                 datatype = [dt for dt in data.datatype if dt in eltype.datatype]
                 if not datatype:
@@ -554,67 +554,89 @@ class Driver(param.Parameterized):
 
 
 class Interface(param.Parameterized):
-    drivers = {}
+    drivers_by_kind = {}
+    drivers_by_datatype = {}
+    datatypes_by_kind = {}
     kind = None
 
     def __init__(self, driver: Driver, **params):
         super(Interface, self).__init__(**params)
         self.driver = driver
 
+    @classmethod
+    def get_datatypes_for_kinds(cls, kinds):
+        return [
+            datatype
+            for kind in kinds
+            for datatype in cls.datatypes_by_kind.get(kind, [])
+        ]
+
+    @classmethod
+    def get_driver(cls, datatype):
+        return cls.drivers_by_datatype[datatype][1]
+
     @property
     def gridded(self):
         return self.driver.gridded
 
-    @classmethod
-    def register_driver(cls, driver):
-        cls.drivers.setdefault(cls.kind, []).append((cls, driver))
+    @property
+    def datatype(self):
+        return self.driver.datatype
+
+    @property
+    def multi(self):
+        return self.driver.multi
+
+    @property
+    def named(self):
+        return self.driver.named
 
     @classmethod
-    def initialize(cls, eltype, data, kdims, vdims, datatype):
-        if datatype is None:
+    def register_driver(cls, driver):
+        cls.drivers_by_kind.setdefault(cls.kind, []).append((cls, driver))
+        cls.datatypes_by_kind.setdefault(cls.kind, []).append(driver.datatype)
+        cls.drivers_by_datatype[driver.datatype] = (cls, driver)
+
+    @classmethod
+    def initialize(cls, eltype, data, kdims, vdims, datatype=None, kind=None):
+
+        if datatype is None and kind is None:
             datatype = eltype.datatype
-        kinds = datatype
+            driver_pairs = [
+                cls.drivers_by_datatype.get(dt)
+                for dt in datatype if dt in cls.drivers_by_datatype
+            ]
+        elif kind is not None:
+            driver_pairs = [pair for k in kind for pair in cls.drivers_by_kind.get(k, [])]
+        else:  # datatype is not None
+            driver_pairs = [
+                cls.drivers_by_datatype.get(dt)
+                for dt in datatype if dt in cls.drivers_by_datatype
+            ]
 
         # Build list of drivers to try
         head = []
         tail = []
-        for kind in kinds:
-            from typing import List, Tuple
-            driver_pairs = cls.drivers.get(kind, [])
-            for interface_cls, driver_cls in driver_pairs:
-                if driver_cls.applies(data):
-                    head.append((interface_cls, driver_cls))
-                else:
-                    tail.append((interface_cls, driver_cls))
-        prioritized = head + tail
-        for interface_cls, driver_cls in prioritized:
+
+        for interface_cls, driver_cls in driver_pairs:
+            if driver_cls.applies(data):
+                head.append((interface_cls, driver_cls))
+            else:
+                tail.append((interface_cls, driver_cls))
+
+        prioritized_pairs = head + tail
+        for interface_cls, driver_cls in prioritized_pairs:
             try:
                 data, driver, dims, extra_kws = \
-                    driver_cls.initialize(eltype, data, kdims, vdims,
-                                          datatype=[driver_cls.datatype])
+                    driver_cls.initialize(
+                        eltype, data, kdims, vdims, datatype=[driver_cls.datatype]
+                    )
                 interface = interface_cls(driver_cls)
                 return data, interface, dims, extra_kws
             except DataError:
                 pass
             except:
                 raise
-
-        # for kind in kinds:
-        #     from typing import List, Tuple
-        #     driver_pairs = cls.drivers.get(kind, [])
-        #     for interface_cls, driver_cls in driver_pairs:
-        #         if not driver_cls.applies(data):
-        #             continue
-        #         try:
-        #             print(driver_cls, driver_cls.datatype)
-        #             data, driver, dims, extra_kws = \
-        #                 driver_cls.initialize(eltype, data, kdims, vdims, datatype=[driver_cls.datatype])
-        #             interface = interface_cls(driver_cls)
-        #             return data, interface, dims, extra_kws
-        #         except DataError:
-        #             raise
-        #         except:
-        #             raise
 
         raise ValueError("No compatible driver")
 
@@ -730,6 +752,35 @@ class Interface(param.Parameterized):
 class TabularInterface(Interface):
     kind = "tabular"
 
+    def aggregate(self, *args, **kwargs):
+        return self.driver.aggregate(*args, **kwargs)
+
+    def unpack_scalar(self, *args, **kwargs):
+        return self.driver.unpack_scalar(*args, **kwargs)
+
+    def add_dimension(self, *args, **kwargs):
+        return self.driver.add_dimension(*args, **kwargs)
+
+    def select(self, *args, **kwargs):
+        return self.driver.select(*args, **kwargs)
+
+    def groupby(self, *args, **kwargs):
+        return self.driver.groupby(*args, **kwargs)
+
+    def reindex(self, *args, **kwargs):
+        return self.driver.reindex(*args, **kwargs)
+
+    def sample(self, *args, **kwargs):
+        return self.driver.sample(*args, **kwargs)
+
+    def sort(self, *args, **kwargs):
+        return self.driver.sort(*args, **kwargs)
+
+    def assign(self, *args, **kwargs):
+        return self.driver.sort(*args, **kwargs)
+
+    def iloc(self, *args, **kwargs):
+        return self.driver.iloc(*args, **kwargs)
 
 class GriddedInterface(Interface):
     kind = "gridded"

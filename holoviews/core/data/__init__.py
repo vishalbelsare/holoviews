@@ -42,7 +42,10 @@ from holoviews.core.data.drivers.xarray import XArrayDriver           # noqa (AP
 
 default_datatype = 'dataframe'
 
-datatypes = ['tabular', 'gridded']
+# datatypes = ['tabular', 'gridded']
+# datatypes = ['dataframe', 'dictionary', 'grid', 'xarray', 'dask',
+#              'cuDF', 'spatialpandas', 'array', 'multitabular', 'ibis']
+datatypes = Interface.get_datatypes_for_kinds(["tabular", "gridded"])
 
 
 def concat(datasets, datatype=None):
@@ -127,7 +130,7 @@ class DataConversion(object):
             else:
                 selected = self._element
         else:
-            if pd and issubclass(self._element.interface, PandasDriver):
+            if pd and issubclass(self._element.interface.driver, PandasDriver):
                 ds_dims = self._element.dimensions()
                 ds_kdims = [self._element.get_dimension(d) if d in ds_dims else d
                             for d in groupby+kdims]
@@ -334,8 +337,9 @@ class Dataset(Element):
         kdims, vdims = kwargs.get('kdims'), kwargs.get('vdims')
 
         validate_vdims = kwargs.pop('_validate_vdims', True)
-        initialized = Interface.initialize(type(self), data, kdims, vdims,
-                                        datatype=kwargs.get('datatype'))
+        initialized = Interface.initialize(
+            type(self), data, kdims, vdims, datatype=kwargs.get('datatype')
+        )
         (data, self.interface, dims, extra_kws) = initialized
         super(Dataset, self).__init__(data, **dict(kwargs, **dict(dims, **extra_kws)))
         self.interface.validate(self, validate_vdims)
@@ -551,7 +555,7 @@ class Dataset(Element):
             dims.insert(dim_pos, dimension)
             dimensions = dict(kdims=dims)
 
-        if issubclass(self.interface, ArrayDriver) and np.asarray(dim_val).dtype != self.data.dtype:
+        if issubclass(self.interface.driver, ArrayDriver) and np.asarray(dim_val).dtype != self.data.dtype:
             element = self.clone(datatype=[default_datatype])
             data = element.interface.add_dimension(element, dimension, dim_pos, dim_val, vdim)
         else:
