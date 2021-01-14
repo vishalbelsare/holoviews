@@ -7,12 +7,13 @@ from collections import OrderedDict
 
 import numpy as np
 
-from .. import util
-from ..dimension import Dimension, asdim, dimension_name
-from ..ndmapping import NdMapping, item_check, sorted_context
-from ..element import Element
+from holoviews.core import util
+from holoviews.core.dimension import Dimension, asdim, dimension_name
+from holoviews.core.ndmapping import NdMapping, item_check, sorted_context
+from holoviews.core.element import Element
 from .grid import GridInterface
-from .interface import Interface, DataError, dask_array_module
+from holoviews.core.data.interface import Interface, DataError, dask_array_module, \
+    GriddedInterface
 
 
 def is_cupy(array):
@@ -668,3 +669,4 @@ class XArrayInterface(GridInterface):
 
 
 Interface.register(XArrayInterface)
+GriddedInterface.register_driver(XArrayInterface)

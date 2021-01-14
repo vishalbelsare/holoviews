@@ -7,9 +7,9 @@ from collections import defaultdict
 
 import numpy as np
 
-from ..dimension import dimension_name
-from ..util import isscalar, unique_iterator, pd, unique_array
-from .interface import DataError, Interface
+from holoviews.core.dimension import dimension_name
+from holoviews.core.util import isscalar, unique_iterator, pd, unique_array
+from holoviews.core.data.interface import DataError, Interface, TabularInterface
 from .multipath import MultiInterface, ensure_ring
 from .pandas import PandasInterface
 
@@ -887,3 +887,4 @@ def from_shapely(data):
 
 
 Interface.register(SpatialPandasInterface)
+TabularInterface.register_driver(SpatialPandasInterface)

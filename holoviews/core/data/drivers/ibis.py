@@ -6,11 +6,11 @@ try:
 except ImportError:
     from collections import Iterable
 
-from .. import util
-from ..element import Element
-from ..ndmapping import NdMapping, item_check, sorted_context
-from .interface import Interface, cached
-from . import pandas
+from holoviews.core import util
+from holoviews.core.element import Element
+from holoviews.core.ndmapping import NdMapping, item_check, sorted_context
+from holoviews.core.data.interface import Interface, cached, TabularInterface
+from holoviews.core.data.drivers import pandas
 
 
 class IbisInterface(Interface):
@@ -442,3 +442,4 @@ class IbisInterface(Interface):
         return dataset.data[dimensions].execute()
 
 Interface.register(IbisInterface)
+TabularInterface.register_driver(IbisInterface)

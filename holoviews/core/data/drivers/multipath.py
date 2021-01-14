@@ -1,10 +1,10 @@
 import numpy as np
 
-from .. import util
-from ..element import Element
-from ..ndmapping import NdMapping, item_check, sorted_context
+from holoviews.core import util
+from holoviews.core.element import Element
+from holoviews.core.ndmapping import NdMapping, item_check, sorted_context
 from .dictionary import DictInterface
-from .interface import Interface, DataError
+from holoviews.core.data.interface import Interface, DataError, GeometryInterface
 
 
 class MultiInterface(Interface):
@@ -551,7 +551,7 @@ def ensure_ring(geom, values=None):
     """
     if values is None:
         values = geom
-    
+
     breaks = np.where(np.isnan(geom.astype('float')).sum(axis=1))[0]
     starts = [0] + list(breaks+1)
     ends = list(breaks-1) + [len(geom)-1]
@@ -565,3 +565,4 @@ def ensure_ring(geom, values=None):
 
 
 Interface.register(MultiInterface)
+GeometryInterface.register_driver(MultiInterface)

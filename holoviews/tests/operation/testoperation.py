@@ -16,7 +16,7 @@ except:
 from holoviews import (HoloMap, NdOverlay, NdLayout, GridSpace, Image,
                        Contours, Polygons, Points, Histogram, Curve, Area,
                        QuadMesh, Dataset)
-from holoviews.core.data.grid import GridInterface
+from holoviews.core.data.drivers.grid import GridInterface
 from holoviews.core.util import pd
 from holoviews.element.comparison import ComparisonTestCase
 from holoviews.operation.element import (operation, transform, threshold,

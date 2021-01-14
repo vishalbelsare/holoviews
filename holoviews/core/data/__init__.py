@@ -26,18 +26,19 @@ from ..element import Element
 from ..ndmapping import OrderedDict, MultiDimensionalMapping
 from ..spaces import HoloMap, DynamicMap
 
-from .array import ArrayInterface             # noqa (API import)
-from .cudf import cuDFInterface               # noqa (API import)
-from .dask import DaskInterface               # noqa (API import)
-from .dictionary import DictInterface         # noqa (API import)
-from .grid import GridInterface               # noqa (API import)
-from .ibis import IbisInterface               # noqa (API import)
+# Imports register drivers, so order matters
+from holoviews.core.data.drivers.pandas import PandasInterface           # noqa (API import)
+from holoviews.core.data.drivers.array import ArrayInterface             # noqa (API import)
+from holoviews.core.data.drivers.cudf import cuDFInterface               # noqa (API import)
+from holoviews.core.data.drivers.dask import DaskInterface               # noqa (API import)
+from holoviews.core.data.drivers.dictionary import DictInterface         # noqa (API import)
+from holoviews.core.data.drivers.grid import GridInterface               # noqa (API import)
+from holoviews.core.data.drivers.ibis import IbisInterface               # noqa (API import)
 from .interface import Interface, iloc, ndloc # noqa (API import)
-from .multipath import MultiInterface         # noqa (API import)
-from .image import ImageInterface             # noqa (API import)
-from .pandas import PandasInterface           # noqa (API import)
-from .spatialpandas import SpatialPandasInterface # noqa (API import)
-from .xarray import XArrayInterface           # noqa (API import)
+from holoviews.core.data.drivers.multipath import MultiInterface         # noqa (API import)
+from holoviews.core.data.drivers.image import ImageInterface             # noqa (API import)
+from holoviews.core.data.drivers.spatialpandas import SpatialPandasInterface # noqa (API import)
+from holoviews.core.data.drivers.xarray import XArrayInterface           # noqa (API import)
 
 default_datatype = 'dataframe'
 

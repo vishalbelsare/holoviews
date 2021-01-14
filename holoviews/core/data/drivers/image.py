@@ -1,14 +1,14 @@
 import numpy as np
 
-from ..boundingregion import BoundingBox
-from ..dimension import dimension_name
-from ..element import Element
-from ..ndmapping import  NdMapping, item_check
-from ..sheetcoords import Slice, SheetCoordinateSystem
-from .. import util
+from holoviews.core.boundingregion import BoundingBox
+from holoviews.core.dimension import dimension_name
+from holoviews.core.element import Element
+from holoviews.core.ndmapping import  NdMapping, item_check
+from holoviews.core.sheetcoords import Slice, SheetCoordinateSystem
+from holoviews.core import util
 from .grid import GridInterface
-from .interface import Interface, DataError
-
+from holoviews.core.data.interface import Interface, DataError
+from ..interface import ImageInterface as ImageInterface2
 
 class ImageInterface(GridInterface):
     """
@@ -320,3 +320,4 @@ class ImageInterface(GridInterface):
 
 
 Interface.register(ImageInterface)
+ImageInterface2.register_driver(ImageInterface)

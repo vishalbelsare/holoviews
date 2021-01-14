@@ -8,12 +8,12 @@ except ImportError:
 import numpy as np
 import pandas as pd
 
-from .interface import Interface, DataError
-from ..dimension import dimension_name
-from ..element import Element
-from ..dimension import OrderedDict as cyODict
-from ..ndmapping import NdMapping, item_check, sorted_context
-from .. import util
+from holoviews.core.data.interface import Interface, DataError, TabularInterface
+from holoviews.core.dimension import dimension_name
+from holoviews.core.element import Element
+from holoviews.core.dimension import OrderedDict as cyODict
+from holoviews.core.ndmapping import NdMapping, item_check, sorted_context
+from holoviews.core import util
 
 
 class PandasInterface(Interface):
@@ -407,3 +407,4 @@ class PandasInterface(Interface):
 
 
 Interface.register(PandasInterface)
+TabularInterface.register_driver(PandasInterface)

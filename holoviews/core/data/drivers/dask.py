@@ -9,11 +9,11 @@ except ImportError:
 import numpy as np
 import pandas as pd
 
-from .. import util
-from ..dimension import Dimension
-from ..element import Element
-from ..ndmapping import NdMapping, item_check, OrderedDict, sorted_context
-from .interface import Interface
+from holoviews.core import util
+from holoviews.core.dimension import Dimension
+from holoviews.core.element import Element
+from holoviews.core.ndmapping import NdMapping, item_check, OrderedDict, sorted_context
+from holoviews.core.data.interface import Interface, TabularInterface
 from .pandas import PandasInterface
 
 
@@ -325,3 +325,4 @@ class DaskInterface(PandasInterface):
 
 
 Interface.register(DaskInterface)
+TabularInterface.register_driver(DaskInterface)

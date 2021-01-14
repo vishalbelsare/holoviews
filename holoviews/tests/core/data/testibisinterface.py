@@ -14,7 +14,7 @@ import pandas as pd
 
 from holoviews.core.data import Dataset
 from holoviews.core.spaces import HoloMap
-from holoviews.core.data.ibis import IbisInterface
+from holoviews.core.data.drivers.ibis import IbisInterface
 
 from .base import HeterogeneousColumnTests, ScalarColumnTests, InterfaceTests
 

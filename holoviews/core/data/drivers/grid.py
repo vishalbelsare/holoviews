@@ -13,13 +13,13 @@ except ImportError:
 import numpy as np
 
 from .dictionary import DictInterface
-from .interface import Interface, DataError
-from ..dimension import dimension_name
-from ..element import Element
-from ..dimension import OrderedDict as cyODict
-from ..ndmapping import NdMapping, item_check, sorted_context
-from .. import util
-from .interface import is_dask, dask_array_module, get_array_types
+from holoviews.core.data.interface import Interface, DataError, GriddedInterface
+from holoviews.core.dimension import dimension_name
+from holoviews.core.element import Element
+from holoviews.core.dimension import OrderedDict as cyODict
+from holoviews.core.ndmapping import NdMapping, item_check, sorted_context
+from holoviews.core import util
+from holoviews.core.data.interface import is_dask, dask_array_module, get_array_types
 
 
 
@@ -831,3 +831,4 @@ class GridInterface(DictInterface):
 
 
 Interface.register(GridInterface)
+GriddedInterface.register_driver(GridInterface)

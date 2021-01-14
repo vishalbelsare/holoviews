@@ -369,7 +369,7 @@ class Interface(param.Parameterized):
         if hasattr(data, 'where'):
             return data.where(mask, np.NaN)
         return np.where(mask, data, np.NaN)
-        
+
     @classmethod
     def select_mask(cls, dataset, selection):
         """
@@ -551,3 +551,164 @@ class Interface(param.Parameterized):
         if it already a dataframe type.
         """
         return dataset.dframe()
+
+
+class Interface2(param.Parameterized):
+    drivers = {}
+    kind = None
+
+    def __init__(self, driver: Interface, **params):
+        super(Interface2, self).__init__(**params)
+        self.driver = driver
+
+    @classmethod
+    def register_driver(cls, driver):
+        cls.drivers.setdefault(cls.kind, []).append((cls, driver))
+
+    @classmethod
+    def instance(cls, data, kdims, vdims, kinds):
+        from . import Dataset
+        for kind in kinds:
+            from typing import List, Tuple
+            driver_pairs = cls.drivers.get(kind, [])
+            for interface_cls, driver_cls in driver_pairs:
+                if not driver_cls.applies(data):
+                    continue
+                try:
+                    data, driver, dims, extra_kws = \
+                        driver_cls.initialize(Dataset, data, kdims, vdims, datatype=[driver_cls.datatype])
+                    interface = interface_cls(driver_cls)
+                    return data, interface, dims, extra_kws
+                except DataError:
+                    pass
+                except:
+                    raise
+
+        return ValueError("No compatible driver")
+
+    def cast(self, datasets, datatype=None, cast_type=None):
+        """
+        Given a list of Dataset objects, cast them to the specified
+        datatype (by default the format matching the current interface)
+        with the given cast_type (if specified).
+        """
+        return self.driver.cast(datasets, datatype, cast_type)
+
+    def validate(self, dataset, vdims=True):
+        return self.driver.validate(dataset, vdims)
+
+    def persist(self, dataset):
+        """
+        Should return a persisted version of the Dataset.
+        """
+        return self.driver.persist(dataset)
+
+    def compute(self, dataset):
+        """
+        Should return a computed version of the Dataset.
+        """
+        return self.driver.compute(dataset)
+
+    def expanded(self, arrays):
+        return self.driver.expanded(arrays)
+
+    def isscalar(self, dataset, dim):
+        return self.driver.isscalar(dataset, dim)
+
+    def isunique(self, dataset, dim, per_geom=False):
+        """
+        Compatibility method introduced for v1.13.0 to smooth
+        over addition of per_geom kwarg for isscalar method.
+        """
+        return self.driver.isunique(dataset, dim, per_geom)
+
+    def dtype(self, dataset, dimension):
+        return self.driver.dtype(dataset, dimension)
+
+    def replace_value(self, data, nodata):
+        """
+        Replace `nodata` value in data with NaN
+        """
+        return self.driver.replace_value(data, nodata)
+
+    def select_mask(self, dataset, selection):
+        """
+        Given a Dataset object and a dictionary with dimension keys and
+        selection keys (i.e. tuple ranges, slices, sets, lists, or literals)
+        return a boolean mask over the rows in the Dataset object that
+        have been selected.
+        """
+        return self.driver.select_mask(dataset, selection)
+
+    def indexed(self, dataset, selection):
+        """
+        Given a Dataset object and selection to be applied returns
+        boolean to indicate whether a scalar value has been indexed.
+        """
+        return self.driver.indexed(dataset, selection)
+
+    def range(self, dataset, dimension):
+        return self.driver.range(dataset, dimension)
+
+    def concatenate(self, datasets, datatype=None, new_type=None):
+        """
+        Utility function to concatenate an NdMapping of Dataset objects.
+        """
+        return self.driver.concatenate(datasets, datatype, new_type)
+
+    def histogram(self, array, bins, density=True, weights=None):
+        return self.driver.histogram(array, bins, density, weights)
+
+    def reduce(self, dataset, reduce_dims, function, **kwargs):
+        return self.driver.reduce(dataset, reduce_dims, function, **kwargs)
+
+    def array(self, dataset, dimensions):
+        return self.driver.array(dataset, dimensions)
+
+    def dframe(self, dataset, dimensions):
+        return self.driver.dframe(dataset, dimensions)
+
+    def columns(self, dataset, dimensions):
+        return self.driver.columns(dataset, dimensions)
+
+    def shape(self, dataset):
+        return self.driver.shape(dataset)
+
+    def length(self, dataset):
+        return self.driver.length(dataset)
+
+    def nonzero(self, dataset):
+        return self.driver.nonzero(dataset)
+
+    def redim(self, dataset, dimensions):
+        return self.driver.redim(dataset, dimensions)
+
+    def as_dframe(self, dataset):
+        """
+        Returns the data of a Dataset as a dataframe avoiding copying
+        if it already a dataframe type.
+        """
+        return self.driver.as_dframe(dataset)
+
+
+# Interface should get a reference to a driver class
+class TabularInterface(Interface2):
+    kind = "tabular"
+
+
+class GriddedInterface(Interface2):
+    kind = "gridded"
+
+
+class ImageInterface(Interface2):
+    kind = "image"
+
+
+class GeometryInterface(Interface2):
+    kind = "geometry"
+
+    def has_holes(self, dataset):
+        return self.driver.has_holes(dataset)
+
+    def holes(self, dataset):
+        return self.driver.holes(dataset)
