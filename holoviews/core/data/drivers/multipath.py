@@ -5,7 +5,7 @@ from holoviews.core.element import Element
 from holoviews.core.ndmapping import NdMapping, item_check, sorted_context
 from .dictionary import DictDriver
 from holoviews.core.data.interface import Driver, DataError, GeometryInterface, \
-    TabularInterface
+    TabularInterface, Interface
 
 
 class MultiDriver(Driver):
@@ -26,6 +26,7 @@ class MultiDriver(Driver):
 
     # subtypes = ['dictionary', 'dataframe', 'array', 'dask']
     subtypes = ['tabular']
+    subdrivers = ['dictionary', 'dataframe', 'array', 'dask']
 
     geom_types = ['Polygon', 'Ring', 'Line', 'Point']
 
@@ -42,48 +43,47 @@ class MultiDriver(Driver):
         if vdims is not None:
             dims['vdims'] = vdims
 
+        tabular_drivers = [driver for _, driver in TabularInterface.drivers["tabular"]]
+
         if (isinstance(data, list) and len(data) and
             all(isinstance(d, tuple) and all(util.isscalar(v) for v in d) for d in data)):
             data = [data]
         elif not isinstance(data, list):
-            interface  = [Driver.interfaces.get(st).applies(data)
-                          for st in cls.subtypes if st in Driver.interfaces]
+            interface = [Driver.interfaces.get(st).applies(data)
+                         for st in cls.subdrivers if st in tabular_drivers]
             if (interface or isinstance(data, tuple)) and issubclass(eltype, Path):
                 data = [data]
             else:
                 raise ValueError('MultiInterface data must be a list of tabular data types.')
-        prev_interface, prev_dims = None, None
+        prev_driver, prev_dims = None, None
         for d in data:
 
-            drivers = [driver for _, driver in TabularInterface.drivers["tabular"]]
-            # datatype = cls.subtypes
+            drivers = [driver for driver in cls.subdrivers]
             if isinstance(d, dict):
                 if Polygons._hole_key in d:
+                    # only grab sub-drivers that support holes
                     drivers = [d for d in drivers if hasattr(d, 'has_holes')]
                 geom_type = d.get('geom_type')
                 if geom_type is not None and geom_type not in cls.geom_types:
                     raise DataError("Geometry type '%s' not recognized, "
                                     "must be one of %s." % (geom_type, cls.geom_types))
                 else:
-                    drivers = [d for d in drivers if hasattr(d, 'geom_type')]
+                    drivers = [d for d in drivers if hasattr(Driver.interfaces.get(d), 'geom_type')]
 
-            # if not drivers:
-            #     raise DataError("No driver")
-
-            # driver = drivers[0]
-
-            d, interface, dims, _ = TabularInterface.initialize(
-                eltype, d, kdims, vdims, datatype=["tabular"]
+            # Build interface, searching for appropriate driver
+            d, driver, dims, _ = Driver.initialize(
+                eltype, d, kdims, vdims, datatype=drivers
             )
-            if prev_interface:
-                if prev_interface.driver != interface.driver:
+
+            if prev_driver:
+                if prev_driver != driver:
                     raise DataError('MultiInterface subpaths must all have matching datatype.', cls)
                 if dims['kdims'] != prev_dims['kdims']:
                     raise DataError('MultiInterface subpaths must all have matching kdims.', cls)
                 if dims['vdims'] != prev_dims['vdims']:
                     raise DataError('MultiInterface subpaths must all have matching vdims.', cls)
             new_data.append(d)
-            prev_interface, prev_dims = interface, dims
+            prev_driver, prev_dims = driver, dims
         return new_data, dims, {}
 
     @classmethod
