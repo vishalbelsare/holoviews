@@ -14,7 +14,7 @@ import pandas as pd
 
 from holoviews.core.data import Dataset
 from holoviews.core.spaces import HoloMap
-from holoviews.core.data.drivers.ibis import IbisInterface
+from holoviews.core.data.drivers.ibis import IbisDriver
 
 from .base import HeterogeneousColumnTests, ScalarColumnTests, InterfaceTests
 
@@ -257,7 +257,7 @@ class IbisDatasetTest(HeterogeneousColumnTests, ScalarColumnTests, InterfaceTest
 
             self.compare_dataset(expected, result, msg=str(agg))
 
-    if not IbisInterface.has_rowid():
+    if not IbisDriver.has_rowid():
 
         def test_dataset_iloc_slice_rows_slice_cols(self):
             raise SkipTest("Not supported")

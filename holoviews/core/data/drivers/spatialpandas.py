@@ -9,12 +9,12 @@ import numpy as np
 
 from holoviews.core.dimension import dimension_name
 from holoviews.core.util import isscalar, unique_iterator, pd, unique_array
-from holoviews.core.data.interface import DataError, Interface, TabularInterface
-from .multipath import MultiInterface, ensure_ring
-from .pandas import PandasInterface
+from holoviews.core.data.interface import DataError, Driver, TabularInterface
+from .multipath import MultiDriver, ensure_ring
+from .pandas import PandasDriver
 
 
-class SpatialPandasInterface(MultiInterface):
+class SpatialPandasDriver(MultiDriver):
 
     types = ()
 
@@ -238,7 +238,7 @@ class SpatialPandasInterface(MultiInterface):
             else:
                 return (bounds[1], bounds[3])
         else:
-            return Interface.range(dataset, dim)
+            return Driver.range(dataset, dim)
 
     @classmethod
     def groupby(cls, dataset, dimensions, container_type, group_type, **kwargs):
@@ -246,7 +246,7 @@ class SpatialPandasInterface(MultiInterface):
         if any(d in geo_dims for d in dimensions):
             raise DataError("SpatialPandasInterface does not allow grouping "
                             "by geometry dimension.", cls)
-        return PandasInterface.groupby(dataset, dimensions, container_type, group_type, **kwargs)
+        return PandasDriver.groupby(dataset, dimensions, container_type, group_type, **kwargs)
 
     @classmethod
     def aggregate(cls, columns, dimensions, function, **kwargs):
@@ -270,7 +270,7 @@ class SpatialPandasInterface(MultiInterface):
         if any(d in geo_dims for d in by):
             raise DataError("SpatialPandasInterface does not allow sorting "
                             "by geometry dimension.", cls)
-        return PandasInterface.sort(dataset, by, reverse)
+        return PandasDriver.sort(dataset, by, reverse)
 
     @classmethod
     def length(cls, dataset):
@@ -279,7 +279,7 @@ class SpatialPandasInterface(MultiInterface):
         column = dataset.data[col_name]
         geom_type = cls.geom_type(dataset)
         if not isinstance(column.dtype, MultiPointDtype) and geom_type != 'Point':
-            return PandasInterface.length(dataset)
+            return PandasDriver.length(dataset)
         length = 0
         for i, geom in enumerate(column):
             if isinstance(geom, Point):
@@ -294,7 +294,7 @@ class SpatialPandasInterface(MultiInterface):
 
     @classmethod
     def redim(cls, dataset, dimensions):
-        return PandasInterface.redim(dataset, dimensions)
+        return PandasDriver.redim(dataset, dimensions)
 
     @classmethod
     def add_dimension(cls, dataset, dimension, dim_pos, values, vdim):
@@ -727,7 +727,7 @@ def to_spatialpandas(data, xdim, ydim, columns=[], geom='point'):
             if len(split_holes) != len(split_geoms):
                 raise DataError('Polygons with holes containing multi-geometries '
                                 'must declare a list of holes for each geometry.',
-                                SpatialPandasInterface)
+                                SpatialPandasDriver)
             else:
                 split_holes = [[ensure_ring(np.asarray(h)) for h in hs] for hs in split_holes]
 
@@ -837,7 +837,7 @@ def from_multi(eltype, data, kdims, vdims):
     new_data, types, geom_types = [], [], []
     for d in data:
         types.append(type(d))
-        new_dict = to_geom_dict(eltype, d, kdims, vdims, SpatialPandasInterface)
+        new_dict = to_geom_dict(eltype, d, kdims, vdims, SpatialPandasDriver)
         if 'geom_type' in new_dict and new_dict['geom_type'] not in geom_types:
             geom_types.append(new_dict['geom_type'])
         new_data.append(new_dict)
@@ -852,7 +852,7 @@ def from_multi(eltype, data, kdims, vdims):
         if len(geom_types) == 1:
             geom = geom_types[0]
         else:
-            geom = SpatialPandasInterface.geom_type(eltype)
+            geom = SpatialPandasDriver.geom_type(eltype)
         data = to_spatialpandas(new_data, xname, yname, columns, geom)
     return data
 
@@ -886,5 +886,5 @@ def from_shapely(data):
     return data
 
 
-Interface.register(SpatialPandasInterface)
-TabularInterface.register_driver(SpatialPandasInterface)
+Driver.register(SpatialPandasDriver)
+TabularInterface.register_driver(SpatialPandasDriver)

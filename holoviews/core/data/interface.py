@@ -128,8 +128,8 @@ class iloc(Accessor):
             vdims = [d for d in dims if d in vdims]
 
         datatypes = util.unique_iterator([dataset.interface.datatype]+dataset.datatype)
-        datatype = [dt for dt in datatypes if dt in Interface.interfaces and
-                    not Interface.interfaces[dt].gridded]
+        datatype = [dt for dt in datatypes if dt in Driver.interfaces and
+                    not Driver.interfaces[dt].gridded]
         if not datatype: datatype = ['dataframe', 'dictionary']
         return dataset.clone(data, kdims=kdims, vdims=vdims, datatype=datatype)
 
@@ -157,7 +157,7 @@ class ndloc(Accessor):
         return dataset.clone(selected, datatype=[ds.interface.datatype]+ds.datatype, **params)
 
 
-class Interface(param.Parameterized):
+class Driver(param.Parameterized):
 
     interfaces = {}
 
@@ -238,7 +238,7 @@ class Interface(param.Parameterized):
             vdims = pvals.get('vdims') if vdims is None else vdims
 
         # Process Element data
-        if (hasattr(data, 'interface') and issubclass(data.interface, Interface)):
+        if (hasattr(data, 'interface') and issubclass(data.interface, Driver)):
             if datatype is None:
                 datatype = [dt for dt in data.datatype if dt in eltype.datatype]
                 if not datatype:
@@ -553,38 +553,70 @@ class Interface(param.Parameterized):
         return dataset.dframe()
 
 
-class Interface2(param.Parameterized):
+class Interface(param.Parameterized):
     drivers = {}
     kind = None
 
-    def __init__(self, driver: Interface, **params):
-        super(Interface2, self).__init__(**params)
+    def __init__(self, driver: Driver, **params):
+        super(Interface, self).__init__(**params)
         self.driver = driver
+
+    @property
+    def gridded(self):
+        return self.driver.gridded
 
     @classmethod
     def register_driver(cls, driver):
         cls.drivers.setdefault(cls.kind, []).append((cls, driver))
 
     @classmethod
-    def instance(cls, data, kdims, vdims, kinds):
-        from . import Dataset
+    def initialize(cls, eltype, data, kdims, vdims, datatype):
+        if datatype is None:
+            datatype = eltype.datatype
+        kinds = datatype
+
+        # Build list of drivers to try
+        head = []
+        tail = []
         for kind in kinds:
             from typing import List, Tuple
             driver_pairs = cls.drivers.get(kind, [])
             for interface_cls, driver_cls in driver_pairs:
-                if not driver_cls.applies(data):
-                    continue
-                try:
-                    data, driver, dims, extra_kws = \
-                        driver_cls.initialize(Dataset, data, kdims, vdims, datatype=[driver_cls.datatype])
-                    interface = interface_cls(driver_cls)
-                    return data, interface, dims, extra_kws
-                except DataError:
-                    pass
-                except:
-                    raise
+                if driver_cls.applies(data):
+                    head.append((interface_cls, driver_cls))
+                else:
+                    tail.append((interface_cls, driver_cls))
+        prioritized = head + tail
+        for interface_cls, driver_cls in prioritized:
+            try:
+                data, driver, dims, extra_kws = \
+                    driver_cls.initialize(eltype, data, kdims, vdims,
+                                          datatype=[driver_cls.datatype])
+                interface = interface_cls(driver_cls)
+                return data, interface, dims, extra_kws
+            except DataError:
+                pass
+            except:
+                raise
 
-        return ValueError("No compatible driver")
+        # for kind in kinds:
+        #     from typing import List, Tuple
+        #     driver_pairs = cls.drivers.get(kind, [])
+        #     for interface_cls, driver_cls in driver_pairs:
+        #         if not driver_cls.applies(data):
+        #             continue
+        #         try:
+        #             print(driver_cls, driver_cls.datatype)
+        #             data, driver, dims, extra_kws = \
+        #                 driver_cls.initialize(eltype, data, kdims, vdims, datatype=[driver_cls.datatype])
+        #             interface = interface_cls(driver_cls)
+        #             return data, interface, dims, extra_kws
+        #         except DataError:
+        #             raise
+        #         except:
+        #             raise
+
+        raise ValueError("No compatible driver")
 
     def cast(self, datasets, datatype=None, cast_type=None):
         """
@@ -671,8 +703,8 @@ class Interface2(param.Parameterized):
     def columns(self, dataset, dimensions):
         return self.driver.columns(dataset, dimensions)
 
-    def shape(self, dataset):
-        return self.driver.shape(dataset)
+    def shape(self, dataset, **kwargs):
+        return self.driver.shape(dataset, **kwargs)
 
     def length(self, dataset):
         return self.driver.length(dataset)
@@ -690,21 +722,24 @@ class Interface2(param.Parameterized):
         """
         return self.driver.as_dframe(dataset)
 
+    def values(self, *args, **kwargs):
+        return self.driver.values(*args, **kwargs)
+
 
 # Interface should get a reference to a driver class
-class TabularInterface(Interface2):
+class TabularInterface(Interface):
     kind = "tabular"
 
 
-class GriddedInterface(Interface2):
+class GriddedInterface(Interface):
     kind = "gridded"
 
 
-class ImageInterface(Interface2):
+class ImageInterface(Interface):
     kind = "image"
 
 
-class GeometryInterface(Interface2):
+class GeometryInterface(Interface):
     kind = "geometry"
 
     def has_holes(self, dataset):

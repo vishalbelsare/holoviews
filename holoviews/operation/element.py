@@ -13,7 +13,7 @@ from param import _is_number
 
 from ..core import (Operation, NdOverlay, Overlay, GridMatrix,
                     HoloMap, Dataset, Element, Collator, Dimension)
-from ..core.data import ArrayInterface, DictInterface, default_datatype
+from ..core.data import ArrayDriver, DictDriver, default_datatype
 from ..core.data.interface import dask_array_module
 from ..core.util import (group_sanitizer, label_sanitizer, pd,
                          basestring, datetime_types, isfinite, dt_to_int,
@@ -25,10 +25,10 @@ from ..element.path import Contours, Polygons
 from ..element.util import categorical_aggregate2d # noqa (API import)
 from ..streams import RangeXY
 
-column_interfaces = [ArrayInterface, DictInterface]
+column_interfaces = [ArrayDriver, DictDriver]
 if pd:
-    from ..core.data import PandasInterface
-    column_interfaces.append(PandasInterface)
+    from ..core.data import PandasDriver
+    column_interfaces.append(PandasDriver)
 
 
 def identity(x,k): return x
@@ -719,7 +719,7 @@ class histogram(Operation):
         if is_cupy:
             import cupy
             full_cupy_support = LooseVersion(cupy.__version__) > '8.0'
-            if not full_cupy_support and (normed or self.p.weight_dimension): 
+            if not full_cupy_support and (normed or self.p.weight_dimension):
                 data = cupy.asnumpy(data)
                 is_cupy = False
             else:

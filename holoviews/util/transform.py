@@ -8,7 +8,7 @@ from types import BuiltinFunctionType, BuiltinMethodType, FunctionType, MethodTy
 import numpy as np
 import param
 
-from ..core.data import PandasInterface
+from ..core.data import PandasDriver
 from ..core.dimension import Dimension
 from ..core.util import basestring, pd, resolve_dependent_value, unique_iterator
 
@@ -323,7 +323,7 @@ class dim(object):
                 if (isinstance(op_arg, param.Parameter) and
                     isinstance(op_arg.owner, param.Parameterized)):
                     params[op_arg.name+str(id(op))] = op_arg
-                
+
         return params
 
     # Namespace properties
@@ -806,7 +806,7 @@ class df_dim(dim):
 
     def interface_applies(self, dataset, coerce):
         return (not dataset.interface.gridded and
-                (coerce or isinstance(dataset.interface, PandasInterface)))
+                (coerce or isinstance(dataset.interface, PandasDriver)))
 
     def _compute_data(self, data, drop_index, compute):
         if hasattr(data, 'compute') and compute:
@@ -820,7 +820,7 @@ class df_dim(dim):
     def _coerce(self, dataset):
         if self.interface_applies(dataset, coerce=False):
             return dataset
-        pandas_interfaces = param.concrete_descendents(PandasInterface)
+        pandas_interfaces = param.concrete_descendents(PandasDriver)
         datatypes = [intfc.datatype for intfc in pandas_interfaces.values()
                      if dataset.interface.multi == intfc.multi]
         return dataset.clone(datatype=datatypes)

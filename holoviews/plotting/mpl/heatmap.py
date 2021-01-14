@@ -8,7 +8,7 @@ import param
 from matplotlib.patches import Wedge, Circle
 from matplotlib.collections import LineCollection, PatchCollection
 
-from ...core.data import GridInterface
+from ...core.data import GridDriver
 from ...core.util import dimension_sanitizer, is_nan
 from ...core.spaces import HoloMap
 from ..mixins import HeatMapMixin
@@ -167,14 +167,14 @@ class HeatMapPlot(HeatMapMixin, QuadMeshPlot):
             xvals = np.arange(data.shape[1]+1)-0.5
         else:
             xvals = aggregate.dimension_values(xdim, expanded=False)
-            xvals = GridInterface._infer_interval_breaks(xvals)
+            xvals = GridDriver._infer_interval_breaks(xvals)
 
         ytype = aggregate.interface.dtype(aggregate, ydim)
         if ytype.kind in 'SUO':
             yvals = np.arange(data.shape[0]+1)-0.5
         else:
             yvals = aggregate.dimension_values(ydim, expanded=False)
-            yvals = GridInterface._infer_interval_breaks(yvals)
+            yvals = GridDriver._infer_interval_breaks(yvals)
 
         xfactors = list(ranges.get(xdim.name, {}).get('factors', []))
         yfactors = list(ranges.get(ydim.name, {}).get('factors', []))

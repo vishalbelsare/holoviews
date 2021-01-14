@@ -12,8 +12,8 @@ except ImportError:
 
 import numpy as np
 
-from .dictionary import DictInterface
-from holoviews.core.data.interface import Interface, DataError, GriddedInterface
+from .dictionary import DictDriver
+from holoviews.core.data.interface import Driver, DataError, GriddedInterface
 from holoviews.core.dimension import dimension_name
 from holoviews.core.element import Element
 from holoviews.core.dimension import OrderedDict as cyODict
@@ -23,7 +23,7 @@ from holoviews.core.data.interface import is_dask, dask_array_module, get_array_
 
 
 
-class GridInterface(DictInterface):
+class GridDriver(DictDriver):
     """
     Interface for simple dictionary-based dataset format using a
     compressed representation that uses the cartesian product between
@@ -253,9 +253,9 @@ class GridInterface(DictInterface):
     @classmethod
     def _infer_interval_breaks(cls, coord, axis=0):
         """
-        >>> GridInterface._infer_interval_breaks(np.arange(5))
+        >>> GridDriver._infer_interval_breaks(np.arange(5))
         array([-0.5,  0.5,  1.5,  2.5,  3.5,  4.5])
-        >>> GridInterface._infer_interval_breaks([[0, 1], [3, 4]], axis=1)
+        >>> GridDriver._infer_interval_breaks([[0, 1], [3, 4]], axis=1)
         array([[-0.5,  0.5,  1.5],
                [ 2.5,  3.5,  4.5]])
         """
@@ -830,5 +830,5 @@ class GridInterface(DictInterface):
 
 
 
-Interface.register(GridInterface)
-GriddedInterface.register_driver(GridInterface)
+Driver.register(GridDriver)
+GriddedInterface.register_driver(GridDriver)

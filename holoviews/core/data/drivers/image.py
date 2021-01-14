@@ -6,11 +6,12 @@ from holoviews.core.element import Element
 from holoviews.core.ndmapping import  NdMapping, item_check
 from holoviews.core.sheetcoords import Slice, SheetCoordinateSystem
 from holoviews.core import util
-from .grid import GridInterface
-from holoviews.core.data.interface import Interface, DataError
+from .grid import GridDriver
+from holoviews.core.data.interface import Driver, DataError
 from ..interface import ImageInterface as ImageInterface2
 
-class ImageInterface(GridInterface):
+
+class ImageDriver(GridDriver):
     """
     Interface for 2 or 3D arrays representing images
     of raw luminance values, RGB values or HSV values.
@@ -319,5 +320,5 @@ class ImageInterface(GridInterface):
                     dataset.vdims[0].name: data[::-1] if axes[0] else data}, [])
 
 
-Interface.register(ImageInterface)
-ImageInterface2.register_driver(ImageInterface)
+Driver.register(ImageDriver)
+ImageInterface2.register_driver(ImageDriver)

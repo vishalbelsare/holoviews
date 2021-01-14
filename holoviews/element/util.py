@@ -15,7 +15,7 @@ from ..core.util import (
 
 try:
     import pandas as pd
-    from ..core.data import PandasInterface
+    from ..core.data import PandasDriver
 except:
     pd = None
 
@@ -29,7 +29,7 @@ def split_path(path):
     values = path.dimension_values(0)
     splits = np.concatenate([[0], np.where(np.isnan(values))[0]+1, [None]])
     subpaths = []
-    data = PandasInterface.as_dframe(path) if pd else path.array()
+    data = PandasDriver.as_dframe(path) if pd else path.array()
     for i in range(len(splits)-1):
         end = splits[i+1]
         slc = slice(splits[i], None if end is None else end-1)
@@ -190,7 +190,7 @@ class categorical_aggregate2d(Operation):
         if not reindexed:
             agg = reindexed
         elif pd:
-            df = PandasInterface.as_dframe(reindexed)
+            df = PandasDriver.as_dframe(reindexed)
             df = df.groupby([xdim, ydim], sort=False).first().reset_index()
             agg = reindexed.clone(df)
         else:

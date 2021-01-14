@@ -5,14 +5,14 @@ except ImportError:
 
 import numpy as np
 
-from holoviews.core.data.interface import Interface, DataError, TabularInterface
+from holoviews.core.data.interface import Driver, DataError, TabularInterface
 from holoviews.core.dimension import dimension_name
 from holoviews.core.element import Element
 from holoviews.core.ndmapping import NdMapping, item_check, sorted_context
 from holoviews.core import util
 
 
-class ArrayInterface(Interface):
+class ArrayDriver(Driver):
 
     types = (np.ndarray,)
 
@@ -286,6 +286,6 @@ class ArrayInterface(Interface):
             return np.atleast_2d(data).T
         return data
 
-Interface.register(ArrayInterface)
-TabularInterface.register_driver(ArrayInterface)
+Driver.register(ArrayDriver)
+TabularInterface.register_driver(ArrayDriver)
 

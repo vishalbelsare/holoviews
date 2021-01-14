@@ -11,8 +11,8 @@ from holoviews.core import util
 from holoviews.core.dimension import Dimension, asdim, dimension_name
 from holoviews.core.ndmapping import NdMapping, item_check, sorted_context
 from holoviews.core.element import Element
-from .grid import GridInterface
-from holoviews.core.data.interface import Interface, DataError, dask_array_module, \
+from .grid import GridDriver
+from holoviews.core.data.interface import Driver, DataError, dask_array_module, \
     GriddedInterface
 
 
@@ -23,7 +23,7 @@ def is_cupy(array):
     return isinstance(array, ndarray)
 
 
-class XArrayInterface(GridInterface):
+class XArrayDriver(GridDriver):
 
     types = ()
 
@@ -214,7 +214,7 @@ class XArrayInterface(GridInterface):
     def validate(cls, dataset, vdims=True):
         import xarray as xr
         if isinstance(dataset.data, xr.Dataset):
-            Interface.validate(dataset, vdims)
+            Driver.validate(dataset, vdims)
         else:
             not_found = [kd.name for kd in dataset.kdims if kd.name not in dataset.data.coords]
             if not_found:
@@ -539,7 +539,7 @@ class XArrayInterface(GridInterface):
         for k, v in selection.items():
             dim = dataset.get_dimension(k, strict=True)
             if cls.irregular(dataset, dim):
-                return GridInterface.select(dataset, selection_mask, **selection)
+                return GridDriver.select(dataset, selection_mask, **selection)
             dim = dim.name
             if isinstance(v, slice):
                 v = (v.start, v.stop)
@@ -668,5 +668,5 @@ class XArrayInterface(GridInterface):
         return data.drop([c for c in drop_coords if c in data.coords]), list(drop_coords)
 
 
-Interface.register(XArrayInterface)
-GriddedInterface.register_driver(XArrayInterface)
+Driver.register(XArrayDriver)
+GriddedInterface.register_driver(XArrayDriver)

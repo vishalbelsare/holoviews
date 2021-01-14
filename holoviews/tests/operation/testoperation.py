@@ -16,7 +16,7 @@ except:
 from holoviews import (HoloMap, NdOverlay, NdLayout, GridSpace, Image,
                        Contours, Polygons, Points, Histogram, Curve, Area,
                        QuadMesh, Dataset)
-from holoviews.core.data.drivers.grid import GridInterface
+from holoviews.core.data.drivers.grid import GridDriver
 from holoviews.core.util import pd
 from holoviews.element.comparison import ComparisonTestCase
 from holoviews.operation.element import (operation, transform, threshold,
@@ -117,10 +117,10 @@ class OperationTests(ComparisonTestCase):
     def test_qmesh_curvilinear_edges_contours(self):
         x = y = np.arange(3)
         xs, ys = np.meshgrid(x, y)
-        xs = GridInterface._infer_interval_breaks(xs)
-        xs = GridInterface._infer_interval_breaks(xs, 1)
-        ys = GridInterface._infer_interval_breaks(ys)
-        ys = GridInterface._infer_interval_breaks(ys, 1)
+        xs = GridDriver._infer_interval_breaks(xs)
+        xs = GridDriver._infer_interval_breaks(xs, 1)
+        ys = GridDriver._infer_interval_breaks(ys)
+        ys = GridDriver._infer_interval_breaks(ys, 1)
         zs = np.array([[0, 1, 0], [3, 4, 5.], [6, 7, 8]])
         qmesh = QuadMesh((xs, ys+0.1, zs))
         op_contours = contours(qmesh, levels=[0.5])

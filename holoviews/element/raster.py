@@ -5,7 +5,7 @@ import colorsys
 import param
 
 from ..core import util, config, Dimension, Element2D, Overlay, Dataset
-from ..core.data import ImageInterface, GridInterface
+from ..core.data import ImageDriver, GridDriver
 from ..core.data.interface import DataError
 from ..core.dimension import dimension_name
 from ..core.boundingregion import BoundingRegion, BoundingBox
@@ -243,7 +243,7 @@ class Image(Selection2DExpr, Dataset, Raster, SheetCoordinateSystem):
     bounds = param.ClassSelector(class_=BoundingRegion, default=BoundingBox(), doc="""
         The bounding region in sheet coordinates containing the data.""")
 
-    datatype = param.List(default=['grid', 'xarray', 'image', 'cube', 'dataframe', 'dictionary'])
+    datatype = param.List(default=['gridded', 'image', 'tabular'])
 
     group = param.String(default='Image', constant=True)
 
@@ -311,7 +311,7 @@ class Image(Selection2DExpr, Dataset, Raster, SheetCoordinateSystem):
             bounds = BoundingBox(points=((l, b), (r, t)))
 
         data_bounds = None
-        if self.interface is ImageInterface and not isinstance(data, (np.ndarray, Image)):
+        if self.interface is ImageDriver and not isinstance(data, (np.ndarray, Image)):
             data_bounds = self.bounds.lbrt()
 
         non_finite = all(not util.isfinite(v) for v in bounds.lbrt())
@@ -408,7 +408,7 @@ class Image(Selection2DExpr, Dataset, Raster, SheetCoordinateSystem):
         """
         self.__dict__ = state
         if isinstance(self.data, np.ndarray):
-            self.interface = ImageInterface
+            self.interface = ImageDriver
         super(Dataset, self).__setstate__(state)
 
 
@@ -797,7 +797,7 @@ class QuadMesh(Selection2DExpr, Dataset, Element2D):
         Note: Deprecate as part of 2.0
         """
         if 'interface' not in state:
-            self.interface = GridInterface
+            self.interface = GridDriver
             x, y = state['_kdims_param_value']
             z = state['_vdims_param_value'][0]
             data = state['data']

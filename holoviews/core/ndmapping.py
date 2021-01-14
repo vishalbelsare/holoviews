@@ -592,12 +592,12 @@ class MultiDimensionalMapping(Dimensioned):
                            "longer be used. If using a HoloMap use "
                            "HoloMap.collapse() instead to return a Dataset.")
 
-        from .data.interface import Interface
+        from .data.interface import Driver
         from ..element.tabular import Table
         new_data = [(key, value.table(datatype=datatype, **kwargs))
                     for key, value in self.data.items()]
         tables = self.clone(new_data)
-        return Interface.concatenate(tables, new_type=Table)
+        return Driver.concatenate(tables, new_type=Table)
 
 
     def dframe(self):

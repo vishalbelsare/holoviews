@@ -9,7 +9,7 @@ import numpy as np
 
 import param
 from ..core import Dataset
-from ..core.data import MultiInterface
+from ..core.data import MultiDriver
 from ..core.dimension import Dimension, asdim
 from ..core.util import OrderedDict, disable_constant
 from .geom import Geometry
@@ -56,7 +56,7 @@ class Path(SelectionPolyExpr, Geometry):
 
     group = param.String(default="Path", constant=True)
 
-    datatype = param.ObjectSelector(default=['multitabular', 'spatialpandas'])
+    datatype = param.ObjectSelector(default=['geometry'])
 
     def __init__(self, data, kdims=None, vdims=None, **params):
         if isinstance(data, tuple) and len(data) == 2:
@@ -200,7 +200,7 @@ class Path(SelectionPolyExpr, Geometry):
         """
         self.__dict__ = state
         if 'interface' not in state:
-            self.interface = MultiInterface
+            self.interface = MultiDriver
         super(Dataset, self).__setstate__(state)
 
 
@@ -366,7 +366,7 @@ class BaseShape(Path):
 
     def __init__(self, **params):
         super(BaseShape, self).__init__([], **params)
-        self.interface = MultiInterface
+        self.interface = MultiDriver
 
     def clone(self, *args, **overrides):
         """

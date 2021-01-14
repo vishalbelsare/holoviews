@@ -27,23 +27,22 @@ from ..ndmapping import OrderedDict, MultiDimensionalMapping
 from ..spaces import HoloMap, DynamicMap
 
 # Imports register drivers, so order matters
-from holoviews.core.data.drivers.pandas import PandasInterface           # noqa (API import)
-from holoviews.core.data.drivers.array import ArrayInterface             # noqa (API import)
-from holoviews.core.data.drivers.cudf import cuDFInterface               # noqa (API import)
-from holoviews.core.data.drivers.dask import DaskInterface               # noqa (API import)
-from holoviews.core.data.drivers.dictionary import DictInterface         # noqa (API import)
-from holoviews.core.data.drivers.grid import GridInterface               # noqa (API import)
-from holoviews.core.data.drivers.ibis import IbisInterface               # noqa (API import)
+from holoviews.core.data.drivers.pandas import PandasDriver           # noqa (API import)
+from holoviews.core.data.drivers.array import ArrayDriver             # noqa (API import)
+from holoviews.core.data.drivers.cudf import cuDFDriver               # noqa (API import)
+from holoviews.core.data.drivers.dask import DaskDriver               # noqa (API import)
+from holoviews.core.data.drivers.dictionary import DictDriver         # noqa (API import)
+from holoviews.core.data.drivers.grid import GridDriver               # noqa (API import)
+from holoviews.core.data.drivers.ibis import IbisDriver               # noqa (API import)
 from .interface import Interface, iloc, ndloc # noqa (API import)
-from holoviews.core.data.drivers.multipath import MultiInterface         # noqa (API import)
-from holoviews.core.data.drivers.image import ImageInterface             # noqa (API import)
-from holoviews.core.data.drivers.spatialpandas import SpatialPandasInterface # noqa (API import)
-from holoviews.core.data.drivers.xarray import XArrayInterface           # noqa (API import)
+from holoviews.core.data.drivers.multipath import MultiDriver         # noqa (API import)
+from holoviews.core.data.drivers.image import ImageDriver             # noqa (API import)
+from holoviews.core.data.drivers.spatialpandas import SpatialPandasDriver # noqa (API import)
+from holoviews.core.data.drivers.xarray import XArrayDriver           # noqa (API import)
 
 default_datatype = 'dataframe'
 
-datatypes = ['dataframe', 'dictionary', 'grid', 'xarray', 'dask',
-             'cuDF', 'spatialpandas', 'array', 'multitabular', 'ibis']
+datatypes = ['tabular', 'gridded']
 
 
 def concat(datasets, datatype=None):
@@ -128,7 +127,7 @@ class DataConversion(object):
             else:
                 selected = self._element
         else:
-            if pd and issubclass(self._element.interface, PandasInterface):
+            if pd and issubclass(self._element.interface, PandasDriver):
                 ds_dims = self._element.dimensions()
                 ds_kdims = [self._element.get_dimension(d) if d in ds_dims else d
                             for d in groupby+kdims]
@@ -336,7 +335,7 @@ class Dataset(Element):
 
         validate_vdims = kwargs.pop('_validate_vdims', True)
         initialized = Interface.initialize(type(self), data, kdims, vdims,
-                                           datatype=kwargs.get('datatype'))
+                                        datatype=kwargs.get('datatype'))
         (data, self.interface, dims, extra_kws) = initialized
         super(Dataset, self).__init__(data, **dict(kwargs, **dict(dims, **extra_kws)))
         self.interface.validate(self, validate_vdims)
@@ -552,7 +551,7 @@ class Dataset(Element):
             dims.insert(dim_pos, dimension)
             dimensions = dict(kdims=dims)
 
-        if issubclass(self.interface, ArrayInterface) and np.asarray(dim_val).dtype != self.data.dtype:
+        if issubclass(self.interface, ArrayDriver) and np.asarray(dim_val).dtype != self.data.dtype:
             element = self.clone(datatype=[default_datatype])
             data = element.interface.add_dimension(element, dimension, dim_pos, dim_val, vdim)
         else:

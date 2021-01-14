@@ -16,11 +16,11 @@ from holoviews.core import util
 from holoviews.core.dimension import dimension_name
 from holoviews.core.element import Element
 from holoviews.core.ndmapping import NdMapping, item_check, sorted_context
-from holoviews.core.data.interface import DataError, Interface, TabularInterface
-from .pandas import PandasInterface
+from holoviews.core.data.interface import DataError, Driver, TabularInterface
+from .pandas import PandasDriver
 
 
-class cuDFInterface(PandasInterface):
+class cuDFDriver(PandasDriver):
     """
     The cuDFInterface allows a Dataset objects to wrap a cuDF
     DataFrame object. Using cuDF allows working with columnar
@@ -64,7 +64,7 @@ class cuDFInterface(PandasInterface):
             data = data.to_frame()
 
         if not isinstance(data, cudf.DataFrame):
-            data, _, _ = PandasInterface.init(eltype, data, kdims, vdims)
+            data, _, _ = PandasDriver.init(eltype, data, kdims, vdims)
             data = cudf.from_pandas(data)
 
         columns = list(data.columns)
@@ -343,5 +343,5 @@ class cuDFInterface(PandasInterface):
             return dataset.data.to_pandas()
 
 
-Interface.register(cuDFInterface)
-TabularInterface.register_driver(cuDFInterface)
+Driver.register(cuDFDriver)
+TabularInterface.register_driver(cuDFDriver)

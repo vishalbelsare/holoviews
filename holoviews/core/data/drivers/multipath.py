@@ -3,11 +3,12 @@ import numpy as np
 from holoviews.core import util
 from holoviews.core.element import Element
 from holoviews.core.ndmapping import NdMapping, item_check, sorted_context
-from .dictionary import DictInterface
-from holoviews.core.data.interface import Interface, DataError, GeometryInterface
+from .dictionary import DictDriver
+from holoviews.core.data.interface import Driver, DataError, GeometryInterface, \
+    TabularInterface
 
 
-class MultiInterface(Interface):
+class MultiDriver(Driver):
     """
     MultiInterface allows wrapping around a list of tabular datasets
     including dataframes, the columnar dictionary format or 2D tabular
@@ -23,7 +24,8 @@ class MultiInterface(Interface):
 
     datatype = 'multitabular'
 
-    subtypes = ['dictionary', 'dataframe', 'array', 'dask']
+    # subtypes = ['dictionary', 'dataframe', 'array', 'dask']
+    subtypes = ['tabular']
 
     geom_types = ['Polygon', 'Ring', 'Line', 'Point']
 
@@ -31,7 +33,7 @@ class MultiInterface(Interface):
 
     @classmethod
     def init(cls, eltype, data, kdims, vdims):
-        from ...element import Polygons, Path
+        from holoviews.element import Path, Polygons
 
         new_data = []
         dims = {'kdims': eltype.kdims, 'vdims': eltype.vdims}
@@ -44,30 +46,37 @@ class MultiInterface(Interface):
             all(isinstance(d, tuple) and all(util.isscalar(v) for v in d) for d in data)):
             data = [data]
         elif not isinstance(data, list):
-            interface  = [Interface.interfaces.get(st).applies(data)
-                          for st in cls.subtypes if st in Interface.interfaces]
+            interface  = [Driver.interfaces.get(st).applies(data)
+                          for st in cls.subtypes if st in Driver.interfaces]
             if (interface or isinstance(data, tuple)) and issubclass(eltype, Path):
                 data = [data]
             else:
                 raise ValueError('MultiInterface data must be a list of tabular data types.')
         prev_interface, prev_dims = None, None
         for d in data:
-            datatype = cls.subtypes
+
+            drivers = [driver for _, driver in TabularInterface.drivers["tabular"]]
+            # datatype = cls.subtypes
             if isinstance(d, dict):
                 if Polygons._hole_key in d:
-                    datatype = [dt for dt in datatype
-                                if hasattr(Interface.interfaces.get(dt), 'has_holes')]
+                    drivers = [d for d in drivers if hasattr(d, 'has_holes')]
                 geom_type = d.get('geom_type')
                 if geom_type is not None and geom_type not in cls.geom_types:
                     raise DataError("Geometry type '%s' not recognized, "
                                     "must be one of %s." % (geom_type, cls.geom_types))
                 else:
-                    datatype = [dt for dt in datatype
-                                if hasattr(Interface.interfaces.get(dt), 'geom_type')]
-            d, interface, dims, _ = Interface.initialize(eltype, d, kdims, vdims,
-                                                         datatype=datatype)
+                    drivers = [d for d in drivers if hasattr(d, 'geom_type')]
+
+            # if not drivers:
+            #     raise DataError("No driver")
+
+            # driver = drivers[0]
+
+            d, interface, dims, _ = TabularInterface.initialize(
+                eltype, d, kdims, vdims, datatype=["tabular"]
+            )
             if prev_interface:
-                if prev_interface != interface:
+                if prev_interface.driver != interface.driver:
                     raise DataError('MultiInterface subpaths must all have matching datatype.', cls)
                 if dims['kdims'] != prev_dims['kdims']:
                     raise DataError('MultiInterface subpaths must all have matching kdims.', cls)
@@ -87,7 +96,7 @@ class MultiInterface(Interface):
         for d in dataset.data:
             ds.data = d
             ds.interface.validate(ds, vdims)
-            if isinstance(dataset, Polygons) and ds.interface is DictInterface:
+            if isinstance(dataset, Polygons) and ds.interface is DictDriver:
                 holes = ds.interface.holes(ds)
                 if not isinstance(holes, list):
                     raise DataError('Polygons holes must be declared as a list-of-lists.', cls)
@@ -125,7 +134,7 @@ class MultiInterface(Interface):
         Returns a Dataset template used as a wrapper around the data
         contained within the multi-interface dataset.
         """
-        from . import Dataset
+        from .. import Dataset
         vdims = dataset.vdims if getattr(dataset, 'level', None) is None else []
         return Dataset(dataset.data[0], datatype=cls.subtypes,
                        kdims=dataset.kdims, vdims=vdims,
@@ -211,7 +220,7 @@ class MultiInterface(Interface):
         """
         Applies selectiong on all the subpaths.
         """
-        from ...element import Polygons
+        from holoviews.element import Polygons
         if not dataset.data:
             return dataset.data
         elif selection_mask is not None:
@@ -249,6 +258,8 @@ class MultiInterface(Interface):
 
     @classmethod
     def groupby(cls, dataset, dimensions, container_type, group_type, **kwargs):
+        from .. import Dataset
+
         # Get dimensions information
         dimensions = [dataset.get_dimension(d) for d in dimensions]
         kdims = [kdim for kdim in dataset.kdims if kdim not in dimensions]
@@ -273,7 +284,6 @@ class MultiInterface(Interface):
         values = tuple(values)
 
         # Iterate over the unique entries applying selection masks
-        from . import Dataset
         ds = Dataset(values, dimensions)
         keys = (tuple(vals[i] for vals in values) for i in range(len(vals)))
         grouped_data = []
@@ -564,5 +574,5 @@ def ensure_ring(geom, values=None):
     return np.insert(values, list(inds), list(inserts), axis=0)
 
 
-Interface.register(MultiInterface)
-GeometryInterface.register_driver(MultiInterface)
+Driver.register(MultiDriver)
+GeometryInterface.register_driver(MultiDriver)

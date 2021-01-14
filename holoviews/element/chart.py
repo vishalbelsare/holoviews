@@ -4,7 +4,7 @@ import param
 from ..core import util
 from ..core import Dimension, Dataset, Element2D
 from ..core.dimension import process_dimensions
-from ..core.data import GridInterface
+from ..core.data import GridDriver
 from .geom import Rectangles, Points, VectorField # noqa: backward compatible import
 from .selection import Selection1DExpr, Selection2DExpr
 
@@ -208,7 +208,7 @@ class Histogram(Selection1DExpr, Chart):
         Note: Deprecate as part of 2.0
         """
         if 'interface' not in state:
-            self.interface = GridInterface
+            self.interface = GridDriver
             x, y = state['_kdims_param_value'][0], state['_vdims_param_value'][0]
             state['data'] = {x.name: state['data'][1], y.name: state['data'][0]}
         super(Dataset, self).__setstate__(state)

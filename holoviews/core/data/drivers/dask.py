@@ -13,11 +13,11 @@ from holoviews.core import util
 from holoviews.core.dimension import Dimension
 from holoviews.core.element import Element
 from holoviews.core.ndmapping import NdMapping, item_check, OrderedDict, sorted_context
-from holoviews.core.data.interface import Interface, TabularInterface
-from .pandas import PandasInterface
+from holoviews.core.data.interface import Driver, TabularInterface
+from .pandas import PandasDriver
 
 
-class DaskInterface(PandasInterface):
+class DaskDriver(PandasDriver):
     """
     The DaskInterface allows a Dataset objects to wrap a dask
     DataFrame object. Using dask allows loading data lazily
@@ -57,7 +57,7 @@ class DaskInterface(PandasInterface):
     def init(cls, eltype, data, kdims, vdims):
         import dask.dataframe as dd
 
-        data, dims, extra = PandasInterface.init(eltype, data, kdims, vdims)
+        data, dims, extra = PandasDriver.init(eltype, data, kdims, vdims)
         if not isinstance(data, dd.DataFrame):
             data = dd.from_pandas(data, npartitions=cls.default_partitions, sort=False)
         kdims = [d.name if isinstance(d, Dimension) else d for d in dims['kdims']]
@@ -324,5 +324,5 @@ class DaskInterface(PandasInterface):
         return tuple(data.values())
 
 
-Interface.register(DaskInterface)
-TabularInterface.register_driver(DaskInterface)
+Driver.register(DaskDriver)
+TabularInterface.register_driver(DaskDriver)

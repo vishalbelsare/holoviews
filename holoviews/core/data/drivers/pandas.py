@@ -8,7 +8,7 @@ except ImportError:
 import numpy as np
 import pandas as pd
 
-from holoviews.core.data.interface import Interface, DataError, TabularInterface
+from holoviews.core.data.interface import Driver, DataError, TabularInterface
 from holoviews.core.dimension import dimension_name
 from holoviews.core.element import Element
 from holoviews.core.dimension import OrderedDict as cyODict
@@ -16,7 +16,7 @@ from holoviews.core.ndmapping import NdMapping, item_check, sorted_context
 from holoviews.core import util
 
 
-class PandasInterface(Interface):
+class PandasDriver(Driver):
 
     types = (pd.DataFrame if pd else None,)
 
@@ -371,7 +371,7 @@ class PandasInterface(Interface):
         Returns the data of a Dataset as a dataframe avoiding copying
         if it already a dataframe type.
         """
-        if issubclass(dataset.interface, PandasInterface):
+        if issubclass(dataset.interface, PandasDriver):
             return dataset.data
         else:
             return dataset.dframe()
@@ -406,5 +406,5 @@ class PandasInterface(Interface):
         return dataset.data.iloc[rows, cols]
 
 
-Interface.register(PandasInterface)
-TabularInterface.register_driver(PandasInterface)
+Driver.register(PandasDriver)
+TabularInterface.register_driver(PandasDriver)

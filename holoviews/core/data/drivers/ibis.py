@@ -9,11 +9,11 @@ except ImportError:
 from holoviews.core import util
 from holoviews.core.element import Element
 from holoviews.core.ndmapping import NdMapping, item_check, sorted_context
-from holoviews.core.data.interface import Interface, cached, TabularInterface
+from holoviews.core.data.interface import Driver, cached, TabularInterface
 from holoviews.core.data.drivers import pandas
 
 
-class IbisInterface(Interface):
+class IbisDriver(Driver):
 
     types = ()
 
@@ -102,7 +102,7 @@ class IbisInterface(Interface):
         if cls.dtype(dataset, dimension).kind in 'SUO':
             return None, None
         if dimension.nodata is not None:
-            return Interface.range(dataset, dimension)
+            return Driver.range(dataset, dimension)
         column = dataset.data[dimension.name]
         return tuple(
             dataset.data.aggregate([column.min(), column.max()]).execute().values[0, :]
@@ -166,8 +166,8 @@ class IbisInterface(Interface):
             **{v.name: dataset.data[k] for k, v in dimensions.items()}
         )
 
-    validate = pandas.PandasInterface.validate
-    reindex = pandas.PandasInterface.reindex
+    validate = pandas.PandasDriver.validate
+    reindex = pandas.PandasDriver.reindex
 
     @classmethod
     def _index_ibis_table(cls, data):
@@ -441,5 +441,5 @@ class IbisInterface(Interface):
     def dframe(cls, dataset, dimensions):
         return dataset.data[dimensions].execute()
 
-Interface.register(IbisInterface)
-TabularInterface.register_driver(IbisInterface)
+Driver.register(IbisDriver)
+TabularInterface.register_driver(IbisDriver)

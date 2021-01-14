@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 
 from ..core import Operation, Element
-from ..core.data import PandasInterface
+from ..core.data import PandasDriver
 from ..core.util import pandas_version
 from ..element import Scatter
 
@@ -46,7 +46,7 @@ class rolling(Operation,RollingBase):
 
     def _process_layer(self, element, key=None):
         xdim = element.kdims[0].name
-        df = PandasInterface.as_dframe(element)
+        df = PandasDriver.as_dframe(element)
         df = df.set_index(xdim).rolling(win_type=self.p.window_type,
                                         **self._roll_kwargs())
         if self.p.window_type is None:
@@ -84,7 +84,7 @@ class resample(Operation):
         A string representing the time interval over which to apply the resampling""")
 
     def _process_layer(self, element, key=None):
-        df = PandasInterface.as_dframe(element)
+        df = PandasDriver.as_dframe(element)
         xdim = element.kdims[0].name
         resample_kwargs = {'rule': self.p.rule, 'label': self.p.label,
                            'closed': self.p.closed}

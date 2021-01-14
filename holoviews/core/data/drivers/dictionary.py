@@ -6,7 +6,7 @@ except ImportError:
 
 import numpy as np
 
-from holoviews.core.data.interface import Interface, DataError, TabularInterface
+from holoviews.core.data.interface import Driver, DataError, TabularInterface
 from holoviews.core.dimension import dimension_name
 from holoviews.core.element import Element
 from holoviews.core.dimension import OrderedDict as cyODict
@@ -16,7 +16,7 @@ from holoviews.core import util
 
 
 
-class DictInterface(Interface):
+class DictDriver(Driver):
     """
     Interface for simple dictionary-based dataset format. The dictionary
     keys correspond to the column (i.e. dimension) names and the values
@@ -252,7 +252,7 @@ class DictInterface(Interface):
         column = dataset.data[dim.name]
         if isscalar(column):
             return column, column
-        return Interface.range(dataset, dimension)
+        return Driver.range(dataset, dimension)
 
 
     @classmethod
@@ -440,8 +440,8 @@ class DictInterface(Interface):
                 holes.append(subholes)
             return [holes]
         else:
-            return super(DictInterface, cls).holes(dataset)
+            return super(DictDriver, cls).holes(dataset)
 
 
-Interface.register(DictInterface)
-TabularInterface.register_driver(DictInterface)
+Driver.register(DictDriver)
+TabularInterface.register_driver(DictDriver)

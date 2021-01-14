@@ -8,7 +8,7 @@ import logging
 
 import numpy as np
 
-from holoviews.core.data import Dataset, MultiInterface
+from holoviews.core.data import Dataset, MultiDriver
 from holoviews.element import Path, Points, Polygons
 from holoviews.element.comparison import ComparisonTestCase
 from param import get_logger
@@ -495,7 +495,7 @@ class GeomTests(ComparisonTestCase):
 class MultiBaseInterfaceTest(GeomTests):
 
     datatype = 'multitabular'
-    interface = MultiInterface
+    interface = MultiDriver
     subtype = None
 
     __test__ = False
@@ -504,12 +504,12 @@ class MultiBaseInterfaceTest(GeomTests):
         logger = get_logger()
         self._log_level = logger.level
         get_logger().setLevel(logging.ERROR)
-        self._subtypes = MultiInterface.subtypes
-        MultiInterface.subtypes = [self.subtype]
+        self._subtypes = MultiDriver.subtypes
+        MultiDriver.subtypes = [self.subtype]
         super(MultiBaseInterfaceTest, self).setUp()
 
     def tearDown(self):
-        MultiInterface.subtypes = self._subtypes
+        MultiDriver.subtypes = self._subtypes
         get_logger().setLevel(self._log_level)
         super(MultiBaseInterfaceTest, self).tearDown()
 
@@ -520,7 +520,7 @@ class MultiDictInterfaceTest(MultiBaseInterfaceTest):
     """
 
     datatype = 'multitabular'
-    interface = MultiInterface
+    interface = MultiDriver
     subtype = 'dictionary'
 
     __test__ = True

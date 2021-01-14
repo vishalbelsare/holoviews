@@ -5,7 +5,7 @@ import numpy as np
 
 from bokeh.models.glyphs import AnnularWedge
 
-from ...core.data import GridInterface
+from ...core.data import GridDriver
 from ...core.util import is_nan, dimension_sanitizer
 from ...core.spaces import HoloMap
 from .element import ColorbarPlot, CompositeElementPlot
@@ -104,7 +104,7 @@ class HeatMapPlot(ColorbarPlot):
         else:
             xvals = aggregate.dimension_values(xdim, flat=False)
             if xvals.shape[1] > 1:
-                edges = GridInterface._infer_interval_breaks(xvals, axis=1)
+                edges = GridDriver._infer_interval_breaks(xvals, axis=1)
                 widths = np.diff(edges, axis=1).T.flatten()
             else:
                 widths = [self.default_span]*xvals.shape[0] if len(xvals) else []
@@ -119,7 +119,7 @@ class HeatMapPlot(ColorbarPlot):
         else:
             yvals = aggregate.dimension_values(ydim, flat=False)
             if yvals.shape[0] > 1:
-                edges = GridInterface._infer_interval_breaks(yvals, axis=0)
+                edges = GridDriver._infer_interval_breaks(yvals, axis=0)
                 heights = np.diff(edges, axis=0).T.flatten()
             else:
                 heights = [self.default_span]*yvals.shape[1] if len(yvals) else []

@@ -25,7 +25,7 @@ except:
 
 from ..core import (Operation, Element, Dimension, NdOverlay,
                     CompositeOverlay, Dataset, Overlay, OrderedDict)
-from ..core.data import PandasInterface, XArrayInterface, DaskInterface, cuDFInterface
+from ..core.data import PandasDriver, XArrayDriver, DaskDriver, cuDFDriver
 from ..core.util import (
     Iterable, LooseVersion, basestring, cftime_types, cftime_to_timestamp,
     datetime_types, dt_to_int, isfinite, get_param_values, max_range, config)
@@ -376,7 +376,7 @@ class aggregate(AggregationOperation):
             for key, el in obj.data.items():
                 x, y, element, glyph = cls.get_agg_data(el)
                 dims = (x, y)
-                df = PandasInterface.as_dframe(element)
+                df = PandasDriver.as_dframe(element)
                 if isinstance(obj, NdOverlay):
                     df = df.assign(**dict(zip(obj.dimensions('key', True), key)))
                 paths.append(df)
@@ -387,7 +387,7 @@ class aggregate(AggregationOperation):
                 vdims = element.vdims
         elif isinstance(obj, Element):
             glyph = 'line' if isinstance(obj, Curve) else 'points'
-            paths.append(PandasInterface.as_dframe(obj))
+            paths.append(PandasDriver.as_dframe(obj))
 
         if dims is None or len(dims) != 2:
             return None, None, None, None
@@ -412,7 +412,7 @@ class aggregate(AggregationOperation):
         if category and df[category].dtype.name != 'category':
             df[category] = df[category].astype('category')
 
-        is_custom = isinstance(df, dd.DataFrame) or cuDFInterface.applies(df)
+        is_custom = isinstance(df, dd.DataFrame) or cuDFDriver.applies(df)
         if any((not is_custom and len(df[d.name]) and isinstance(df[d.name].values[0], cftime_types)) or
                df[d.name].dtype.kind == 'M' for d in (x, y)):
             df = df.copy()
@@ -457,7 +457,7 @@ class aggregate(AggregationOperation):
 
         if x is None or y is None or width == 0 or height == 0:
             return self._empty_agg(element, x, y, width, height, xs, ys, agg_fn, **params)
-        elif not getattr(data, 'interface', None) is DaskInterface and not len(data):
+        elif not getattr(data, 'interface', None) is DaskDriver and not len(data):
             empty_val = 0 if isinstance(agg_fn, ds.count) else np.NaN
             xarray = xr.DataArray(np.full((height, width), empty_val),
                                   dims=[y.name, x.name], coords={x.name: xs, y.name: ys})
@@ -466,7 +466,7 @@ class aggregate(AggregationOperation):
         cvs = ds.Canvas(plot_width=width, plot_height=height,
                         x_range=x_range, y_range=y_range)
 
-        dfdata = PandasInterface.as_dframe(data)
+        dfdata = PandasDriver.as_dframe(data)
         agg = getattr(cvs, glyph)(dfdata, x.name, y.name, agg_fn)
         if 'x_axis' in agg.coords and 'y_axis' in agg.coords:
             agg = agg.rename({'x_axis': x, 'y_axis': y})
@@ -621,7 +621,7 @@ class area_aggregate(AggregationOperation):
         (x_range, y_range), (xs, ys), (width, height), (xtype, ytype) = info
         ((x0, x1), (y0, y1)), (xs, ys) = self._dt_transform(x_range, y_range, xs, ys, xtype, ytype)
 
-        df = PandasInterface.as_dframe(element)
+        df = PandasDriver.as_dframe(element)
 
         cvs = ds.Canvas(plot_width=width, plot_height=height,
                         x_range=x_range, y_range=y_range)
@@ -647,7 +647,7 @@ class spread_aggregate(area_aggregate):
 
     def _process(self, element, key=None):
         x, y = element.dimensions()[:2]
-        df = PandasInterface.as_dframe(element)
+        df = PandasDriver.as_dframe(element)
         if df is element.data:
             df = df.copy()
 
@@ -859,9 +859,9 @@ class regrid(AggregationOperation):
 
         arrays = {}
         for i, vd in enumerate(element.vdims):
-            if element.interface is XArrayInterface:
+            if element.interface is XArrayDriver:
                 if element.interface.packed(element):
-                    xarr = element.data[..., i] 
+                    xarr = element.data[..., i]
                 else:
                     xarr = element.data[vd.name]
                 if 'datetime' in (xtype, ytype):
@@ -1226,7 +1226,7 @@ class shade(LinkableOperation):
 
     @classmethod
     def to_xarray(cls, element):
-        if issubclass(element.interface, XArrayInterface):
+        if issubclass(element.interface, XArrayDriver):
             return element
         data = tuple(element.dimension_values(kd, expanded=False)
                      for kd in element.kdims)
