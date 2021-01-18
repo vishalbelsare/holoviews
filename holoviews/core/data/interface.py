@@ -522,11 +522,7 @@ class Interface(param.Parameterized):
     def initialize(cls, eltype, data, kdims, vdims, datatype=None, kind=None):
 
         if datatype is None and kind is None:
-            datatype = eltype.datatype
-            driver_pairs = [
-                cls.drivers_by_datatype.get(dt)
-                for dt in datatype if dt in cls.drivers_by_datatype
-            ]
+            raise ValueError("Either datatype or kind must be provided")
         elif kind is not None:
             driver_pairs = [pair for k in kind for pair in cls.drivers_by_kind.get(k, [])]
         else:  # datatype is not None
@@ -550,11 +546,6 @@ class Interface(param.Parameterized):
         priority_errors = []
         for interface_cls, driver_cls in prioritized_pairs:
             try:
-                # data, driver, dims, extra_kws = \
-                #     cls._driver_initialize(
-                #         driver_cls, eltype, data, kdims, vdims, datatype=[driver_cls.datatype]
-                #     )
-
                 (data, dims, extra_kws) = driver_cls.init(eltype, data, kdims, vdims)
                 interface = interface_cls(driver_cls)
                 return data, interface, dims, extra_kws
@@ -763,6 +754,7 @@ class GriddedInterface(Interface):
 
     def concat(self, *args, **kwargs):
         return self.driver.concat(*args, **kwargs)
+
 
 class ImageInterface(GriddedInterface):
     kind = "image"
