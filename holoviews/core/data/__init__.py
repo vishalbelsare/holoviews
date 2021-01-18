@@ -34,7 +34,7 @@ from holoviews.core.data.drivers.dask import DaskDriver               # noqa (AP
 from holoviews.core.data.drivers.dictionary import DictDriver         # noqa (API import)
 from holoviews.core.data.drivers.grid import GridDriver               # noqa (API import)
 from holoviews.core.data.drivers.ibis import IbisDriver               # noqa (API import)
-from .interface import Interface, iloc, ndloc # noqa (API import)
+from .interface import Interface, iloc, ndloc, Driver  # noqa (API import)
 from holoviews.core.data.drivers.multipath import MultiDriver         # noqa (API import)
 from holoviews.core.data.drivers.image import ImageDriver             # noqa (API import)
 from holoviews.core.data.drivers.spatialpandas import SpatialPandasDriver # noqa (API import)
@@ -68,7 +68,7 @@ def concat(datasets, datatype=None):
     Returns:
         Concatenated dataset
     """
-    return Interface.concatenate(datasets, datatype)
+    return Driver.concatenate(datasets, datatype)
 
 
 class DataConversion(object):
@@ -680,7 +680,7 @@ argument to specify a selection specification""")
         data = self.interface.reindex(self, key_dims, val_dims)
         datatype = self.datatype
         if gridded and dropped:
-            interfaces = self.interface.interfaces
+            interfaces = self.interface.driver.interfaces
             datatype = [dt for dt in datatype if not
                         getattr(interfaces.get(dt, None), 'gridded', True)]
         return self.clone(data, kdims=key_dims, vdims=val_dims,

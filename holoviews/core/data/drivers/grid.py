@@ -151,7 +151,7 @@ class GridDriver(DictDriver):
 
     @classmethod
     def concat(cls, datasets, dimensions, vdims):
-        from . import Dataset
+        from .. import Dataset
         with sorted_context(False):
             datasets = NdMapping(datasets, kdims=dimensions)
             datasets = datasets.clone([(k, v.data if isinstance(v, Dataset) else v)

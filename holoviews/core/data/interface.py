@@ -638,7 +638,7 @@ class Interface(param.Parameterized):
             except:
                 raise
 
-        raise ValueError("No compatible driver")
+        raise DataError("No compatible driver")
 
     def cast(self, datasets, datatype=None, cast_type=None):
         """
@@ -777,16 +777,61 @@ class TabularInterface(Interface):
         return self.driver.sort(*args, **kwargs)
 
     def assign(self, *args, **kwargs):
-        return self.driver.sort(*args, **kwargs)
+        return self.driver.assign(*args, **kwargs)
 
     def iloc(self, *args, **kwargs):
         return self.driver.iloc(*args, **kwargs)
 
+
 class GriddedInterface(Interface):
     kind = "gridded"
 
+    def aggregate(self, *args, **kwargs):
+        return self.driver.aggregate(*args, **kwargs)
 
-class ImageInterface(Interface):
+    def unpack_scalar(self, *args, **kwargs):
+        return self.driver.unpack_scalar(*args, **kwargs)
+
+    def add_dimension(self, *args, **kwargs):
+        return self.driver.add_dimension(*args, **kwargs)
+
+    def coords(self, *args, **kwargs):
+        return self.driver.coords(*args, **kwargs)
+
+    def irregular(self, *args, **kwargs):
+        return self.driver.irregular(*args, **kwargs)
+
+    def select(self, *args, **kwargs):
+        return self.driver.select(*args, **kwargs)
+
+    def groupby(self, *args, **kwargs):
+        return self.driver.groupby(*args, **kwargs)
+
+    def reindex(self, *args, **kwargs):
+        return self.driver.reindex(*args, **kwargs)
+
+    def ndloc(self, *args, **kwargs):
+        return self.driver.ndloc(*args, **kwargs)
+
+    def sample(self, *args, **kwargs):
+        return self.driver.sample(*args, **kwargs)
+
+    def sort(self, *args, **kwargs):
+        return self.driver.sort(*args, **kwargs)
+
+    def assign(self, *args, **kwargs):
+        return self.driver.assign(*args, **kwargs)
+
+    def iloc(self, *args, **kwargs):
+        return self.driver.iloc(*args, **kwargs)
+
+    def mask(self, *args, **kwargs):
+        return self.driver.mask(*args, **kwargs)
+
+    def concat(self, *args, **kwargs):
+        return self.driver.concat(*args, **kwargs)
+
+class ImageInterface(GriddedInterface):
     kind = "image"
 
 
