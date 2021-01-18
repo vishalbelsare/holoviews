@@ -9,7 +9,7 @@ except ImportError:
 from holoviews.core import util
 from holoviews.core.element import Element
 from holoviews.core.ndmapping import NdMapping, item_check, sorted_context
-from holoviews.core.data.interface import Driver, cached, TabularInterface
+from holoviews.core.data.interface import Driver, cached, TabularInterface, DataError
 from holoviews.core.data.drivers import pandas
 
 
@@ -50,6 +50,8 @@ class IbisDriver(Driver):
 
     @classmethod
     def init(cls, eltype, data, keys, values):
+        if not cls.applies(data):
+            raise DataError("Input not an expression")
         params = eltype.param.objects()
         index = params["kdims"]
         columns = params["vdims"]
