@@ -228,85 +228,6 @@ class Driver(param.Parameterized):
         return ("{interface} expects {datatype} data, for more information "
                 "on supported datatypes see {url}".format(**info))
 
-
-    @classmethod
-    def initialize(cls, eltype, data, kdims, vdims, datatype=None):
-        # Process params and dimensions
-        if isinstance(data, Element):
-            pvals = util.get_param_values(data)
-            kdims = pvals.get('kdims') if kdims is None else kdims
-            vdims = pvals.get('vdims') if vdims is None else vdims
-
-        # Process Element data
-        if (hasattr(data, 'interface') and isinstance(data.interface, Interface)):
-            if datatype is None:
-                datatype = [dt for dt in data.datatype if dt in eltype.datatype]
-                if not datatype:
-                    datatype = eltype.datatype
-
-            interface = data.interface
-            if interface.datatype in datatype and interface.datatype in eltype.datatype and interface.named:
-                data = data.data
-            elif interface.multi and any(cls.interfaces[dt].multi for dt in datatype if dt in cls.interfaces):
-                data = [d for d in data.interface.split(data, None, None, 'columns')]
-            elif interface.gridded and any(cls.interfaces[dt].gridded for dt in datatype):
-                new_data = []
-                for kd in data.kdims:
-                    irregular = interface.irregular(data, kd)
-                    coords = data.dimension_values(kd.name, expanded=irregular,
-                                                   flat=not irregular)
-                    new_data.append(coords)
-                for vd in data.vdims:
-                    new_data.append(interface.values(data, vd, flat=False, compute=False))
-                data = tuple(new_data)
-            elif 'dataframe' in datatype and util.pd:
-                data = data.dframe()
-            else:
-                data = tuple(data.columns().values())
-        elif isinstance(data, Element):
-            data = tuple(data.dimension_values(d) for d in kdims+vdims)
-        elif isinstance(data, util.generator_types):
-            data = list(data)
-
-        if datatype is None:
-            datatype = eltype.datatype
-
-        # Set interface priority order
-        prioritized = [cls.interfaces[p] for p in datatype
-                       if p in cls.interfaces]
-        head = [intfc for intfc in prioritized if intfc.applies(data)]
-        if head:
-            # Prioritize interfaces which have matching types
-            prioritized = head + [el for el in prioritized if el != head[0]]
-
-        # Iterate over interfaces until one can interpret the input
-        priority_errors = []
-        for interface in prioritized:
-            if not interface.loaded() and len(datatype) != 1:
-                # Skip interface if it is not loaded and was not explicitly requested
-                continue
-            try:
-                (data, dims, extra_kws) = interface.init(eltype, data, kdims, vdims)
-                break
-            except DataError:
-                raise
-            except Exception as e:
-                if interface in head or len(prioritized) == 1:
-                    priority_errors.append((interface, e, True))
-        else:
-            error = ("None of the available storage backends were able "
-                     "to support the supplied data format.")
-            if priority_errors:
-                intfc, e, _ = priority_errors[0]
-                priority_error = ("%s raised following error:\n\n %s"
-                                  % (intfc.__name__, e))
-                error = ' '.join([error, priority_error])
-                raise six.reraise(DataError, DataError(error, intfc), sys.exc_info()[2])
-            raise DataError(error)
-
-        return data, interface, dims, extra_kws
-
-
     @classmethod
     def validate(cls, dataset, vdims=True):
         dims = 'all' if vdims else 'key'
@@ -625,20 +546,32 @@ class Interface(param.Parameterized):
                 tail.append((interface_cls, driver_cls))
 
         prioritized_pairs = head + tail
+        # TODO: move driver_cls.initialize logic here
+        priority_errors = []
         for interface_cls, driver_cls in prioritized_pairs:
             try:
-                data, driver, dims, extra_kws = \
-                    driver_cls.initialize(
-                        eltype, data, kdims, vdims, datatype=[driver_cls.datatype]
-                    )
+                # data, driver, dims, extra_kws = \
+                #     cls._driver_initialize(
+                #         driver_cls, eltype, data, kdims, vdims, datatype=[driver_cls.datatype]
+                #     )
+
+                (data, dims, extra_kws) = driver_cls.init(eltype, data, kdims, vdims)
                 interface = interface_cls(driver_cls)
                 return data, interface, dims, extra_kws
             except DataError:
                 pass
-            except:
-                raise
+            except Exception as e:
+                priority_errors.append((driver_cls, e, True))
 
-        raise DataError("No compatible driver")
+        error = ("None of the available storage backends were able "
+                 "to support the supplied data format.")
+        if priority_errors:
+            intfc, e, _ = priority_errors[0]
+            priority_error = ("%s raised following error:\n\n %s"
+                              % (intfc.__name__, e))
+            error = ' '.join([error, priority_error])
+            raise six.reraise(DataError, DataError(error, intfc), sys.exc_info()[2])
+        raise DataError(error)
 
     def cast(self, datasets, datatype=None, cast_type=None):
         """

@@ -337,8 +337,11 @@ class Dataset(Element):
         kdims, vdims = kwargs.get('kdims'), kwargs.get('vdims')
 
         validate_vdims = kwargs.pop('_validate_vdims', True)
+
+        data, datatype, kdims, vdims = self._proproc_data(data, kwargs.get('datatype'), kdims, vdims)
+        # datatype = kwargs.get('datatype')
         initialized = Interface.initialize(
-            type(self), data, kdims, vdims, datatype=kwargs.get('datatype')
+            type(self), data, kdims, vdims, datatype=datatype
         )
         (data, self.interface, dims, extra_kws) = initialized
         super(Dataset, self).__init__(data, **dict(kwargs, **dict(dims, **extra_kws)))
@@ -375,6 +378,54 @@ class Dataset(Element):
                                         transforms=None, _validate_vdims=False)
                 if hasattr(self, '_binned'):
                     self._dataset._binned = self._binned
+
+    @classmethod
+    def _proproc_data(cls, data, datatype, kdims, vdims):
+        "Moved from Driver.initialize"
+
+        eltype = cls
+
+        # Process params and dimensions
+        if isinstance(data, Element):
+            pvals = util.get_param_values(data)
+            kdims = pvals.get('kdims') if kdims is None else kdims
+            vdims = pvals.get('vdims') if vdims is None else vdims
+
+        # Process Element data
+        if (hasattr(data, 'interface') and isinstance(data.interface, Interface)):
+            if datatype is None:
+                datatype = [dt for dt in data.datatype if dt in eltype.datatype]
+                if not datatype:
+                    datatype = eltype.datatype
+
+            interface = data.interface
+            if interface.datatype in datatype and interface.datatype in eltype.datatype and interface.named:
+                data = data.data
+            elif interface.multi and any(Interface.drivers_by_datatype[dt][1].multi for dt in datatype if dt in Interface.drivers_by_datatype):
+                data = [d for d in data.interface.split(data, None, None, 'columns')]
+            elif interface.gridded and any(Interface.drivers_by_datatype[dt][1].gridded for dt in datatype):
+                new_data = []
+                for kd in data.kdims:
+                    irregular = interface.irregular(data, kd)
+                    coords = data.dimension_values(kd.name, expanded=irregular,
+                                                   flat=not irregular)
+                    new_data.append(coords)
+                for vd in data.vdims:
+                    new_data.append(interface.values(data, vd, flat=False, compute=False))
+                data = tuple(new_data)
+            elif 'dataframe' in datatype and util.pd:
+                data = data.dframe()
+            else:
+                data = tuple(data.columns().values())
+        elif isinstance(data, Element):
+            data = tuple(data.dimension_values(d) for d in kdims+vdims)
+        elif isinstance(data, util.generator_types):
+            data = list(data)
+
+        if datatype is None:
+            datatype = eltype.datatype
+
+        return data, datatype, kdims, vdims
 
     def __getstate__(self):
         "Ensures pipelines are dropped"
