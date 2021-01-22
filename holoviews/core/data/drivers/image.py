@@ -29,12 +29,11 @@ class ImageDriver(GridDriver):
             rtol=None, time_unit=None, binned=False, **kwargs
     ):
 
-        assert rtol is not None
-        assert time_unit is not None
-        # if kdims is None:
-        #     kdims = eltype.kdims
-        # if vdims is None:
-        #     vdims = eltype.vdims
+        if rtol is None:
+            raise ValueError("rtol must be specified")
+
+        if time_unit is None:
+            raise ValueError("time_unit must be specified")
 
         kdims = kdims_spec["value"]
         kdims = kdims if kdims is not None else kdims_spec["default"]
@@ -75,9 +74,6 @@ class ImageDriver(GridDriver):
 
         if not isinstance(data, np.ndarray) or data.ndim not in [2, 3]:
             raise ValueError('ImageInterface expects a 2D array.')
-        # elif not issubclass(eltype, SheetCoordinateSystem):
-        #     raise ValueError('ImageInterface may only be used on elements '
-        #                      'that subclass SheetCoordinateSystem.')
 
         return data, {'kdims':kdims, 'vdims':vdims}, kwargs
 

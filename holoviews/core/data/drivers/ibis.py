@@ -58,10 +58,6 @@ class IbisDriver(Driver):
         index_default = kdims_spec["default"]
         columns_bounds = vdims_spec["bounds"]
 
-        # params = eltype.param.objects()
-        # index = params["kdims"]
-        # columns = params["vdims"]
-
         if isinstance(index_bounds[1], int):
             ndim = min([index_bounds[1], len(index_default)])
         else:

@@ -77,10 +77,6 @@ class XArrayDriver(GridDriver):
         kdims_default = kdims_spec["default"]
         vdims_default = vdims_spec["default"]
 
-        # element_params = eltype.param.objects()
-        # kdim_param = element_params['kdims']
-        # vdim_param = element_params['vdims']
-
         def retrieve_unit_and_label(dim):
             if isinstance(dim, Dimension):
                 return dim

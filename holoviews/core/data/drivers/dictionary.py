@@ -38,10 +38,6 @@ class DictDriver(Driver):
     def init(cls, data, kdims_spec, vdims_spec, auto_indexable_1d=False, **kwargs):
         odict_types = (OrderedDict, cyODict)
 
-        # if kdims is None:
-        #     kdims = eltype.kdims
-        # if vdims is None:
-        #     vdims = eltype.vdims
         kdims = kdims_spec["value"]
         kdims = kdims if kdims is not None else kdims_spec["default"]
         vdims = vdims_spec["value"]

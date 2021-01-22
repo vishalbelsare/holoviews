@@ -54,11 +54,6 @@ class SpatialPandasDriver(MultiDriver):
         import pandas as pd
         from spatialpandas import GeoDataFrame, GeoSeries
 
-        # if kdims is None:
-        #     kdims = eltype.kdims
-        # if vdims is None:
-        #     vdims = eltype.vdims
-
         kdims = kdims_spec["value"]
         kdims = kdims if kdims is not None else kdims_spec["default"]
         vdims = vdims_spec["value"]

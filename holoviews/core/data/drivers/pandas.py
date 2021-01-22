@@ -30,9 +30,6 @@ class PandasDriver(Driver):
 
     @classmethod
     def init(cls, data, kdims_spec, vdims_spec, auto_indexable_1d=False, **kwargs):
-        # element_params = eltype.param.objects()
-        # kdim_param = element_params['kdims']
-        # vdim_param = element_params['vdims']
 
         kdims, vdims = kdims_spec["value"], vdims_spec["value"]
 

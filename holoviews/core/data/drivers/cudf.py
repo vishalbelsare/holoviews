@@ -56,10 +56,6 @@ class cuDFDriver(PandasDriver):
         import cudf
         import pandas as pd
 
-        # element_params = eltype.param.objects()
-        # kdim_param = element_params['kdims']
-        # vdim_param = element_params['vdims']
-
         kdims = kdims_spec["value"]
         vdims = vdims_spec["value"]
 
