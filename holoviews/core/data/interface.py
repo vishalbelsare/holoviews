@@ -712,6 +712,9 @@ class TabularInterface(Interface):
     def iloc(self, *args, **kwargs):
         return self.driver.iloc(*args, **kwargs)
 
+    def holes(self, *args, **kwargs):
+        # TODO: Remove after separating dictionary fro geodictionary
+        return self.driver.holes(*args, **kwargs)
 
 class GriddedInterface(Interface):
     kind = "gridded"
@@ -774,3 +777,24 @@ class GeometryInterface(Interface):
 
     def holes(self, dataset):
         return self.driver.holes(dataset)
+
+    def split(self, dataset, *args, **kwargs):
+        return self.driver.split(dataset, *args, **kwargs)
+
+    def add_dimension(self, dataset, *args, **kwargs):
+        return self.driver.add_dimension(dataset, *args, **kwargs)
+
+    def groupby(self, dataset, *args, **kwargs):
+        return self.driver.groupby(dataset, *args, **kwargs)
+
+    def iloc(self, *args, **kwargs):
+        return self.driver.iloc(*args, **kwargs)
+
+    def isscalar(self, *args, **kwargs):
+        return self.driver.isscalar(*args, **kwargs)
+
+    def select(self, *args, **kwargs):
+        return self.driver.select(*args, **kwargs)
+
+    def sort(self, *args, **kwargs):
+        return self.driver.sort(*args, **kwargs)

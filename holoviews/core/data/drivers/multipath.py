@@ -50,6 +50,7 @@ class MultiDriver(Driver):
         elif not isinstance(data, list):
             interface = [Driver.interfaces.get(st).applies(data)
                          for st in cls.subtypes if st in Interface.drivers_by_datatype]
+            # TODO: remove eltype here
             if (interface or isinstance(data, tuple)) and issubclass(eltype, Path):
                 data = [data]
             else:
@@ -68,7 +69,7 @@ class MultiDriver(Driver):
                 else:
                     datatype = [dt for dt in datatype
                                 if hasattr(Interface.get_driver(dt), 'geom_type')]
-            d, interface, dims, _ = Driver.initialize(
+            d, interface, dims, _ = Interface.initialize(
                 d, kdims_spec, vdims_spec, datatype=datatype
             )
             if prev_driver:
@@ -484,8 +485,8 @@ class MultiDriver(Driver):
             elif datatype == 'dataframe':
                 obj = ds.dframe(**kwargs)
             elif datatype in ('columns', 'dictionary'):
-                if hasattr(ds.interface, 'geom_type'):
-                    gt = ds.interface.geom_type(ds)
+                if hasattr(ds.interface.driver, 'geom_type'):
+                    gt = ds.interface.driver.geom_type(ds)
                 if gt is None:
                     gt = geom_type
                 if isinstance(ds.data[0], dict):
