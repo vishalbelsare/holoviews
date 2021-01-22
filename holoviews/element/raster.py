@@ -288,10 +288,10 @@ class Image(Selection2DExpr, Dataset, Raster, SheetCoordinateSystem):
             params['rtol'] = rtol
         else:
             params['rtol'] = config.image_rtol
-        interface_opts = dict(
-            rtol=params["rtol"],
-            time_unit=self._time_unit,
-        )
+
+        interface_opts = params.pop("interface_opts", None)
+        if interface_opts is None:
+            interface_opts = self._interface_opts(rtol=params['rtol'])
 
         Dataset.__init__(
             self, data, kdims=kdims, vdims=vdims, extents=extents,
@@ -334,6 +334,15 @@ class Image(Selection2DExpr, Dataset, Raster, SheetCoordinateSystem):
         if non_finite:
            self.bounds = BoundingBox(points=((np.nan, np.nan), (np.nan, np.nan)))
         self._validate(data_bounds, supplied_bounds)
+
+    @classmethod
+    def _interface_opts(cls, rtol=None):
+        if rtol is None:
+            rtol = cls.rtol
+        return dict(
+            rtol=rtol if rtol is not None else config.image_rtol,
+            time_unit=cls._time_unit,
+        )
 
     def _validate(self, data_bounds, supplied_bounds):
         if len(self.shape) == 3:
@@ -433,8 +442,11 @@ class Image(Selection2DExpr, Dataset, Raster, SheetCoordinateSystem):
             sheet_params = dict(bounds=self.bounds, xdensity=self.xdensity,
                                 ydensity=self.ydensity)
             overrides = dict(sheet_params, **overrides)
-        return super(Image, self).clone(data, shared_data, new_type, link,
-                                        *args, **overrides)
+        interface_opts = self._interface_opts(rtol=self.rtol)
+        return super(Image, self).clone(
+            data, shared_data, new_type, link, *args, interface_opts=interface_opts,
+            **overrides
+        )
 
 
     def aggregate(self, dimensions=None, function=None, spreadfn=None, **kwargs):

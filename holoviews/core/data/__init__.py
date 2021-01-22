@@ -342,7 +342,9 @@ class Dataset(Element):
             data, kwargs.get('datatype'), kdims, vdims
         )
         # datatype = kwargs.get('datatype')
-        interface_opts = kwargs.get("interface_opts", {})
+        interface_opts = kwargs.pop("interface_opts", None)
+        if interface_opts is None:
+            interface_opts = self._interface_opts()
         interface_opts["binned"] = self._binned
         interface_opts["name"] = type(self).__name__
         interface_opts["auto_indexable_1d"] = self._auto_indexable_1d
@@ -441,6 +443,10 @@ class Dataset(Element):
 
         return data, datatype, kdims_spec, vdims_spec
 
+    @classmethod
+    def _interface_opts(cls):
+        return {}
+
     def __getstate__(self):
         "Ensures pipelines are dropped"
         obj_dict = super(Dataset, self).__getstate__()
@@ -464,8 +470,11 @@ class Dataset(Element):
             if type(self) is Dataset:
                 return self
             datatype = list(util.unique_iterator(self.datatype+Dataset.datatype))
-            dataset = Dataset(self, dataset=None, pipeline=None, transforms=None,
-                              _validate_vdims=False, datatype=datatype)
+            dataset = Dataset(
+                self, dataset=None, pipeline=None, transforms=None, _validate_vdims=False,
+                datatype=datatype, interface_opts=self._interface_opts()
+
+            )
             if hasattr(self, '_binned'):
                 dataset._binned = self._binned
             return dataset
