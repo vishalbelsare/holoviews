@@ -31,15 +31,16 @@ class MultiDriver(Driver):
     multi = True
 
     @classmethod
-    def init(cls, eltype, data, kdims, vdims, auto_indexable_1d=False, **kwargs):
+    def init(cls, data, kdims_spec, vdims_spec, auto_indexable_1d=False, **kwargs):
         from holoviews.element import Path, Polygons
 
+        kdims = kdims_spec["value"]
+        kdims = kdims if kdims is not None else kdims_spec["default"]
+        vdims = vdims_spec["value"]
+        vdims = vdims if vdims is not None else vdims_spec["default"]
+
         new_data = []
-        dims = {'kdims': eltype.kdims, 'vdims': eltype.vdims}
-        if kdims is not None:
-            dims['kdims'] = kdims
-        if vdims is not None:
-            dims['vdims'] = vdims
+        dims = {'kdims': kdims, 'vdims': vdims}
 
         tabular_drivers = [driver for _, driver in TabularInterface.drivers_by_kind["tabular"]]
 
@@ -68,7 +69,7 @@ class MultiDriver(Driver):
                     datatype = [dt for dt in datatype
                                 if hasattr(Interface.get_driver(dt), 'geom_type')]
             d, interface, dims, _ = Driver.initialize(
-                eltype, d, kdims, vdims, datatype=datatype
+                d, kdims_spec, vdims_spec, datatype=datatype
             )
             if prev_driver:
                 if prev_driver != interface:

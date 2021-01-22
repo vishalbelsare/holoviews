@@ -46,11 +46,19 @@ class GridDriver(DictDriver):
     gridded = True
 
     @classmethod
-    def init(cls, eltype, data, kdims, vdims, auto_indexable_1d=False, **kwargs):
-        if kdims is None:
-            kdims = eltype.kdims
-        if vdims is None:
-            vdims = eltype.vdims
+    def init(cls, data, kdims_spec, vdims_spec, auto_indexable_1d=False, **kwargs):
+        # if kdims is None:
+        #     kdims = eltype.kdims
+        # if vdims is None:
+        #     vdims = eltype.vdims
+
+        kdims = kdims_spec["value"]
+        kdims = kdims if kdims is not None else kdims_spec["default"]
+        vdims = vdims_spec["value"]
+        vdims = vdims if vdims is not None else vdims_spec["default"]
+
+        assert kdims is not None
+        assert vdims is not None
 
         if not vdims:
             raise ValueError('GridInterface interface requires at least '

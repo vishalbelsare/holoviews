@@ -24,11 +24,25 @@ class ImageDriver(GridDriver):
     named = False
 
     @classmethod
-    def init(cls, eltype, data, kdims, vdims, auto_indexable_1d=False, **kwargs):
-        if kdims is None:
-            kdims = eltype.kdims
-        if vdims is None:
-            vdims = eltype.vdims
+    def init(
+            cls, data, kdims_spec, vdims_spec, auto_indexable_1d=False,
+            rtol=None, time_unit=None, binned=False, **kwargs
+    ):
+
+        assert rtol is not None
+        assert time_unit is not None
+        # if kdims is None:
+        #     kdims = eltype.kdims
+        # if vdims is None:
+        #     vdims = eltype.vdims
+
+        kdims = kdims_spec["value"]
+        kdims = kdims if kdims is not None else kdims_spec["default"]
+        vdims = vdims_spec["value"]
+        vdims = vdims if vdims is not None else vdims_spec["default"]
+
+        assert kdims is not None
+        assert vdims is not None
 
         kwargs = {}
         dimensions = [dimension_name(d) for d in kdims + vdims]
@@ -36,12 +50,12 @@ class ImageDriver(GridDriver):
             data = dict(zip(dimensions, data))
         if isinstance(data, dict):
             xs, ys = np.asarray(data[kdims[0].name]), np.asarray(data[kdims[1].name])
-            xvalid = util.validate_regular_sampling(xs, eltype.rtol or util.config.image_rtol)
-            yvalid = util.validate_regular_sampling(ys, eltype.rtol or util.config.image_rtol)
+            xvalid = util.validate_regular_sampling(xs, rtol)
+            yvalid = util.validate_regular_sampling(ys, rtol)
             if not xvalid or not yvalid:
                 raise ValueError('ImageInterface only supports regularly sampled coordinates')
-            l, r, xdensity, invertx = util.bound_range(xs, None, eltype._time_unit)
-            b, t, ydensity, inverty = util.bound_range(ys, None, eltype._time_unit)
+            l, r, xdensity, invertx = util.bound_range(xs, None, time_unit)
+            b, t, ydensity, inverty = util.bound_range(ys, None, time_unit)
             kwargs['bounds'] = BoundingBox(points=((l, b), (r, t)))
             if len(vdims) == 1:
                 data = np.flipud(np.asarray(data[vdims[0].name]))
@@ -53,7 +67,7 @@ class ImageDriver(GridDriver):
                 data = data[::-1, :]
             expected = (len(ys), len(xs))
             shape = data.shape[:2]
-            error = DataError if len(shape) > 1 and not eltype._binned else ValueError
+            error = DataError if len(shape) > 1 and not binned else ValueError
             if shape != expected and not (not expected and shape == (1,)):
                 raise error('Key dimension values and value array %s '
                             'shapes do not match. Expected shape %s, '
@@ -61,9 +75,9 @@ class ImageDriver(GridDriver):
 
         if not isinstance(data, np.ndarray) or data.ndim not in [2, 3]:
             raise ValueError('ImageInterface expects a 2D array.')
-        elif not issubclass(eltype, SheetCoordinateSystem):
-            raise ValueError('ImageInterface may only be used on elements '
-                             'that subclass SheetCoordinateSystem.')
+        # elif not issubclass(eltype, SheetCoordinateSystem):
+        #     raise ValueError('ImageInterface may only be used on elements '
+        #                      'that subclass SheetCoordinateSystem.')
 
         return data, {'kdims':kdims, 'vdims':vdims}, kwargs
 

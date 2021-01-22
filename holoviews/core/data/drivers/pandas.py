@@ -29,10 +29,14 @@ class PandasDriver(Driver):
         return dataset.data.dtypes[idx].type
 
     @classmethod
-    def init(cls, eltype, data, kdims, vdims, auto_indexable_1d=False, **kwargs):
-        element_params = eltype.param.objects()
-        kdim_param = element_params['kdims']
-        vdim_param = element_params['vdims']
+    def init(cls, data, kdims_spec, vdims_spec, auto_indexable_1d=False, **kwargs):
+        # element_params = eltype.param.objects()
+        # kdim_param = element_params['kdims']
+        # vdim_param = element_params['vdims']
+
+        kdims, vdims = kdims_spec["value"], vdims_spec["value"]
+
+
         if util.is_series(data):
             data = data.to_frame()
         if util.is_dataframe(data):
@@ -43,11 +47,11 @@ class PandasDriver(Driver):
             if auto_indexable_1d and ncols == 1 and kdims is None:
                 kdims = list(index_names)
 
-            if isinstance(kdim_param.bounds[1], int):
-                ndim = min([kdim_param.bounds[1], len(kdim_param.default)])
+            if isinstance(kdims_spec["bounds"][1], int):
+                ndim = min([kdims_spec["bounds"][1], len(kdims_spec["default"])])
             else:
                 ndim = None
-            nvdim = vdim_param.bounds[1] if isinstance(vdim_param.bounds[1], int) else None
+            nvdim = vdims_spec["bounds"][1] if isinstance(vdims_spec["bounds"][1], int) else None
             if kdims and vdims is None:
                 vdims = [c for c in data.columns if c not in kdims]
             elif vdims and kdims is None:
@@ -89,8 +93,8 @@ class PandasDriver(Driver):
         else:
             # Check if data is of non-numeric type
             # Then use defined data type
-            kdims = kdims if kdims else kdim_param.default
-            vdims = vdims if vdims else vdim_param.default
+            kdims = kdims if kdims else kdims_spec["default"]
+            vdims = vdims if vdims else vdims_spec["default"]
             columns = list(util.unique_iterator([dimension_name(d) for d in kdims+vdims]))
 
             if isinstance(data, dict) and all(c in data for c in columns):
@@ -121,7 +125,7 @@ class PandasDriver(Driver):
 
             if isinstance(data, tuple):
                 data = [np.array(d) if not isinstance(d, np.ndarray) else d for d in data]
-                min_dims = (kdim_param.bounds[0] or 0) + (vdim_param.bounds[0] or 0)
+                min_dims = (kdims_spec["bounds"][0] or 0) + (vdims_spec["bounds"][0] or 0)
                 if any(d.ndim > 1 for d in data):
                     raise ValueError('PandasInterface cannot interpret multi-dimensional arrays.')
                 elif len(data) < min_dims:

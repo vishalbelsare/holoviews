@@ -50,15 +50,22 @@ class SpatialPandasDriver(MultiDriver):
         return cols[0]
 
     @classmethod
-    def init(cls, eltype, data, kdims, vdims, auto_indexable_1d=False, **kwargs):
+    def init(cls, data, kdims_spec, vdims_spec, auto_indexable_1d=False, **kwargs):
         import pandas as pd
         from spatialpandas import GeoDataFrame, GeoSeries
 
-        if kdims is None:
-            kdims = eltype.kdims
+        # if kdims is None:
+        #     kdims = eltype.kdims
+        # if vdims is None:
+        #     vdims = eltype.vdims
 
-        if vdims is None:
-            vdims = eltype.vdims
+        kdims = kdims_spec["value"]
+        kdims = kdims if kdims is not None else kdims_spec["default"]
+        vdims = vdims_spec["value"]
+        vdims = vdims if vdims is not None else vdims_spec["default"]
+
+        assert kdims is not None
+        assert vdims is not None
 
         if isinstance(data, GeoSeries):
             data = data.to_frame()
@@ -73,6 +80,7 @@ class SpatialPandasDriver(MultiDriver):
             if 'shapely' in sys.modules:
                 data = from_shapely(data)
             if isinstance(data, list):
+                # TODO: eltype is gone
                 data = from_multi(eltype, data, kdims, vdims)
         elif not isinstance(data, GeoDataFrame):
             raise ValueError("SpatialPandasInterface only support spatialpandas DataFrames.")

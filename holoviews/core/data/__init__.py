@@ -338,11 +338,17 @@ class Dataset(Element):
 
         validate_vdims = kwargs.pop('_validate_vdims', True)
 
-        data, datatype, kdims, vdims = self._proproc_data(data, kwargs.get('datatype'), kdims, vdims)
+        data, datatype, kdims_spec, vdims_spec = self._proproc_data(
+            data, kwargs.get('datatype'), kdims, vdims
+        )
         # datatype = kwargs.get('datatype')
+        interface_opts = kwargs.get("interface_opts", {})
+        interface_opts["binned"] = self._binned
+        interface_opts["name"] = type(self).__name__
+        interface_opts["auto_indexable_1d"] = self._auto_indexable_1d
         initialized = Interface.initialize(
-            type(self), data, kdims, vdims, datatype=datatype,
-            auto_indexable_1d=self._auto_indexable_1d
+            data, kdims_spec, vdims_spec, datatype=datatype,
+            **interface_opts
         )
         (data, self.interface, dims, extra_kws) = initialized
         super(Dataset, self).__init__(data, **dict(kwargs, **dict(dims, **extra_kws)))
@@ -426,7 +432,14 @@ class Dataset(Element):
         if datatype is None:
             datatype = eltype.datatype
 
-        return data, datatype, kdims, vdims
+        kdims_spec = dict(
+            value=kdims, bounds=cls.param.kdims.bounds, default=cls.param.kdims.default
+        )
+        vdims_spec = dict(
+            value=vdims, bounds=cls.param.vdims.bounds, default=cls.param.vdims.default
+        )
+
+        return data, datatype, kdims_spec, vdims_spec
 
     def __getstate__(self):
         "Ensures pipelines are dropped"

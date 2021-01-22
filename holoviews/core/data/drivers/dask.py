@@ -54,11 +54,11 @@ class DaskDriver(PandasDriver):
         return isinstance(obj, (dd.DataFrame, dd.Series))
 
     @classmethod
-    def init(cls, eltype, data, kdims, vdims, auto_indexable_1d=False, **kwargs):
+    def init(cls, data, kdims_spec, vdims_spec, auto_indexable_1d=False, **kwargs):
         import dask.dataframe as dd
 
         data, dims, extra = PandasDriver.init(
-            eltype, data, kdims, vdims, auto_indexable_1d=auto_indexable_1d
+            data, kdims_spec, vdims_spec, auto_indexable_1d=auto_indexable_1d
         )
         if not isinstance(data, dd.DataFrame):
             data = dd.from_pandas(data, npartitions=cls.default_partitions, sort=False)

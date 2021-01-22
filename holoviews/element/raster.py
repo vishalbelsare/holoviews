@@ -288,8 +288,15 @@ class Image(Selection2DExpr, Dataset, Raster, SheetCoordinateSystem):
             params['rtol'] = rtol
         else:
             params['rtol'] = config.image_rtol
+        interface_opts = dict(
+            rtol=params["rtol"],
+            time_unit=self._time_unit,
+        )
 
-        Dataset.__init__(self, data, kdims=kdims, vdims=vdims, extents=extents, **params)
+        Dataset.__init__(
+            self, data, kdims=kdims, vdims=vdims, extents=extents,
+            interface_opts=interface_opts , **params
+        )
         if not self.interface.gridded:
             raise DataError("%s type expects gridded data, %s is columnar. "
                             "To display columnar data as gridded use the HeatMap "

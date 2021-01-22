@@ -35,12 +35,20 @@ class DictDriver(Driver):
 
 
     @classmethod
-    def init(cls, eltype, data, kdims, vdims, auto_indexable_1d=False, **kwargs):
+    def init(cls, data, kdims_spec, vdims_spec, auto_indexable_1d=False, **kwargs):
         odict_types = (OrderedDict, cyODict)
-        if kdims is None:
-            kdims = eltype.kdims
-        if vdims is None:
-            vdims = eltype.vdims
+
+        # if kdims is None:
+        #     kdims = eltype.kdims
+        # if vdims is None:
+        #     vdims = eltype.vdims
+        kdims = kdims_spec["value"]
+        kdims = kdims if kdims is not None else kdims_spec["default"]
+        vdims = vdims_spec["value"]
+        vdims = vdims if vdims is not None else vdims_spec["default"]
+
+        assert kdims is not None
+        assert vdims is not None
 
         dimensions = [dimension_name(d) for d in kdims + vdims]
         if (isinstance(data, list) and all(isinstance(d, dict) for d in data) and

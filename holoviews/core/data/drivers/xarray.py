@@ -71,11 +71,15 @@ class XArrayDriver(GridDriver):
         return tuple(shape_map.get(kd.name, np.nan) for kd in dataset.kdims[::-1])
 
     @classmethod
-    def init(cls, eltype, data, kdims, vdims, auto_indexable_1d=False, **kwargs):
+    def init(cls, data, kdims_spec, vdims_spec, name=None, auto_indexable_1d=False, **kwargs):
         import xarray as xr
-        element_params = eltype.param.objects()
-        kdim_param = element_params['kdims']
-        vdim_param = element_params['vdims']
+        kdims, vdims = kdims_spec["value"], vdims_spec["value"]
+        kdims_default = kdims_spec["default"]
+        vdims_default = vdims_spec["default"]
+
+        # element_params = eltype.param.objects()
+        # kdim_param = element_params['kdims']
+        # vdim_param = element_params['vdims']
 
         def retrieve_unit_and_label(dim):
             if isinstance(dim, Dimension):
@@ -92,8 +96,8 @@ class XArrayDriver(GridDriver):
 
         packed = False
         if isinstance(data, xr.DataArray):
-            kdim_len = len(kdim_param.default) if kdims is None else len(kdims)
-            vdim_len = len(vdim_param.default) if vdims is None else len(vdims)
+            kdim_len = len(kdims_default) if kdims is None else len(kdims)
+            vdim_len = len(vdims_default) if vdims is None else len(vdims)
             if vdim_len > 1 and kdim_len == len(data.dims)-1 and data.shape[-1] == vdim_len:
                 packed = True
             elif vdims:
@@ -105,8 +109,8 @@ class XArrayDriver(GridDriver):
                 label = data.attrs.get('long_name')
                 if 'long_name' in data.attrs:
                     vdim.label = label
-            elif len(vdim_param.default) == 1:
-                vdim = vdim_param.default[0]
+            elif len(vdims_default) == 1:
+                vdim = vdims_default[0]
                 if vdim.name in data.dims:
                     raise DataError("xarray DataArray does not define a name, "
                                     "and the default of '%s' clashes with a "
@@ -117,7 +121,7 @@ class XArrayDriver(GridDriver):
                 raise DataError("xarray DataArray does not define a name "
                                 "and %s does not define a default value "
                                 "dimension. Give the DataArray a name or "
-                                "supply an explicit vdim." % eltype.__name__,
+                                "supply an explicit vdim." % name,
                                 cls)
             if not packed:
                 vdims = [vdim]
@@ -125,9 +129,9 @@ class XArrayDriver(GridDriver):
 
         if not isinstance(data, (xr.Dataset, xr.DataArray)):
             if kdims is None:
-                kdims = kdim_param.default
+                kdims = kdims_default
             if vdims is None:
-                vdims = vdim_param.default
+                vdims = vdims_default
             kdims = [asdim(kd) for kd in kdims]
             vdims = [asdim(vd) for vd in vdims]
             if isinstance(data, np.ndarray) and data.ndim == 2 and data.shape[1] == len(kdims+vdims):

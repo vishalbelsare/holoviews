@@ -520,8 +520,8 @@ class Interface(param.Parameterized):
 
     @classmethod
     def initialize(
-            cls, eltype, data, kdims, vdims, datatype=None, kind=None,
-            auto_indexable_1d=False,
+            cls, data, kdims_spec, vdims_spec, datatype=None, kind=None,
+            **kwargs
     ):
 
         if datatype is None and kind is None:
@@ -550,7 +550,7 @@ class Interface(param.Parameterized):
         for interface_cls, driver_cls in prioritized_pairs:
             try:
                 (data, dims, extra_kws) = driver_cls.init(
-                    eltype, data, kdims, vdims, auto_indexable_1d=auto_indexable_1d
+                    data, kdims_spec, vdims_spec, **kwargs
                 )
                 interface = interface_cls(driver_cls)
                 return data, interface, dims, extra_kws

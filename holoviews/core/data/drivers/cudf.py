@@ -52,34 +52,38 @@ class cuDFDriver(PandasDriver):
         return isinstance(obj, (cudf.DataFrame, cudf.Series))
 
     @classmethod
-    def init(cls, eltype, data, kdims, vdims, auto_indexable_1d=False, **kwargs):
+    def init(cls, data, kdims_spec, vdims_spec, auto_indexable_1d=False, **kwargs):
         import cudf
         import pandas as pd
 
-        element_params = eltype.param.objects()
-        kdim_param = element_params['kdims']
-        vdim_param = element_params['vdims']
+        # element_params = eltype.param.objects()
+        # kdim_param = element_params['kdims']
+        # vdim_param = element_params['vdims']
+
+        kdims = kdims_spec["value"]
+        vdims = vdims_spec["value"]
 
         if isinstance(data, (cudf.Series, pd.Series)):
             data = data.to_frame()
 
         if not isinstance(data, cudf.DataFrame):
-            data, _, _ = PandasDriver.init(eltype, data, kdims, vdims)
+            data, _, _ = PandasDriver.init(data, kdims_spec, vdims_spec)
             data = cudf.from_pandas(data)
 
         columns = list(data.columns)
         ncols = len(columns)
         index_names = [data.index.name]
+
         if index_names == [None]:
             index_names = ['index']
         if auto_indexable_1d and ncols == 1 and kdims is None:
             kdims = list(index_names)
 
-        if isinstance(kdim_param.bounds[1], int):
-            ndim = min([kdim_param.bounds[1], len(kdim_param.default)])
+        if isinstance(kdims_spec["bounds"][1], int):
+            ndim = min([kdims_spec["bounds"][1], len(kdims_spec["default"])])
         else:
             ndim = None
-        nvdim = vdim_param.bounds[1] if isinstance(vdim_param.bounds[1], int) else None
+        nvdim = vdims_spec["bounds"][1] if isinstance(vdims_spec["bounds"][1], int) else None
         if kdims and vdims is None:
             vdims = [c for c in columns if c not in kdims]
         elif vdims and kdims is None:
@@ -118,7 +122,7 @@ class cuDFDriver(PandasDriver):
                                 'columns (found duplicate %r columns). If you want to plot '
                                 'a column against itself simply declare two dimensions '
                                 'with the same name. '% d, cls)
-        return data, {'kdims':kdims, 'vdims':vdims}, {}
+        return data, {'kdims': kdims, 'vdims': vdims}, {}
 
 
     @classmethod

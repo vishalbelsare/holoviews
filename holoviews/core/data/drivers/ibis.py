@@ -49,33 +49,39 @@ class IbisDriver(Driver):
         return isinstance(obj, Expr)
 
     @classmethod
-    def init(cls, eltype, data, keys, values, auto_indexable_1d=False, **kwargs):
+    def init(cls, data, kdims_spec, vdims_spec, **kwargs):
         if not cls.applies(data):
             raise DataError("Input not an expression")
-        params = eltype.param.objects()
-        index = params["kdims"]
-        columns = params["vdims"]
 
-        if isinstance(index.bounds[1], int):
-            ndim = min([index.bounds[1], len(index.default)])
+        kdims, vdims = kdims_spec["value"], vdims_spec["value"]
+        index_bounds = kdims_spec["bounds"]
+        index_default = kdims_spec["default"]
+        columns_bounds = vdims_spec["bounds"]
+
+        # params = eltype.param.objects()
+        # index = params["kdims"]
+        # columns = params["vdims"]
+
+        if isinstance(index_bounds[1], int):
+            ndim = min([index_bounds[1], len(index_default)])
         else:
             ndim = None
-        nvdim = columns.bounds[1] if isinstance(columns.bounds[1], int) else None
-        if keys and values is None:
-            values = [c for c in data.columns if c not in keys]
-        elif values and keys is None:
-            keys = [c for c in data.columns if c not in values][:ndim]
-        elif keys is None:
-            keys = list(data.columns[:ndim])
-            if values is None:
-                values = [
+        nvdim = columns_bounds[1] if isinstance(columns_bounds[1], int) else None
+        if kdims and vdims is None:
+            vdims = [c for c in data.columns if c not in kdims]
+        elif vdims and kdims is None:
+            kdims = [c for c in data.columns if c not in vdims][:ndim]
+        elif kdims is None:
+            kdims = list(data.columns[:ndim])
+            if vdims is None:
+                vdims = [
                     key
                     for key in data.columns[ndim : ((ndim + nvdim) if nvdim else None)]
-                    if key not in keys
+                    if key not in kdims
                 ]
-        elif keys == [] and values is None:
-            values = list(data.columns[: nvdim if nvdim else None])
-        return data, dict(kdims=keys, vdims=values), {}
+        elif kdims == [] and vdims is None:
+            vdims = list(data.columns[: nvdim if nvdim else None])
+        return data, dict(kdims=kdims, vdims=vdims), {}
 
     @classmethod
     def compute(cls, dataset):
