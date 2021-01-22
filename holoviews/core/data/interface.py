@@ -480,9 +480,10 @@ class Interface(param.Parameterized):
     datatypes_by_kind = {}
     kind = None
 
-    def __init__(self, driver: Driver, **params):
+    def __init__(self, driver: Driver, interface_opts=None, **params):
         super(Interface, self).__init__(**params)
         self.driver = driver
+        self.interface_opts = interface_opts
 
     @classmethod
     def get_datatypes_for_kinds(cls, kinds):
@@ -521,7 +522,7 @@ class Interface(param.Parameterized):
     @classmethod
     def initialize(
             cls, data, kdims_spec, vdims_spec, datatype=None, kind=None,
-            **kwargs
+            **interface_opts
     ):
 
         if datatype is None and kind is None:
@@ -550,9 +551,9 @@ class Interface(param.Parameterized):
         for interface_cls, driver_cls in prioritized_pairs:
             try:
                 (data, dims, extra_kws) = driver_cls.init(
-                    data, kdims_spec, vdims_spec, **kwargs
+                    data, kdims_spec, vdims_spec, **interface_opts
                 )
-                interface = interface_cls(driver_cls)
+                interface = interface_cls(driver_cls, interface_opts=interface_opts)
                 return data, interface, dims, extra_kws
             except DataError:
                 pass
