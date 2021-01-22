@@ -71,7 +71,7 @@ class XArrayDriver(GridDriver):
         return tuple(shape_map.get(kd.name, np.nan) for kd in dataset.kdims[::-1])
 
     @classmethod
-    def init(cls, eltype, data, kdims, vdims):
+    def init(cls, eltype, data, kdims, vdims, auto_indexable_1d=False, **kwargs):
         import xarray as xr
         element_params = eltype.param.objects()
         kdim_param = element_params['kdims']

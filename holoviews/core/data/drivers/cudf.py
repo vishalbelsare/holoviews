@@ -52,7 +52,7 @@ class cuDFDriver(PandasDriver):
         return isinstance(obj, (cudf.DataFrame, cudf.Series))
 
     @classmethod
-    def init(cls, eltype, data, kdims, vdims):
+    def init(cls, eltype, data, kdims, vdims, auto_indexable_1d=False, **kwargs):
         import cudf
         import pandas as pd
 
@@ -72,7 +72,7 @@ class cuDFDriver(PandasDriver):
         index_names = [data.index.name]
         if index_names == [None]:
             index_names = ['index']
-        if eltype._auto_indexable_1d and ncols == 1 and kdims is None:
+        if auto_indexable_1d and ncols == 1 and kdims is None:
             kdims = list(index_names)
 
         if isinstance(kdim_param.bounds[1], int):
@@ -107,7 +107,7 @@ class cuDFDriver(PandasDriver):
 
         if kdims:
             kdim = dimension_name(kdims[0])
-            if eltype._auto_indexable_1d and ncols == 1 and kdim not in columns:
+            if auto_indexable_1d and ncols == 1 and kdim not in columns:
                 data = data.copy()
                 data.insert(0, kdim, np.arange(len(data)))
 

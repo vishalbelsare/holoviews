@@ -519,7 +519,10 @@ class Interface(param.Parameterized):
         cls.drivers_by_datatype[driver.datatype] = (cls, driver)
 
     @classmethod
-    def initialize(cls, eltype, data, kdims, vdims, datatype=None, kind=None):
+    def initialize(
+            cls, eltype, data, kdims, vdims, datatype=None, kind=None,
+            auto_indexable_1d=False,
+    ):
 
         if datatype is None and kind is None:
             raise ValueError("Either datatype or kind must be provided")
@@ -546,7 +549,9 @@ class Interface(param.Parameterized):
         priority_errors = []
         for interface_cls, driver_cls in prioritized_pairs:
             try:
-                (data, dims, extra_kws) = driver_cls.init(eltype, data, kdims, vdims)
+                (data, dims, extra_kws) = driver_cls.init(
+                    eltype, data, kdims, vdims, auto_indexable_1d=auto_indexable_1d
+                )
                 interface = interface_cls(driver_cls)
                 return data, interface, dims, extra_kws
             except DataError:

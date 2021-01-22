@@ -35,7 +35,7 @@ class DictDriver(Driver):
 
 
     @classmethod
-    def init(cls, eltype, data, kdims, vdims):
+    def init(cls, eltype, data, kdims, vdims, auto_indexable_1d=False, **kwargs):
         odict_types = (OrderedDict, cyODict)
         if kdims is None:
             kdims = eltype.kdims
@@ -52,7 +52,7 @@ class DictDriver(Driver):
             data = {d: data[d] for d in dimensions}
         elif isinstance(data, np.ndarray):
             if data.ndim == 1:
-                if eltype._auto_indexable_1d and len(kdims)+len(vdims)>1:
+                if auto_indexable_1d and len(kdims)+len(vdims)>1:
                     data = np.column_stack([np.arange(len(data)), data])
                 else:
                     data = np.atleast_2d(data).T
@@ -60,7 +60,7 @@ class DictDriver(Driver):
         elif isinstance(data, list) and data == []:
             data = OrderedDict([(d, []) for d in dimensions])
         elif isinstance(data, list) and isscalar(data[0]):
-            if eltype._auto_indexable_1d:
+            if auto_indexable_1d:
                 data = {dimensions[0]: np.arange(len(data)), dimensions[1]: data}
             else:
                 data = {dimensions[0]: data}

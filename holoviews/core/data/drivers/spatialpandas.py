@@ -50,7 +50,7 @@ class SpatialPandasDriver(MultiDriver):
         return cols[0]
 
     @classmethod
-    def init(cls, eltype, data, kdims, vdims):
+    def init(cls, eltype, data, kdims, vdims, auto_indexable_1d=False, **kwargs):
         import pandas as pd
         from spatialpandas import GeoDataFrame, GeoSeries
 

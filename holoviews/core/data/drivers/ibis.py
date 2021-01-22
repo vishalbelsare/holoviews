@@ -49,7 +49,7 @@ class IbisDriver(Driver):
         return isinstance(obj, Expr)
 
     @classmethod
-    def init(cls, eltype, data, keys, values):
+    def init(cls, eltype, data, keys, values, auto_indexable_1d=False, **kwargs):
         if not cls.applies(data):
             raise DataError("Input not an expression")
         params = eltype.param.objects()

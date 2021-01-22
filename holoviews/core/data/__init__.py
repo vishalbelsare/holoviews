@@ -341,7 +341,8 @@ class Dataset(Element):
         data, datatype, kdims, vdims = self._proproc_data(data, kwargs.get('datatype'), kdims, vdims)
         # datatype = kwargs.get('datatype')
         initialized = Interface.initialize(
-            type(self), data, kdims, vdims, datatype=datatype
+            type(self), data, kdims, vdims, datatype=datatype,
+            auto_indexable_1d=self._auto_indexable_1d
         )
         (data, self.interface, dims, extra_kws) = initialized
         super(Dataset, self).__init__(data, **dict(kwargs, **dict(dims, **extra_kws)))

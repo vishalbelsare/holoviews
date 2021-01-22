@@ -31,7 +31,7 @@ class MultiDriver(Driver):
     multi = True
 
     @classmethod
-    def init(cls, eltype, data, kdims, vdims):
+    def init(cls, eltype, data, kdims, vdims, auto_indexable_1d=False, **kwargs):
         from holoviews.element import Path, Polygons
 
         new_data = []

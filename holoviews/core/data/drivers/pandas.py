@@ -29,7 +29,7 @@ class PandasDriver(Driver):
         return dataset.data.dtypes[idx].type
 
     @classmethod
-    def init(cls, eltype, data, kdims, vdims):
+    def init(cls, eltype, data, kdims, vdims, auto_indexable_1d=False, **kwargs):
         element_params = eltype.param.objects()
         kdim_param = element_params['kdims']
         vdim_param = element_params['vdims']
@@ -40,7 +40,7 @@ class PandasDriver(Driver):
             index_names = data.index.names if isinstance(data, pd.DataFrame) else [data.index.name]
             if index_names == [None]:
                 index_names = ['index']
-            if eltype._auto_indexable_1d and ncols == 1 and kdims is None:
+            if auto_indexable_1d and ncols == 1 and kdims is None:
                 kdims = list(index_names)
 
             if isinstance(kdim_param.bounds[1], int):
@@ -75,7 +75,7 @@ class PandasDriver(Driver):
 
             if kdims:
                 kdim = dimension_name(kdims[0])
-                if eltype._auto_indexable_1d and ncols == 1 and kdim not in data.columns:
+                if auto_indexable_1d and ncols == 1 and kdim not in data.columns:
                     data = data.copy()
                     data.insert(0, kdim, np.arange(len(data)))
 
@@ -112,7 +112,7 @@ class PandasDriver(Driver):
                 data = cyODict(((c, col) for c, col in zip(columns, column_data)))
             elif isinstance(data, np.ndarray):
                 if data.ndim == 1:
-                    if eltype._auto_indexable_1d and len(kdims)+len(vdims)>1:
+                    if auto_indexable_1d and len(kdims)+len(vdims)>1:
                         data = (np.arange(len(data)), data)
                     else:
                         data = np.atleast_2d(data).T

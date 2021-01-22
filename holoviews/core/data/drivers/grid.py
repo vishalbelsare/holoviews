@@ -46,7 +46,7 @@ class GridDriver(DictDriver):
     gridded = True
 
     @classmethod
-    def init(cls, eltype, data, kdims, vdims):
+    def init(cls, eltype, data, kdims, vdims, auto_indexable_1d=False, **kwargs):
         if kdims is None:
             kdims = eltype.kdims
         if vdims is None:
@@ -91,7 +91,7 @@ class GridDriver(DictDriver):
                 data[vdim_tuple] = array
             else:
                 if data.ndim == 1:
-                    if eltype._auto_indexable_1d and len(kdims)+len(vdims)>1:
+                    if auto_indexable_1d and len(kdims)+len(vdims)>1:
                         data = np.column_stack([np.arange(len(data)), data])
                     else:
                         data = np.atleast_2d(data).T

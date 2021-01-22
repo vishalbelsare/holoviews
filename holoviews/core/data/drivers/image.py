@@ -24,7 +24,7 @@ class ImageDriver(GridDriver):
     named = False
 
     @classmethod
-    def init(cls, eltype, data, kdims, vdims):
+    def init(cls, eltype, data, kdims, vdims, auto_indexable_1d=False, **kwargs):
         if kdims is None:
             kdims = eltype.kdims
         if vdims is None:
