@@ -318,7 +318,7 @@ class Image(Selection2DExpr, Dataset, Raster, SheetCoordinateSystem):
             bounds = BoundingBox(points=((l, b), (r, t)))
 
         data_bounds = None
-        if self.interface is ImageDriver and not isinstance(data, (np.ndarray, Image)):
+        if self.interface.driver is ImageDriver and not isinstance(data, (np.ndarray, Image)):
             data_bounds = self.bounds.lbrt()
 
         non_finite = all(not util.isfinite(v) for v in bounds.lbrt())
