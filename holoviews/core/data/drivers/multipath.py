@@ -485,8 +485,8 @@ class MultiDriver(Driver):
             elif datatype == 'dataframe':
                 obj = ds.dframe(**kwargs)
             elif datatype in ('columns', 'dictionary'):
-                if hasattr(ds.driver.driver, 'geom_type'):
-                    gt = ds.driver.driver.geom_type(ds)
+                if hasattr(ds.interface.driver, 'geom_type'):
+                    gt = ds.interface.driver.geom_type(ds)
                 if gt is None:
                     gt = geom_type
                 if isinstance(ds.data[0], dict):
@@ -494,8 +494,8 @@ class MultiDriver(Driver):
                     xd, yd = ds.kdims
                     if (geom_type in ('Polygon', 'Ring') or
                         xd not in obj or yd not in obj):
-                        obj[xd.name] = ds.driver.values(ds, xd)
-                        obj[yd.name] = ds.driver.values(ds, yd)
+                        obj[xd.name] = ds.interface.values(ds, xd)
+                        obj[yd.name] = ds.interface.values(ds, yd)
                 else:
                     obj = ds.columns()
                 if gt is not None:
