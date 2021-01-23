@@ -35,7 +35,7 @@ from holoviews.core.data.drivers.dask import DaskDriver               # noqa (AP
 from holoviews.core.data.drivers.dictionary import DictDriver         # noqa (API import)
 from holoviews.core.data.drivers.grid import GridDriver               # noqa (API import)
 from holoviews.core.data.drivers.ibis import IbisDriver               # noqa (API import)
-from .interface import Interface, iloc, ndloc, Driver  # noqa (API import)
+from .interface import Interface, Driver  # noqa (API import)
 from holoviews.core.data.drivers.multipath import MultiDriver         # noqa (API import)
 from holoviews.core.data.drivers.image import ImageDriver             # noqa (API import)
 from holoviews.core.data.drivers.spatialpandas import SpatialPandasDriver # noqa (API import)
@@ -242,6 +242,109 @@ class PipelineMeta(ParameterizedMetaclass):
         pipelined_fn.__doc__ = method_fn.__doc__
 
         return pipelined_fn
+
+
+
+class Accessor(object):
+    def __init__(self, dataset):
+        self.dataset = dataset
+
+    def __getitem__(self, index):
+        from ..data import Dataset
+        from ...operation.element import method
+        in_method = self.dataset._in_method
+        if not in_method:
+            self.dataset._in_method = True
+        try:
+            res = self._perform_getitem(self.dataset, index)
+            if not in_method and isinstance(res, Dataset):
+                getitem_op = method.instance(
+                    input_type=type(self),
+                    output_type=type(self.dataset),
+                    method_name='_perform_getitem',
+                    args=[index],
+                )
+                res._pipeline = self.dataset.pipeline.instance(
+                    operations=self.dataset.pipeline.operations + [getitem_op],
+                    output_type=type(self.dataset)
+                )
+        finally:
+            if not in_method:
+                self.dataset._in_method = False
+        return res
+
+    @classmethod
+    def _perform_getitem(cls, dataset, index):
+        raise NotImplementedError()
+
+
+class iloc(Accessor):
+    """
+    iloc is small wrapper object that allows row, column based
+    indexing into a Dataset using the ``.iloc`` property.  It supports
+    the usual numpy and pandas iloc indexing semantics including
+    integer indices, slices, lists and arrays of values. For more
+    information see the ``Dataset.iloc`` property docstring.
+    """
+
+    @classmethod
+    def _perform_getitem(cls, dataset, index):
+        index = util.wrap_tuple(index)
+        if len(index) == 1:
+            index = (index[0], slice(None))
+        elif len(index) > 2:
+            raise IndexError('Tabular index not understood, index '
+                             'must be at most length 2.')
+
+        rows, cols = index
+        if rows is Ellipsis:
+            rows = slice(None)
+
+        data = dataset.interface.iloc(dataset, (rows, cols))
+        kdims = dataset.kdims
+        vdims = dataset.vdims
+        if util.isscalar(data):
+            return data
+        elif cols == slice(None):
+            pass
+        else:
+            if isinstance(cols, slice):
+                dims = dataset.dimensions()[index[1]]
+            elif np.isscalar(cols):
+                dims = [dataset.get_dimension(cols)]
+            else:
+                dims = [dataset.get_dimension(d) for d in cols]
+            kdims = [d for d in dims if d in kdims]
+            vdims = [d for d in dims if d in vdims]
+
+        datatypes = util.unique_iterator([dataset.interface.datatype]+dataset.datatype)
+        datatype = [dt for dt in datatypes if dt in Driver.interfaces and
+                    not Driver.interfaces[dt].gridded]
+        if not datatype: datatype = ['dataframe', 'dictionary']
+        return dataset.clone(data, kdims=kdims, vdims=vdims, datatype=datatype)
+
+
+class ndloc(Accessor):
+    """
+    ndloc is a small wrapper object that allows ndarray-like indexing
+    for gridded Datasets using the ``.ndloc`` property. It supports
+    the standard NumPy ndarray indexing semantics including
+    integer indices, slices, lists and arrays of values. For more
+    information see the ``Dataset.ndloc`` property docstring.
+    """
+    @classmethod
+    def _perform_getitem(cls, dataset, indices):
+        ds = dataset
+        indices = util.wrap_tuple(indices)
+        if not ds.interface.gridded:
+            raise IndexError('Cannot use ndloc on non nd-dimensional datastructure')
+        selected = dataset.interface.ndloc(ds, indices)
+        if np.isscalar(selected):
+            return selected
+        params = {}
+        if hasattr(ds, 'bounds'):
+            params['bounds'] = None
+        return dataset.clone(selected, datatype=[ds.interface.datatype]+ds.datatype, **params)
 
 
 @add_metaclass(PipelineMeta)
