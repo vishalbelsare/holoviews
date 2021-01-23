@@ -86,7 +86,9 @@ class Path(SelectionPolyExpr, Geometry):
 
     @classmethod
     def _interface_opts(cls):
-        return {"geom_type": cls._geom_type}
+        opts = super(Path, cls)._interface_opts()
+        opts["geom_type"] = cls._geom_type
+        return opts
 
     def __getitem__(self, key):
         if isinstance(key, np.ndarray):
@@ -337,6 +339,12 @@ class Polygons(Contours):
     _hole_key = 'holes'
 
     _geom_type = "Polygon"
+
+    @classmethod
+    def _interface_opts(cls):
+        opts = super(Polygons, cls)._interface_opts()
+        opts["hole_key"] = cls._hole_key
+        return opts
 
     @property
     def has_holes(self):

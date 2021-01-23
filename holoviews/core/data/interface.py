@@ -229,7 +229,7 @@ class Driver(param.Parameterized):
                 "on supported datatypes see {url}".format(**info))
 
     @classmethod
-    def validate(cls, dataset, vdims=True):
+    def validate(cls, dataset, vdims=True, **kwargs):
         dims = 'all' if vdims else 'key'
         not_found = [d for d in dataset.dimensions(dims, label='name')
                      if d not in dataset.data]
@@ -257,7 +257,7 @@ class Driver(param.Parameterized):
         return not any(array.shape not in [arrays[0].shape, (1,)] for array in arrays[1:])
 
     @classmethod
-    def isscalar(cls, dataset, dim):
+    def isscalar(cls, dataset, dim, **kwargs):
         return len(cls.values(dataset, dim, expanded=False)) == 1
 
     @classmethod
@@ -440,11 +440,11 @@ class Driver(param.Parameterized):
         return Element.columns(dataset, dimensions)
 
     @classmethod
-    def shape(cls, dataset):
+    def shape(cls, dataset, **kwargs):
         return dataset.data.shape
 
     @classmethod
-    def length(cls, dataset):
+    def length(cls, dataset, **kwargs):
         return len(dataset.data)
 
     @classmethod
@@ -475,15 +475,27 @@ class Driver(param.Parameterized):
 
 
 class Interface(param.Parameterized):
+    auto_indexable_1d = param.Boolean(default=False, constant=True, doc="""
+        In the 1D case the interfaces should not automatically add x-values
+        to supplied data""")
+
+    binned = param.Boolean(default=False, constant=True, doc="""
+        Whether the key dimensions are specified as bins""")
+
+    name = param.String(default=None)
+
     drivers_by_kind = {}
     drivers_by_datatype = {}
     datatypes_by_kind = {}
     kind = None
 
-    def __init__(self, driver: Driver, interface_opts=None, **params):
+    def __init__(self, driver: Driver, **params):
         super(Interface, self).__init__(**params)
         self.driver = driver
-        self.interface_opts = interface_opts
+
+    # @property
+    # def interface_opts(self):
+    #     return {p: getattr(self, p) for p in self.param.objects()}
 
     @classmethod
     def get_datatypes_for_kinds(cls, kinds):
@@ -553,7 +565,7 @@ class Interface(param.Parameterized):
                 (data, dims, extra_kws) = driver_cls.init(
                     data, kdims_spec, vdims_spec, **interface_opts
                 )
-                interface = interface_cls(driver_cls, interface_opts=interface_opts)
+                interface = interface_cls(driver_cls, **interface_opts)
                 return data, interface, dims, extra_kws
             except DataError:
                 pass
@@ -655,8 +667,8 @@ class Interface(param.Parameterized):
     def columns(self, dataset, dimensions):
         return self.driver.columns(dataset, dimensions)
 
-    def shape(self, dataset, **kwargs):
-        return self.driver.shape(dataset, **kwargs)
+    def shape(self, dataset):
+        return self.driver.shape(dataset)
 
     def length(self, dataset):
         return self.driver.length(dataset)
@@ -724,6 +736,7 @@ class TabularInterface(Interface):
         # TODO: Remove after separating dictionary fro geodictionary
         return self.driver.geom_dims(*args, **kwargs)
 
+
 class GriddedInterface(Interface):
     kind = "gridded"
 
@@ -774,11 +787,31 @@ class GriddedInterface(Interface):
 
 
 class ImageInterface(GriddedInterface):
+
+    rtol = param.Number(default=10e-4, constant=True, doc="""
+        The tolerance used to enforce regular sampling for regular, gridded
+        data where regular sampling is expected. Expressed as the maximal
+        allowable sampling difference between sample locations.""")
+
+    time_unit = param.String(default="us", constant=True, doc="""
+        Determines the unit of time densities are defined relative to
+        when one or both axes are datetime types""")
+
     kind = "image"
 
 
 class GeometryInterface(Interface):
+    geom_type = param.Selector(
+        objects=["Point", "Line", "Polygon"], default=None, doc="""
+            Geometry type interpretation for data structures that do not contain
+            their own geometry type metadata""")
+
+    hole_key = param.String(default=None)
+
     kind = "geometry"
+
+    def validate(self, dataset, vdims=True, geom_type=None):
+        return self.driver.validate(dataset, vdims, geom_type=geom_type)
 
     def has_holes(self, dataset):
         return self.driver.has_holes(dataset)
@@ -786,8 +819,23 @@ class GeometryInterface(Interface):
     def holes(self, dataset):
         return self.driver.holes(dataset)
 
-    def split(self, dataset, *args, **kwargs):
-        return self.driver.split(dataset, *args, **kwargs)
+    def values(self, dataset, dimension, expanded=True, flat=True, compute=True, keep_index=False):
+        return self.driver.values(
+            dataset, dimension, expanded=expanded, flat=flat, compute=compute,
+            keep_index=keep_index, geom_type=self.geom_type
+        )
+
+    def shape(self, dataset):
+        return self.driver.shape(dataset, geom_type=self.geom_type)
+
+    def length(self, dataset):
+        return self.driver.length(dataset, geom_type=self.geom_type)
+
+    def split(self, dataset, start, end, datatype, **kwargs):
+        return self.driver.split(
+            dataset, start, end, datatype,
+            geom_type=self.geom_type, hole_key=self.hole_key, **kwargs
+        )
 
     def add_dimension(self, dataset, *args, **kwargs):
         return self.driver.add_dimension(dataset, *args, **kwargs)
@@ -795,14 +843,18 @@ class GeometryInterface(Interface):
     def groupby(self, dataset, *args, **kwargs):
         return self.driver.groupby(dataset, *args, **kwargs)
 
-    def iloc(self, *args, **kwargs):
-        return self.driver.iloc(*args, **kwargs)
+    def iloc(self, dataset, index):
+        return self.driver.iloc(dataset, index, geom_type=self.geom_type)
 
-    def isscalar(self, *args, **kwargs):
-        return self.driver.isscalar(*args, **kwargs)
+    def isscalar(self, dataset, dim, per_geom=False):
+        return self.driver.isscalar(
+            dataset, dim, per_geom=per_geom, geom_type=self.geom_type
+        )
 
-    def select(self, *args, **kwargs):
-        return self.driver.select(*args, **kwargs)
+    def select(self, dataset, selection_mask=None, **selection):
+        return self.driver.select(
+            dataset, selection_mask=selection_mask, hole_key=self.hole_key, **selection
+        )
 
     def sort(self, *args, **kwargs):
         return self.driver.sort(*args, **kwargs)

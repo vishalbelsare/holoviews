@@ -50,7 +50,9 @@ class SpatialPandasDriver(MultiDriver):
         return cols[0]
 
     @classmethod
-    def init(cls, data, kdims_spec, vdims_spec, auto_indexable_1d=False, geom_type=None, **kwargs):
+    def init(
+            cls, data, kdims_spec, vdims_spec, auto_indexable_1d=False, geom_type=None, hole_key=None, **kwargs
+    ):
         import pandas as pd
         from spatialpandas import GeoDataFrame, GeoSeries
 
@@ -75,7 +77,7 @@ class SpatialPandasDriver(MultiDriver):
             if 'shapely' in sys.modules:
                 data = from_shapely(data)
             if isinstance(data, list):
-                data = from_multi(data, kdims, vdims, geom_type)
+                data = from_multi(data, kdims, vdims, geom_type, hole_key=hole_key)
         elif not isinstance(data, GeoDataFrame):
             raise ValueError("SpatialPandasInterface only support spatialpandas DataFrames.")
         elif 'geometry' not in data:
@@ -97,7 +99,7 @@ class SpatialPandasDriver(MultiDriver):
         return data, {'kdims': kdims, 'vdims': vdims}, {}
 
     @classmethod
-    def validate(cls, dataset, vdims=True):
+    def validate(cls, dataset, vdims=True, geom_type=None):
         dim_types = 'key' if vdims else 'all'
         geom_dims = cls.geom_dims(dataset)
         if len(geom_dims) != 2:
@@ -149,7 +151,7 @@ class SpatialPandasDriver(MultiDriver):
         return [geom_to_holes(geom) for geom in series]
 
     @classmethod
-    def select(cls, dataset, selection_mask=None, **selection):
+    def select(cls, dataset, selection_mask=None, hole_key=None, **selection):
         xdim, ydim = cls.geom_dims(dataset)
         selection.pop(xdim.name, None)
         selection.pop(ydim.name, None)
@@ -214,7 +216,7 @@ class SpatialPandasDriver(MultiDriver):
             return cls.dtype(dataset, dim).type
 
     @classmethod
-    def isscalar(cls, dataset, dim, per_geom=False):
+    def isscalar(cls, dataset, dim, per_geom=False, geom_type=None):
         """
         Tests if dimension is scalar in each subpath.
         """
@@ -263,7 +265,7 @@ class SpatialPandasDriver(MultiDriver):
         return dataset.data
 
     @classmethod
-    def shape(cls, dataset):
+    def shape(cls, dataset, geom_type=None):
         return (cls.length(dataset), len(dataset.dimensions()))
 
     @classmethod
@@ -275,11 +277,11 @@ class SpatialPandasDriver(MultiDriver):
         return PandasDriver.sort(dataset, by, reverse)
 
     @classmethod
-    def length(cls, dataset):
+    def length(cls, dataset, geom_type=None):
         from spatialpandas.geometry import MultiPointDtype, Point
         col_name = cls.geo_column(dataset.data)
         column = dataset.data[col_name]
-        geom_type = cls.geom_type(dataset)
+        geom_type = cls.geom_type(dataset, geom_type)
         if not isinstance(column.dtype, MultiPointDtype) and geom_type != 'Point':
             return PandasDriver.length(dataset)
         length = 0
@@ -309,7 +311,7 @@ class SpatialPandasDriver(MultiDriver):
         return data
 
     @classmethod
-    def iloc(cls, dataset, index):
+    def iloc(cls, dataset, index, geom_type=None):
         from spatialpandas import GeoSeries
         from spatialpandas.geometry import MultiPointDtype
         rows, cols = index
@@ -378,13 +380,13 @@ class SpatialPandasDriver(MultiDriver):
         return new
 
     @classmethod
-    def values(cls, dataset, dimension, expanded=True, flat=True, compute=True, keep_index=False):
+    def values(cls, dataset, dimension, expanded=True, flat=True, compute=True, keep_index=False, geom_type=None):
         dimension = dataset.get_dimension(dimension)
         geom_dims = dataset.interface.geom_dims(dataset)
         data = dataset.data
         isgeom = (dimension in geom_dims)
         geom_col = cls.geo_column(dataset.data)
-        is_points = cls.geom_type(dataset) == 'Point'
+        is_points = cls.geom_type(dataset, geom_type) == 'Point'
         if isgeom and keep_index:
             return data[geom_col]
         elif not isgeom:
@@ -392,14 +394,13 @@ class SpatialPandasDriver(MultiDriver):
         elif not len(data):
             return np.array([])
 
-        geom_type = cls.geom_type(dataset)
+        geom_type = cls.geom_type(dataset, geom_type)
         index = geom_dims.index(dimension)
         return geom_array_to_array(data[geom_col].values, index, expanded, geom_type)
 
     @classmethod
-    def split(cls, dataset, start, end, datatype, **kwargs):
+    def split(cls, dataset, start, end, datatype, geom_type=None, hole_key=None, **kwargs):
         from spatialpandas import GeoDataFrame, GeoSeries
-        from holoviews import Polygons
 
         objs = []
         if not len(dataset.data):
@@ -409,7 +410,7 @@ class SpatialPandasDriver(MultiDriver):
                       if dim not in (xdim, ydim)]
         row = dataset.data.iloc[0]
         col = cls.geo_column(dataset.data)
-        geom_type = cls.geom_type(dataset)
+        geom_type = cls.geom_type(dataset, geom_type)
         if datatype is not None:
             arr = geom_to_array(row[col], geom_type=geom_type)
             d = {(xdim.name, ydim.name): arr}
@@ -431,7 +432,7 @@ class SpatialPandasDriver(MultiDriver):
             d.update({dim.name: row[dim.name] for dim in value_dims})
             if datatype in ('dictionary', 'columns'):
                 if holes is not None:
-                    d[Polygons._hole_key] = holes[i]
+                    d[hole_key] = holes[i]
                 d['geom_type'] = gt
                 objs.append(d)
                 continue
@@ -670,7 +671,7 @@ def geom_to_holes(geom):
         return [[]]
 
 
-def to_spatialpandas(data, xdim, ydim, columns=[], geom='point'):
+def to_spatialpandas(data, xdim, ydim, columns=[], geom='point', hole_key=None):
     """Converts list of dictionary format geometries to spatialpandas line geometries.
 
     Args:
@@ -688,9 +689,8 @@ def to_spatialpandas(data, xdim, ydim, columns=[], geom='point'):
         Point, Line, Polygon, Ring, LineArray, PolygonArray, PointArray,
         MultiLineArray, MultiPolygonArray, MultiPointArray, RingArray
     )
-    from holoviews import Polygons
 
-    poly = any(Polygons._hole_key in d for d in data) or geom == 'Polygon'
+    poly = hole_key and any(hole_key in d for d in data) or geom == 'Polygon'
     if poly:
         geom_type = Polygon
         single_array, multi_array = PolygonArray, MultiPolygonArray
@@ -725,7 +725,7 @@ def to_spatialpandas(data, xdim, ydim, columns=[], geom='point'):
 
         splits = np.where(np.isnan(geom_array[:, :2].astype('float')).sum(axis=1))[0]
         split_geoms = np.split(geom_array, splits+1) if len(splits) else [geom_array]
-        split_holes = geom.pop(Polygons._hole_key, None)
+        split_holes = geom.pop(hole_key, None)
         if split_holes is not None:
             if len(split_holes) != len(split_geoms):
                 raise DataError('Polygons with holes containing multi-geometries '
@@ -820,7 +820,7 @@ def to_geom_dict(data, kdims, vdims, interface=None):
     return new_dict
 
 
-def from_multi(data, kdims, vdims, geom_type):
+def from_multi(data, kdims, vdims, geom_type, hole_key=None):
     """Converts list formats into spatialpandas.GeoDataFrame.
 
     Args:
@@ -855,7 +855,7 @@ def from_multi(data, kdims, vdims, geom_type):
             geom = geom_types[0]
         else:
             geom = geom_type if geom_type is not None else None
-        data = to_spatialpandas(new_data, xname, yname, columns, geom)
+        data = to_spatialpandas(new_data, xname, yname, columns, geom, hole_key)
     return data
 
 

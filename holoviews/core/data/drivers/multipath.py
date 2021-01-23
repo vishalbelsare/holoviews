@@ -31,9 +31,7 @@ class MultiDriver(Driver):
     multi = True
 
     @classmethod
-    def init(cls, data, kdims_spec, vdims_spec, auto_indexable_1d=False, geom_type=None, **kwargs):
-        from holoviews.element import Path, Polygons
-
+    def init(cls, data, kdims_spec, vdims_spec, auto_indexable_1d=False, geom_type=None, hole_key=None, **kwargs):
         kdims = kdims_spec["value"]
         kdims = kdims if kdims is not None else kdims_spec["default"]
         vdims = vdims_spec["value"]
@@ -58,7 +56,7 @@ class MultiDriver(Driver):
         for d in data:
             datatype = cls.subtypes
             if isinstance(d, dict):
-                if Polygons._hole_key in d:
+                if hole_key in d:
                     datatype = [dt for dt in datatype
                                 if hasattr(Interface.get_driver(dt), 'has_holes')]
                 geom_type = d.get('geom_type')
@@ -87,7 +85,7 @@ class MultiDriver(Driver):
 
             drivers = [driver for driver in cls.subdrivers]
             if isinstance(d, dict):
-                if Polygons._hole_key in d:
+                if hole_key in d:
                     # only grab sub-drivers that support holes
                     drivers = [d for d in drivers if hasattr(d, 'has_holes')]
                 geom_type = d.get('geom_type')
@@ -114,16 +112,15 @@ class MultiDriver(Driver):
         return new_data, dims, {}
 
     @classmethod
-    def validate(cls, dataset, vdims=True):
+    def validate(cls, dataset, vdims=True, geom_type=None):
         if not dataset.data:
             return
 
-        from holoviews.element import Polygons
         ds = cls._inner_dataset_template(dataset, validate_vdims=vdims)
         for d in dataset.data:
             ds.data = d
             ds.interface.validate(ds, vdims)
-            if isinstance(dataset, Polygons) and ds.interface is DictDriver:
+            if geom_type == "Polygon" and ds.interface is DictDriver:
                 holes = ds.interface.holes(ds)
                 if not isinstance(holes, list):
                     raise DataError('Polygons holes must be declared as a list-of-lists.', cls)
@@ -134,26 +131,15 @@ class MultiDriver(Driver):
                     raise DataError('Polygons with holes containing multi-geometries '
                                     'must declare a list of holes for each geometry.', cls)
 
-
     @classmethod
-    def geom_type(cls, dataset):
-        from holoviews.element import Polygons, Path, Points
-        if isinstance(dataset, type):
-            dstype = dataset
-        else:
-            dstype = type(dataset)
-            if isinstance(dataset.data, list):
-                ds = cls._inner_dataset_template(dataset)
-                if hasattr(ds.interface, 'geom_type'):
-                    geom_type = ds.interface.geom_type(ds)
-                    if geom_type is not None:
-                        return geom_type
-        if issubclass(dstype, Polygons):
-            return 'Polygon'
-        elif issubclass(dstype, Path):
-            return 'Line'
-        elif issubclass(dstype, Points):
-            return 'Point'
+    def geom_type(cls, dataset, default):
+        if isinstance(dataset.data, list):
+            ds = cls._inner_dataset_template(dataset)
+            if hasattr(ds.interface, 'geom_type'):
+                geom_type = ds.interface.geom_type(ds, default)
+                if geom_type is not None:
+                    return geom_type
+        return default
 
     @classmethod
     def _inner_dataset_template(cls, dataset, validate_vdims=True):
@@ -218,13 +204,13 @@ class MultiDriver(Driver):
         return holes
 
     @classmethod
-    def isscalar(cls, dataset, dim, per_geom=False):
+    def isscalar(cls, dataset, dim, per_geom=False, geom_type=None):
         """
         Tests if dimension is scalar in each subpath.
         """
         if not dataset.data:
             return True
-        geom_type = cls.geom_type(dataset)
+        geom_type = cls.geom_type(dataset, geom_type)
         ds = cls._inner_dataset_template(dataset)
         combined = []
         for d in dataset.data:
@@ -243,17 +229,16 @@ class MultiDriver(Driver):
         return True
 
     @classmethod
-    def select(cls, dataset, selection_mask=None, **selection):
+    def select(cls, dataset, selection_mask=None, hole_key=None, **selection):
         """
         Applies selectiong on all the subpaths.
         """
-        from holoviews.element import Polygons
         if not dataset.data:
             return dataset.data
         elif selection_mask is not None:
             return [d for b, d in zip(selection_mask, dataset.data) if b]
         ds = cls._inner_dataset_template(dataset)
-        skipped = (Polygons._hole_key,)
+        skipped = (hole_key,)
         if hasattr(ds.interface, 'geo_column'):
             skipped += (ds.interface.geo_column(ds),)
         data = []
@@ -331,14 +316,14 @@ class MultiDriver(Driver):
         raise NotImplementedError('Sampling operation on subpaths not supported')
 
     @classmethod
-    def shape(cls, dataset):
+    def shape(cls, dataset, geom_type=None):
         """
         Returns the shape of all subpaths, making it appear like a
         single array of concatenated subpaths separated by NaN values.
         """
         if not dataset.data:
             return (0, len(dataset.dimensions()))
-        elif cls.geom_type(dataset) != 'Point':
+        elif cls.geom_type(dataset, geom_type) != 'Point':
             return (len(dataset.data), len(dataset.dimensions()))
 
         rows, cols = 0, 0
@@ -350,7 +335,7 @@ class MultiDriver(Driver):
         return rows, cols
 
     @classmethod
-    def length(cls, dataset):
+    def length(cls, dataset, geom_type=None):
         """
         Returns the length of the multi-tabular dataset making it appear
         like a single array of concatenated subpaths separated by NaN
@@ -358,7 +343,7 @@ class MultiDriver(Driver):
         """
         if not dataset.data:
             return 0
-        elif cls.geom_type(dataset) != 'Point':
+        elif cls.geom_type(dataset, geom_type) != 'Point':
             return len(dataset.data)
         length = 0
         ds = cls._inner_dataset_template(dataset)
@@ -410,7 +395,7 @@ class MultiDriver(Driver):
 
     @classmethod
     def values(cls, dataset, dimension, expanded=True, flat=True,
-               compute=True, keep_index=False):
+               compute=True, keep_index=False, geom_type=None):
         """
         Returns a single concatenated array of all subpaths separated
         by NaN values. If expanded keyword is False an array of arrays
@@ -421,7 +406,7 @@ class MultiDriver(Driver):
         values, scalars = [], []
         all_scalar = True
         ds = cls._inner_dataset_template(dataset)
-        geom_type = cls.geom_type(dataset)
+        geom_type = cls.geom_type(dataset, geom_type)
         is_points = geom_type == 'Point'
         is_geom = dimension in dataset.kdims[:2]
         for d in dataset.data:
@@ -430,7 +415,7 @@ class MultiDriver(Driver):
                 ds, dimension, True, flat, compute, keep_index
             )
             scalar = len(util.unique_array(dvals)) == 1 and not is_geom
-            gt = ds.interface.geom_type(ds) if hasattr(ds.interface, 'geom_type') else None
+            gt = ds.interface.geom_type(ds, geom_type) if hasattr(ds.interface, 'geom_type') else None
 
             if gt is None:
                 gt = geom_type
@@ -462,7 +447,7 @@ class MultiDriver(Driver):
             return array
 
     @classmethod
-    def split(cls, dataset, start, end, datatype, **kwargs):
+    def split(cls, dataset, start, end, datatype, geom_type=None, hole_key=None, **kwargs):
         """
         Splits a multi-interface Dataset into regular Datasets using
         regular tabular interfaces.
@@ -475,7 +460,7 @@ class MultiDriver(Driver):
         elif not dataset.data:
             return objs
 
-        geom_type = cls.geom_type(dataset)
+        geom_type = cls.geom_type(dataset, geom_type)
         ds = dataset.clone([])
         for d in dataset.data[start:end]:
             ds.data = [d]
@@ -485,7 +470,7 @@ class MultiDriver(Driver):
                 obj = ds.dframe(**kwargs)
             elif datatype in ('columns', 'dictionary'):
                 if hasattr(ds.interface.driver, 'geom_type'):
-                    gt = ds.interface.driver.geom_type(ds)
+                    gt = ds.interface.driver.geom_type(ds, geom_type)
                 if gt is None:
                     gt = geom_type
                 if isinstance(ds.data[0], dict):
@@ -527,12 +512,12 @@ class MultiDriver(Driver):
         return new_data
 
     @classmethod
-    def iloc(cls, dataset, index):
+    def iloc(cls, dataset, index, geom_type=None):
         rows, cols = index
         scalar = np.isscalar(cols) and np.isscalar(rows)
 
         template = cls._inner_dataset_template(dataset)
-        if cls.geom_type(dataset) != 'Point':
+        if cls.geom_type(dataset, geom_type) != 'Point':
             geoms = cls.select_paths(dataset, rows)
             new_data = []
             for d in geoms:

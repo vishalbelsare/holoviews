@@ -423,15 +423,15 @@ class DictDriver(Driver):
         return dataset.data.get('geom_type')
 
     @classmethod
-    def has_holes(cls, dataset):
-        from holoviews.element import Polygons
-        key = Polygons._hole_key
+    def has_holes(cls, dataset, hole_key="holes"):
+        # TODO: hole methods go away and pull out into geometry_dict subclass
+        key = hole_key
         return key in dataset.data and isinstance(dataset.data[key], list)
 
     @classmethod
-    def holes(cls, dataset):
-        from holoviews.element import Polygons
-        key = Polygons._hole_key
+    def holes(cls, dataset, hole_key="holes"):
+        # TODO: hole methods go away and pull out into geometry_dict subclass
+        key = hole_key
         if key in dataset.data:
             holes = []
             for hs in dataset.data[key]:
