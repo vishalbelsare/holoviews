@@ -14,8 +14,6 @@ import numpy as np
 
 from holoviews.core import util
 from holoviews.core.dimension import dimension_name
-from holoviews.core.element import Element
-from holoviews.core.ndmapping import NdMapping, item_check, sorted_context
 from holoviews.core.data.interface import DataError, Driver, TabularInterface
 from .pandas import PandasDriver
 

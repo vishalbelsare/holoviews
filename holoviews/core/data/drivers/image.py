@@ -2,9 +2,7 @@ import numpy as np
 
 from holoviews.core.boundingregion import BoundingBox
 from holoviews.core.dimension import dimension_name
-from holoviews.core.element import Element
-from holoviews.core.ndmapping import  NdMapping, item_check
-from holoviews.core.sheetcoords import Slice, SheetCoordinateSystem
+from holoviews.core.sheetcoords import Slice
 from holoviews.core import util
 from .grid import GridDriver
 from holoviews.core.data.interface import Driver, DataError
@@ -265,18 +263,9 @@ class ImageDriver(GridDriver):
 
 
     @classmethod
-    def groupby(cls, dataset, dim_names, container_type, group_type, **kwargs):
+    def groupby(cls, dataset, dim_names, kdims=None):
         # Get dimensions information
         dimensions = [dataset.get_dimension(d) for d in dim_names]
-        kdims = [kdim for kdim in dataset.kdims if kdim not in dimensions]
-
-        # Update the kwargs appropriately for Element group types
-        group_kwargs = {}
-        group_type = dict if group_type == 'raw' else group_type
-        if issubclass(group_type, Element):
-            group_kwargs.update(util.get_param_values(dataset))
-            group_kwargs['kdims'] = kdims
-        group_kwargs.update(kwargs)
 
         if len(dimensions) == 1:
             didx = dataset.get_dimension_index(dimensions[0])
@@ -285,19 +274,14 @@ class ImageDriver(GridDriver):
             samples = [(i, slice(None)) if didx else (slice(None), i)
                        for i in range(dataset.data.shape[abs(didx-1)])]
             data = np.flipud(dataset.data)
-            groups = [(c, group_type((xvals, data[s]), **group_kwargs))
-                       for s, c in zip(samples, coords)]
+            groups_data = [(c, (xvals, data[s])) for s, c in zip(samples, coords)]
         else:
             data = zip(*[dataset.dimension_values(i) for i in range(len(dataset.dimensions()))])
-            groups = [(g[:dataset.ndims], group_type([g[dataset.ndims:]], **group_kwargs))
-                      for g in data]
+            groups_data = [(
+                g[:dataset.ndims], [g[dataset.ndims:]]) for g in data
+            ]
 
-        if issubclass(container_type, NdMapping):
-            with item_check(False):
-                return container_type(groups, kdims=dimensions)
-        else:
-            return container_type(groups)
-
+        return groups_data
 
     @classmethod
     def unpack_scalar(cls, dataset, data):

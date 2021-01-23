@@ -8,9 +8,7 @@ import numpy as np
 
 from holoviews.core.data.interface import Driver, DataError, TabularInterface
 from holoviews.core.dimension import dimension_name
-from holoviews.core.element import Element
 from holoviews.core.dimension import OrderedDict as cyODict
-from holoviews.core.ndmapping import NdMapping, item_check, sorted_context
 from holoviews.core.util import isscalar
 from holoviews.core import util
 

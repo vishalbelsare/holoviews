@@ -15,9 +15,8 @@ import numpy as np
 from .dictionary import DictDriver
 from holoviews.core.data.interface import Driver, DataError, GriddedInterface
 from holoviews.core.dimension import dimension_name
-from holoviews.core.element import Element
 from holoviews.core.dimension import OrderedDict as cyODict
-from holoviews.core.ndmapping import NdMapping, item_check, sorted_context
+from holoviews.core.ndmapping import NdMapping, sorted_context
 from holoviews.core import util
 from holoviews.core.data.interface import is_dask, dask_array_module, get_array_types
 
@@ -451,12 +450,6 @@ class GridDriver(DictDriver):
     def groupby(cls, dataset, dim_names, kdims=None):
         # Get dimensions information
         dimensions = [dataset.get_dimension(d, strict=True) for d in dim_names]
-        # if 'kdims' in kwargs:
-        #     kdims = kwargs['kdims']
-        # else:
-        #     kdims = [kdim for kdim in dataset.kdims if kdim not in dimensions]
-        #     kwargs['kdims'] = kdims
-
         if kdims is None:
             kdims = [kdim for kdim in dataset.kdims if kdim not in dimensions]
 
@@ -466,16 +459,9 @@ class GridDriver(DictDriver):
             raise ValueError("Cannot groupby irregularly sampled dimension(s) %s."
                              % invalid)
 
-        # # Update the kwargs appropriately for Element group types
-        # group_kwargs = {}
-        # group_type = dict if group_type == 'raw' else group_type
-        # if issubclass(group_type, Element):
-        #     group_kwargs.update(util.get_param_values(dataset))
-        # else:
-        #     kwargs.pop('kdims')
-        # group_kwargs.update(kwargs)
-        #
-        # drop_dim = any(d not in group_kwargs['kdims'] for d in kdims)
+        # TODO: drop_dim support
+        # drop_dim = any(d not in kdims for d in dataset.kdims)
+        drop_dim = False
 
         # Find all the keys along supplied dimensions
         keys = [cls.coords(dataset, d.name) for d in dimensions]
@@ -486,32 +472,26 @@ class GridDriver(DictDriver):
         grouped_data = []
         for unique_key in zip(*util.cartesian_product(keys)):
             select = dict(zip(dim_names, unique_key))
-            # if drop_dim:
-            #     group_data = dataset.select(**select)
-            #     group_data = group_data if np.isscalar(group_data) else group_data.columns()
-            # else:
-            group_data = cls.select(dataset, **select)
+            if drop_dim:
+                group_data = dataset.select(**select)
+                group_data = group_data if np.isscalar(group_data) else group_data.columns()
+            else:
+                group_data = cls.select(dataset, **select)
 
             if np.isscalar(group_data) or (isinstance(group_data, get_array_types()) and group_data.shape == ()):
                 group_data = {dataset.vdims[0].name: np.atleast_1d(group_data)}
                 for dim, v in zip(dim_names, unique_key):
                     group_data[dim] = np.atleast_1d(v)
-            # elif not drop_dim:
-            if isinstance(group_data, get_array_types()):
-                group_data = {dataset.vdims[0].name: group_data}
-            for vdim in dataset.vdims:
-                data = group_data[vdim.name]
-                data = data.transpose(transpose[::-1])
-                group_data[vdim.name] = np.squeeze(data)
+            elif not drop_dim:
+                if isinstance(group_data, get_array_types()):
+                    group_data = {dataset.vdims[0].name: group_data}
+                for vdim in dataset.vdims:
+                    data = group_data[vdim.name]
+                    data = data.transpose(transpose[::-1])
+                    group_data[vdim.name] = np.squeeze(data)
             grouped_data.append((tuple(unique_key), group_data))
 
         return grouped_data
-
-        # if issubclass(container_type, NdMapping):
-        #     with item_check(False):
-        #         return container_type(grouped_data, kdims=dimensions)
-        # else:
-        #     return container_type(grouped_data)
 
 
     @classmethod

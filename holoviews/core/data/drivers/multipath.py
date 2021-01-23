@@ -1,8 +1,6 @@
 import numpy as np
 
 from holoviews.core import util
-from holoviews.core.element import Element
-from holoviews.core.ndmapping import NdMapping, item_check, sorted_context
 from .dictionary import DictDriver
 from holoviews.core.data.interface import Driver, DataError, GeometryInterface, \
     TabularInterface, Interface

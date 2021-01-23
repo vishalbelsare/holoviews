@@ -11,8 +11,7 @@ import pandas as pd
 
 from holoviews.core import util
 from holoviews.core.dimension import Dimension
-from holoviews.core.element import Element
-from holoviews.core.ndmapping import NdMapping, item_check, OrderedDict, sorted_context
+from collections import OrderedDict
 from holoviews.core.data.interface import Driver, TabularInterface
 from .pandas import PandasDriver
 

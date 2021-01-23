@@ -9,8 +9,6 @@ import numpy as np
 
 from holoviews.core import util
 from holoviews.core.dimension import Dimension, asdim, dimension_name
-from holoviews.core.ndmapping import NdMapping, item_check, sorted_context
-from holoviews.core.element import Element
 from .grid import GridDriver
 from holoviews.core.data.interface import Driver, DataError, dask_array_module, \
     GriddedInterface
@@ -283,10 +281,8 @@ class XArrayDriver(GridDriver):
 
 
     @classmethod
-    def groupby(cls, dataset, dimensions, container_type, group_type, **kwargs):
+    def groupby(cls, dataset, dimensions, kdims=None):
         index_dims = [dataset.get_dimension(d, strict=True) for d in dimensions]
-        element_dims = [kdim for kdim in dataset.kdims
-                        if kdim not in index_dims]
 
         invalid = [d for d in index_dims if dataset.data[d.name].ndim > 1]
         if invalid:
@@ -294,21 +290,27 @@ class XArrayDriver(GridDriver):
             raise ValueError("Cannot groupby irregularly sampled dimension(s) %s."
                              % invalid)
 
-        group_kwargs = {}
-        if group_type != 'raw' and issubclass(group_type, Element):
-            group_kwargs = dict(util.get_param_values(dataset),
-                                kdims=element_dims)
-        group_kwargs.update(kwargs)
+        # element_dims = [kdim for kdim in dataset.kdims
+        #                 if kdim not in index_dims]
+        # group_kwargs = {}
+        # if group_type != 'raw' and issubclass(group_type, Element):
+        #     group_kwargs = dict(util.get_param_values(dataset),
+        #                         kdims=element_dims)
+        # group_kwargs.update(kwargs)
+        #
+        # drop_dim = any(d not in group_kwargs['kdims'] for d in element_dims)
 
-        drop_dim = any(d not in group_kwargs['kdims'] for d in element_dims)
+        # TODO: drop_dim logic
+        # drop_dim = any(d not in kdims for d in dataset.kdims)
+        drop_dim = False
 
         group_by = [d.name for d in index_dims]
-        data = []
+        grouped_data = []
         if len(dimensions) == 1:
             for k, v in dataset.data.groupby(index_dims[0].name):
                 if drop_dim:
                     v = v.to_dataframe().reset_index()
-                data.append((k, group_type(v, **group_kwargs)))
+                grouped_data.append((k, v))
         else:
             unique_iters = [cls.values(dataset, d, False) for d in group_by]
             indexes = zip(*util.cartesian_product(unique_iters))
@@ -316,14 +318,9 @@ class XArrayDriver(GridDriver):
                 sel = dataset.data.sel(**dict(zip(group_by, k)))
                 if drop_dim:
                     sel = sel.to_dataframe().reset_index()
-                data.append((k, group_type(sel, **group_kwargs)))
+                grouped_data.append((k, sel))
 
-        if issubclass(container_type, NdMapping):
-            with item_check(False), sorted_context(False):
-                return container_type(data, kdims=index_dims)
-        else:
-            return container_type(data)
-
+        return grouped_data
 
     @classmethod
     def coords(cls, dataset, dimension, ordered=False, expanded=False, edges=False):

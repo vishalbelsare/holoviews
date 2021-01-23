@@ -7,8 +7,6 @@ except ImportError:
     from collections import Iterable
 
 from holoviews.core import util
-from holoviews.core.element import Element
-from holoviews.core.ndmapping import NdMapping, item_check, sorted_context
 from holoviews.core.data.interface import Driver, cached, TabularInterface, DataError
 from holoviews.core.data.drivers import pandas
 

@@ -8,8 +8,6 @@ import numpy as np
 
 from holoviews.core.data.interface import Driver, DataError, TabularInterface
 from holoviews.core.dimension import dimension_name
-from holoviews.core.element import Element
-from holoviews.core.ndmapping import NdMapping, item_check, sorted_context
 from holoviews.core import util
 
 
@@ -157,9 +155,6 @@ class ArrayDriver(Driver):
         # Get dimension objects, labels, indexes and data
         dimensions = [dataset.get_dimension(d, strict=True) for d in dimensions]
         dim_idxs = [dataset.get_dimension_index(d) for d in dimensions]
-        # kdims = [kdim for kdim in dataset.kdims
-        #          if kdim not in dimensions]
-        # vdims = dataset.vdims
 
         # Find unique entries along supplied dimensions
         # by creating a view that treats the selected
@@ -170,13 +165,6 @@ class ArrayDriver(Driver):
         _, idx = np.unique(view, return_index=True)
         idx.sort()
         unique_indices = indices[idx]
-
-        # # Get group
-        # group_kwargs = {}
-        # if group_type != 'raw' and issubclass(group_type, Element):
-        #     group_kwargs.update(util.get_param_values(dataset))
-        #     group_kwargs['kdims'] = kdims
-        # group_kwargs.update(kwargs)
 
         # Iterate over the unique entries building masks
         # to apply the group selection
@@ -194,14 +182,7 @@ class ArrayDriver(Driver):
 
             grouped_data.append((group, group_data))
 
-        # return OrderedDict(grouped_data)
         return grouped_data
-
-        # if issubclass(container_type, NdMapping):
-        #     with item_check(False), sorted_context(False):
-        #         return container_type(grouped_data, kdims=dimensions)
-        # else:
-        #     return container_type(grouped_data)
 
 
     @classmethod

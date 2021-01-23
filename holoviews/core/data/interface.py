@@ -494,7 +494,9 @@ class Interface(param.Parameterized):
     kind = None
 
     def __init__(self, driver: Driver, **params):
-        super(Interface, self).__init__(**params)
+        super(Interface, self).__init__(
+            **{p: v for p, v in params.items() if p in self.param}
+        )
         self.driver = driver
 
     @property
