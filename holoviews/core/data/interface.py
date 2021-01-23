@@ -713,8 +713,8 @@ class TabularInterface(Interface):
     def select(self, *args, **kwargs):
         return self.driver.select(*args, **kwargs)
 
-    def groupby(self, dataset, *args, **kwargs):
-        grouped_list = self.driver.groupby(dataset, *args, **kwargs)
+    def groupby(self, dataset, dimensions, kdims=None):
+        grouped_list = self.driver.groupby(dataset, dimensions, kdims=kdims)
         return OrderedDict(grouped_list)
 
     def reindex(self, *args, **kwargs):
@@ -766,8 +766,8 @@ class GriddedInterface(Interface):
     def select(self, *args, **kwargs):
         return self.driver.select(*args, **kwargs)
 
-    def groupby(self, dataset, *args, **kwargs):
-        grouped_list = self.driver.groupby(dataset, *args, **kwargs)
+    def groupby(self, dataset, dimensions, kdims=None):
+        grouped_list = self.driver.groupby(dataset, dimensions, kdims=kdims)
         return OrderedDict(grouped_list)
 
     def reindex(self, *args, **kwargs):
@@ -794,6 +794,8 @@ class GriddedInterface(Interface):
     def concat(self, *args, **kwargs):
         return self.driver.concat(*args, **kwargs)
 
+    def shape(self, dataset, gridded=False):
+        return self.driver.shape(dataset, gridded=gridded)
 
 class ImageInterface(GriddedInterface):
 
@@ -849,8 +851,8 @@ class GeometryInterface(Interface):
     def add_dimension(self, dataset, *args, **kwargs):
         return self.driver.add_dimension(dataset, *args, **kwargs)
 
-    def groupby(self, dataset, *args, **kwargs):
-        grouped_list = self.driver.groupby(dataset, *args, **kwargs)
+    def groupby(self, dataset, dimensions, kdims=None):
+        grouped_list = self.driver.groupby(dataset, dimensions, kdims=kdims)
         return OrderedDict(grouped_list)
 
     def iloc(self, dataset, index):

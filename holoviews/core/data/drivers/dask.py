@@ -169,7 +169,7 @@ class DaskDriver(PandasDriver):
         return df
 
     @classmethod
-    def groupby(cls, dataset, dimensions):
+    def groupby(cls, dataset, dimensions, kdims=None):
         index_dims = [dataset.get_dimension(d) for d in dimensions]
 
         grouped_data = []

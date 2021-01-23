@@ -151,7 +151,7 @@ class ArrayDriver(Driver):
 
 
     @classmethod
-    def groupby(cls, dataset, dimensions):
+    def groupby(cls, dataset, dimensions, kdims=None):
         data = dataset.data
 
         # Get dimension objects, labels, indexes and data

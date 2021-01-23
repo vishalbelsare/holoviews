@@ -201,7 +201,7 @@ class PandasDriver(Driver):
         return cls.concat_fn(dataframes)
 
     @classmethod
-    def groupby(cls, dataset, dimensions):
+    def groupby(cls, dataset, dimensions, kdims=None):
         index_dims = [dataset.get_dimension(d, strict=True) for d in dimensions]
         group_by = [d.name for d in index_dims]
         grouped_data = [(k, v) for k, v in dataset.data.groupby(group_by, sort=False)]

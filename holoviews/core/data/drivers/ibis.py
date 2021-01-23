@@ -239,16 +239,9 @@ class IbisDriver(Driver):
         return data.execute().iat[0, 0]
 
     @classmethod
-    def groupby(cls, dataset, dimensions, container_type, group_type, **kwargs):
+    def groupby(cls, dataset, dimensions, kdims=None):
         # aggregate the necesary dimensions
         index_dims = [dataset.get_dimension(d, strict=True) for d in dimensions]
-        element_dims = [kdim for kdim in dataset.kdims if kdim not in index_dims]
-
-        group_kwargs = {}
-        if group_type != "raw" and issubclass(group_type, Element):
-            group_kwargs = dict(util.get_param_values(dataset), kdims=element_dims)
-        group_kwargs.update(kwargs)
-        group_kwargs["dataset"] = dataset.dataset
 
         group_by = [d.name for d in index_dims]
 
@@ -256,23 +249,18 @@ class IbisDriver(Driver):
         groups = dataset.data.groupby(group_by).aggregate().execute()
 
         # filter each group based on the predicate defined.
-        data = [
+        grouped_data = [
             (
                 tuple(s.values.tolist()),
-                group_type(
-                    dataset.data.filter(
-                        [dataset.data[k] == v for k, v in s.to_dict().items()]
-                    ),
-                    **group_kwargs
+
+                dataset.data.filter(
+                    [dataset.data[k] == v for k, v in s.to_dict().items()]
                 ),
             )
             for i, s in groups.iterrows()
         ]
-        if issubclass(container_type, NdMapping):
-            with item_check(False), sorted_context(False):
-                return container_type(data, kdims=index_dims)
-        else:
-            return container_type(data)
+
+        return grouped_data
 
     @classmethod
     def assign(cls, dataset, new_data):

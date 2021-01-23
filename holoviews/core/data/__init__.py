@@ -1076,7 +1076,9 @@ argument to specify a selection specification""")
                             for d in dimensions]
             return DynamicMap(load_subset, kdims=dynamic_dims)
 
-        grouped_data = self.interface.groupby(self, dim_names)
+        grouped_data = self.interface.groupby(
+            self, dim_names, kdims=kwargs.get("kdims", None)
+        )
 
         kdims = [kdim for kdim in self.kdims if kdim not in dimensions]
         vdims = self.vdims

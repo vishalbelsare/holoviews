@@ -245,7 +245,7 @@ class SpatialPandasDriver(MultiDriver):
             return Driver.range(dataset, dim)
 
     @classmethod
-    def groupby(cls, dataset, dimensions):
+    def groupby(cls, dataset, dimensions, kdims=None):
         geo_dims = cls.geom_dims(dataset)
         if any(d in geo_dims for d in dimensions):
             raise DataError("SpatialPandasInterface does not allow grouping "

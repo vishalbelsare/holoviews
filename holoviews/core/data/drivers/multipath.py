@@ -269,7 +269,7 @@ class MultiDriver(Driver):
         raise NotImplementedError('Aggregation currently not implemented')
 
     @classmethod
-    def groupby(cls, dataset, dimensions):
+    def groupby(cls, dataset, dimensions, kdims=None):
         # Get dimensions information
         dimensions = [dataset.get_dimension(d) for d in dimensions]
 

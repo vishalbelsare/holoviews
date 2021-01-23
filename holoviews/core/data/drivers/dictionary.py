@@ -289,19 +289,9 @@ class DictDriver(Driver):
 
 
     @classmethod
-    def groupby(cls, dataset, dimensions, container_type, group_type, **kwargs):
+    def groupby(cls, dataset, dimensions, kdims=None):
         # Get dimensions information
         dimensions = [dataset.get_dimension(d) for d in dimensions]
-        kdims = [kdim for kdim in dataset.kdims if kdim not in dimensions]
-        vdims = dataset.vdims
-
-        # Update the kwargs appropriately for Element group types
-        group_kwargs = {}
-        group_type = dict if group_type == 'raw' else group_type
-        if issubclass(group_type, Element):
-            group_kwargs.update(util.get_param_values(dataset))
-            group_kwargs['kdims'] = kdims
-        group_kwargs.update(kwargs)
 
         # Find all the keys along supplied dimensions
         keys = (tuple(dataset.data[d.name] if isscalar(dataset.data[d.name])
@@ -311,19 +301,16 @@ class DictDriver(Driver):
         # Iterate over the unique entries applying selection masks
         grouped_data = []
         for unique_key in util.unique_iterator(keys):
-            mask = cls.select_mask(dataset, dict(zip(dimensions, unique_key)))
-            group_data = OrderedDict(((d.name, dataset.data[d.name] if isscalar(dataset.data[d.name])
-                                       else dataset.data[d.name][mask])
-                                      for d in kdims+vdims))
-            group_data = group_type(group_data, **group_kwargs)
+            group_data = cls.select(
+                dataset, **{d.name: v for d, v in zip(dimensions, unique_key)}
+            )
+
+            if len(unique_key) == 1:
+                unique_key = unique_key[0]
+
             grouped_data.append((unique_key, group_data))
 
-        if issubclass(container_type, NdMapping):
-            with item_check(False), sorted_context(False):
-                return container_type(grouped_data, kdims=dimensions)
-        else:
-            return container_type(grouped_data)
-
+        return grouped_data
 
     @classmethod
     def select(cls, dataset, selection_mask=None, **selection):
@@ -365,7 +352,7 @@ class DictDriver(Driver):
     def aggregate(cls, dataset, kdims, function, **kwargs):
         kdims = [dataset.get_dimension(d, strict=True).name for d in kdims]
         vdims = dataset.dimensions('value', label='name')
-        groups = cls.groupby(dataset, kdims, list, OrderedDict)
+        groups = cls.groupby(dataset, kdims)
         aggregated = OrderedDict([(k, []) for k in kdims+vdims])
 
         dropped = []

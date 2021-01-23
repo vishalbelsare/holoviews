@@ -448,14 +448,17 @@ class GridDriver(DictDriver):
 
 
     @classmethod
-    def groupby(cls, dataset, dim_names, container_type, group_type, **kwargs):
+    def groupby(cls, dataset, dim_names, kdims=None):
         # Get dimensions information
         dimensions = [dataset.get_dimension(d, strict=True) for d in dim_names]
-        if 'kdims' in kwargs:
-            kdims = kwargs['kdims']
-        else:
+        # if 'kdims' in kwargs:
+        #     kdims = kwargs['kdims']
+        # else:
+        #     kdims = [kdim for kdim in dataset.kdims if kdim not in dimensions]
+        #     kwargs['kdims'] = kdims
+
+        if kdims is None:
             kdims = [kdim for kdim in dataset.kdims if kdim not in dimensions]
-            kwargs['kdims'] = kdims
 
         invalid = [d for d in dimensions if dataset.data[d.name].ndim > 1]
         if invalid:
@@ -463,16 +466,16 @@ class GridDriver(DictDriver):
             raise ValueError("Cannot groupby irregularly sampled dimension(s) %s."
                              % invalid)
 
-        # Update the kwargs appropriately for Element group types
-        group_kwargs = {}
-        group_type = dict if group_type == 'raw' else group_type
-        if issubclass(group_type, Element):
-            group_kwargs.update(util.get_param_values(dataset))
-        else:
-            kwargs.pop('kdims')
-        group_kwargs.update(kwargs)
-
-        drop_dim = any(d not in group_kwargs['kdims'] for d in kdims)
+        # # Update the kwargs appropriately for Element group types
+        # group_kwargs = {}
+        # group_type = dict if group_type == 'raw' else group_type
+        # if issubclass(group_type, Element):
+        #     group_kwargs.update(util.get_param_values(dataset))
+        # else:
+        #     kwargs.pop('kdims')
+        # group_kwargs.update(kwargs)
+        #
+        # drop_dim = any(d not in group_kwargs['kdims'] for d in kdims)
 
         # Find all the keys along supplied dimensions
         keys = [cls.coords(dataset, d.name) for d in dimensions]
@@ -483,31 +486,32 @@ class GridDriver(DictDriver):
         grouped_data = []
         for unique_key in zip(*util.cartesian_product(keys)):
             select = dict(zip(dim_names, unique_key))
-            if drop_dim:
-                group_data = dataset.select(**select)
-                group_data = group_data if np.isscalar(group_data) else group_data.columns()
-            else:
-                group_data = cls.select(dataset, **select)
+            # if drop_dim:
+            #     group_data = dataset.select(**select)
+            #     group_data = group_data if np.isscalar(group_data) else group_data.columns()
+            # else:
+            group_data = cls.select(dataset, **select)
 
             if np.isscalar(group_data) or (isinstance(group_data, get_array_types()) and group_data.shape == ()):
                 group_data = {dataset.vdims[0].name: np.atleast_1d(group_data)}
                 for dim, v in zip(dim_names, unique_key):
                     group_data[dim] = np.atleast_1d(v)
-            elif not drop_dim:
-                if isinstance(group_data, get_array_types()):
-                    group_data = {dataset.vdims[0].name: group_data}
-                for vdim in dataset.vdims:
-                    data = group_data[vdim.name]
-                    data = data.transpose(transpose[::-1])
-                    group_data[vdim.name] = np.squeeze(data)
-            group_data = group_type(group_data, **group_kwargs)
+            # elif not drop_dim:
+            if isinstance(group_data, get_array_types()):
+                group_data = {dataset.vdims[0].name: group_data}
+            for vdim in dataset.vdims:
+                data = group_data[vdim.name]
+                data = data.transpose(transpose[::-1])
+                group_data[vdim.name] = np.squeeze(data)
             grouped_data.append((tuple(unique_key), group_data))
 
-        if issubclass(container_type, NdMapping):
-            with item_check(False):
-                return container_type(grouped_data, kdims=dimensions)
-        else:
-            return container_type(grouped_data)
+        return grouped_data
+
+        # if issubclass(container_type, NdMapping):
+        #     with item_check(False):
+        #         return container_type(grouped_data, kdims=dimensions)
+        # else:
+        #     return container_type(grouped_data)
 
 
     @classmethod
