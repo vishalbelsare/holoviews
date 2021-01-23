@@ -28,7 +28,7 @@ class RoundTripTests(ComparisonTestCase):
 
     datatype = None
 
-    interface = None
+    driver = None
 
     __test__ = False
 
@@ -129,7 +129,7 @@ class SpatialPandasTest(GeomTests, RoundTripTests):
 
     datatype = 'spatialpandas'
 
-    interface = SpatialPandasDriver
+    driver = SpatialPandasDriver
 
     __test__ = True
 
@@ -141,7 +141,7 @@ class SpatialPandasTest(GeomTests, RoundTripTests):
     def test_array_points_iloc_index_rows_index_cols(self):
         arrays = [np.array([(1+i, i), (2+i, i), (3+i, i)]) for i in range(2)]
         mds = Dataset(arrays, kdims=['x', 'y'], datatype=[self.datatype])
-        self.assertIs(mds.interface, self.interface)
+        self.assertIs(mds.interface.driver, self.driver)
         with self.assertRaises(DataError):
             mds.iloc[3, 0]
 

@@ -372,7 +372,7 @@ class PandasDriver(Driver):
         Returns the data of a Dataset as a dataframe avoiding copying
         if it already a dataframe type.
         """
-        if issubclass(dataset.interface, PandasDriver):
+        if issubclass(dataset.interface.driver, PandasDriver):
             return dataset.data
         else:
             return dataset.dframe()

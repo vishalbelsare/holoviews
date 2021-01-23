@@ -9,7 +9,7 @@ import numpy as np
 
 from holoviews.core.dimension import dimension_name
 from holoviews.core.util import isscalar, unique_iterator, pd, unique_array
-from holoviews.core.data.interface import DataError, Driver, TabularInterface
+from holoviews.core.data.interface import DataError, Driver, GeometryInterface
 from .multipath import MultiDriver, ensure_ring
 from .pandas import PandasDriver
 
@@ -50,7 +50,7 @@ class SpatialPandasDriver(MultiDriver):
         return cols[0]
 
     @classmethod
-    def init(cls, data, kdims_spec, vdims_spec, auto_indexable_1d=False, **kwargs):
+    def init(cls, data, kdims_spec, vdims_spec, auto_indexable_1d=False, eltype=None, **kwargs):
         import pandas as pd
         from spatialpandas import GeoDataFrame, GeoSeries
 
@@ -75,8 +75,7 @@ class SpatialPandasDriver(MultiDriver):
             if 'shapely' in sys.modules:
                 data = from_shapely(data)
             if isinstance(data, list):
-                # TODO: eltype is gone
-                data = from_multi(eltype, data, kdims, vdims)
+                data = from_multi(data, kdims, vdims, eltype)
         elif not isinstance(data, GeoDataFrame):
             raise ValueError("SpatialPandasInterface only support spatialpandas DataFrames.")
         elif 'geometry' not in data:
@@ -400,7 +399,7 @@ class SpatialPandasDriver(MultiDriver):
     @classmethod
     def split(cls, dataset, start, end, datatype, **kwargs):
         from spatialpandas import GeoDataFrame, GeoSeries
-        from ...element import Polygons
+        from holoviews import Polygons
 
         objs = []
         if not len(dataset.data):
@@ -689,7 +688,8 @@ def to_spatialpandas(data, xdim, ydim, columns=[], geom='point'):
         Point, Line, Polygon, Ring, LineArray, PolygonArray, PointArray,
         MultiLineArray, MultiPolygonArray, MultiPointArray, RingArray
     )
-    from ...element import Polygons
+    from holoviews import Polygons
+
     poly = any(Polygons._hole_key in d for d in data) or geom == 'Polygon'
     if poly:
         geom_type = Polygon
@@ -789,7 +789,7 @@ def to_spatialpandas(data, xdim, ydim, columns=[], geom='point'):
     return GeoDataFrame(converted, columns=['geometry']+columns)
 
 
-def to_geom_dict(eltype, data, kdims, vdims, interface=None):
+def to_geom_dict(data, kdims, vdims, interface=None):
     """Converts data from any list format to a dictionary based format.
 
     Args:
@@ -801,7 +801,7 @@ def to_geom_dict(eltype, data, kdims, vdims, interface=None):
     Returns:
         A list of dictionaries containing geometry coordinates and values.
     """
-    from . import Dataset
+    from .. import Dataset
 
     xname, yname = (kd.name for kd in kdims[:2])
     if isinstance(data, dict):
@@ -821,7 +821,7 @@ def to_geom_dict(eltype, data, kdims, vdims, interface=None):
     return new_dict
 
 
-def from_multi(eltype, data, kdims, vdims):
+def from_multi(data, kdims, vdims, eltype):
     """Converts list formats into spatialpandas.GeoDataFrame.
 
     Args:
@@ -840,7 +840,7 @@ def from_multi(eltype, data, kdims, vdims):
     new_data, types, geom_types = [], [], []
     for d in data:
         types.append(type(d))
-        new_dict = to_geom_dict(eltype, d, kdims, vdims, SpatialPandasDriver)
+        new_dict = to_geom_dict(d, kdims, vdims, SpatialPandasDriver)
         if 'geom_type' in new_dict and new_dict['geom_type'] not in geom_types:
             geom_types.append(new_dict['geom_type'])
         new_data.append(new_dict)
@@ -855,7 +855,8 @@ def from_multi(eltype, data, kdims, vdims):
         if len(geom_types) == 1:
             geom = geom_types[0]
         else:
-            geom = SpatialPandasDriver.geom_type(eltype)
+            # TODO: eltype removed
+            geom = SpatialPandasDriver.geom_type(eltype) if eltype is not None else None
         data = to_spatialpandas(new_data, xname, yname, columns, geom)
     return data
 
@@ -890,4 +891,4 @@ def from_shapely(data):
 
 
 Driver.register(SpatialPandasDriver)
-TabularInterface.register_driver(SpatialPandasDriver)
+GeometryInterface.register_driver(SpatialPandasDriver)

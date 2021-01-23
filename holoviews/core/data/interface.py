@@ -716,6 +716,14 @@ class TabularInterface(Interface):
         # TODO: Remove after separating dictionary fro geodictionary
         return self.driver.holes(*args, **kwargs)
 
+    def split(self, *args, **kwargs):
+        # TODO: Remove after separating dictionary fro geodictionary
+        return self.driver.split(*args, **kwargs)
+
+    def geom_dims(self, *args, **kwargs):
+        # TODO: Remove after separating dictionary fro geodictionary
+        return self.driver.geom_dims(*args, **kwargs)
+
 class GriddedInterface(Interface):
     kind = "gridded"
 
