@@ -806,3 +806,6 @@ class GeometryInterface(Interface):
 
     def sort(self, *args, **kwargs):
         return self.driver.sort(*args, **kwargs)
+
+    def geom_dims(self, *args, **kwargs):
+        return self.driver.geom_dims(*args, **kwargs)

@@ -402,6 +402,7 @@ class Dataset(Element):
 
         # Process Element data
         if (hasattr(data, 'interface') and isinstance(data.interface, Interface)):
+            eltype = type(data)
             if datatype is None:
                 datatype = [dt for dt in data.datatype if dt in eltype.datatype]
                 if not datatype:
