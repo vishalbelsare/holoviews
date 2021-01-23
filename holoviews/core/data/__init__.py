@@ -45,7 +45,7 @@ default_datatype = 'dataframe'
 # datatypes = ['tabular', 'gridded']
 # datatypes = ['dataframe', 'dictionary', 'grid', 'xarray', 'dask',
 #              'cuDF', 'spatialpandas', 'array', 'multitabular', 'ibis']
-datatypes = Interface.get_datatypes_for_kinds(["tabular", "gridded"])
+datatypes = Interface.get_datatypes_for_kinds(["tabular", "gridded", "geometry"])
 
 
 def concat(datasets, datatype=None):
@@ -402,7 +402,6 @@ class Dataset(Element):
 
         # Process Element data
         if (hasattr(data, 'interface') and isinstance(data.interface, Interface)):
-            eltype = type(data)
             if datatype is None:
                 datatype = [dt for dt in data.datatype if dt in eltype.datatype]
                 if not datatype:
