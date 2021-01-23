@@ -23,7 +23,8 @@ from ..dimension import (
     Dimension, Dimensioned, LabelledData, dimension_name, process_dimensions
 )
 from ..element import Element
-from ..ndmapping import OrderedDict, MultiDimensionalMapping
+from ..ndmapping import OrderedDict, MultiDimensionalMapping, NdMapping, sorted_context, \
+    item_check
 from ..spaces import HoloMap, DynamicMap
 
 # Imports register drivers, so order matters
@@ -1055,6 +1056,7 @@ argument to specify a selection specification""")
         dim_names = [d.name for d in dimensions]
 
         if dynamic:
+            # TODO: Handle Dynamic case when interface returns dict
             group_dims = [kd for kd in self.kdims if kd not in dimensions]
             kdims = [self.get_dimension(d) for d in kwargs.pop('kdims', group_dims)]
             drop_dim = len(group_dims) != len(kdims)
@@ -1074,8 +1076,41 @@ argument to specify a selection specification""")
                             for d in dimensions]
             return DynamicMap(load_subset, kdims=dynamic_dims)
 
-        return self.interface.groupby(self, dim_names, container_type,
-                                      group_type, **kwargs)
+        grouped_data = self.interface.groupby(
+            self, dim_names, **kwargs
+        )
+
+        kdims = [kdim for kdim in self.kdims if kdim not in dimensions]
+        vdims = self.vdims
+
+        # Get group
+        group_kwargs = {}
+        if group_type != 'raw' and issubclass(group_type, Element):
+            group_kwargs.update(util.get_param_values(self))
+            group_kwargs['kdims'] = kdims
+        group_kwargs.update(kwargs)
+
+        # Replace raw group data with group_type objects
+        if not group_type == 'raw':
+            for group in grouped_data:
+                group_data = grouped_data[group]
+                if issubclass(group_type, dict):
+                    group_data = {
+                        d.name: group_data[:, i]
+                        for i, d in enumerate(self.kdims+vdims)
+                    }
+                else:
+                    group_data = group_type(group_data, **group_kwargs)
+
+                grouped_data[group] = group_data
+
+        # Wrap in container type
+        if issubclass(container_type, NdMapping):
+            with item_check(False), sorted_context(False):
+                return container_type(grouped_data, kdims=dimensions)
+        else:
+            return container_type(grouped_data)
+
 
     def transform(self, *args, **kwargs):
         """Transforms the Dataset according to a dimension transform.

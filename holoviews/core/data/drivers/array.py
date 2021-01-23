@@ -1,3 +1,4 @@
+from collections import OrderedDict
 try:
     import itertools.izip as zip
 except ImportError:
@@ -150,15 +151,15 @@ class ArrayDriver(Driver):
 
 
     @classmethod
-    def groupby(cls, dataset, dimensions, container_type, group_type, **kwargs):
+    def groupby(cls, dataset, dimensions):
         data = dataset.data
 
         # Get dimension objects, labels, indexes and data
         dimensions = [dataset.get_dimension(d, strict=True) for d in dimensions]
         dim_idxs = [dataset.get_dimension_index(d) for d in dimensions]
-        kdims = [kdim for kdim in dataset.kdims
-                 if kdim not in dimensions]
-        vdims = dataset.vdims
+        # kdims = [kdim for kdim in dataset.kdims
+        #          if kdim not in dimensions]
+        # vdims = dataset.vdims
 
         # Find unique entries along supplied dimensions
         # by creating a view that treats the selected
@@ -170,12 +171,12 @@ class ArrayDriver(Driver):
         idx.sort()
         unique_indices = indices[idx]
 
-        # Get group
-        group_kwargs = {}
-        if group_type != 'raw' and issubclass(group_type, Element):
-            group_kwargs.update(util.get_param_values(dataset))
-            group_kwargs['kdims'] = kdims
-        group_kwargs.update(kwargs)
+        # # Get group
+        # group_kwargs = {}
+        # if group_type != 'raw' and issubclass(group_type, Element):
+        #     group_kwargs.update(util.get_param_values(dataset))
+        #     group_kwargs['kdims'] = kdims
+        # group_kwargs.update(kwargs)
 
         # Iterate over the unique entries building masks
         # to apply the group selection
@@ -186,19 +187,21 @@ class ArrayDriver(Driver):
             mask = np.logical_and.reduce([data[:, d_idx] == group[i]
                                           for i, d_idx in enumerate(dim_idxs)])
             group_data = data[mask][:, col_idxs]
-            if not group_type == 'raw':
-                if issubclass(group_type, dict):
-                    group_data = {d.name: group_data[:, i] for i, d in
-                                  enumerate(kdims+vdims)}
-                else:
-                    group_data = group_type(group_data, **group_kwargs)
+            # if not group_type == 'raw':
+            #     if issubclass(group_type, dict):
+            #         group_data = {d.name: group_data[:, i] for i, d in
+            #                       enumerate(kdims+vdims)}
+            #     else:
+            #         group_data = group_type(group_data, **group_kwargs)
             grouped_data.append((tuple(group), group_data))
 
-        if issubclass(container_type, NdMapping):
-            with item_check(False), sorted_context(False):
-                return container_type(grouped_data, kdims=dimensions)
-        else:
-            return container_type(grouped_data)
+        return OrderedDict(grouped_data)
+
+        # if issubclass(container_type, NdMapping):
+        #     with item_check(False), sorted_context(False):
+        #         return container_type(grouped_data, kdims=dimensions)
+        # else:
+        #     return container_type(grouped_data)
 
 
     @classmethod
@@ -252,8 +255,9 @@ class ArrayDriver(Driver):
     @classmethod
     def aggregate(cls, dataset, dimensions, function, **kwargs):
         reindexed = dataset.reindex(dimensions)
-        grouped = (cls.groupby(reindexed, dimensions, list, 'raw')
-                   if len(dimensions) else [((), reindexed.data)])
+        grouped = cls.groupby(reindexed, dimensions)
+        # grouped = (cls.groupby(reindexed, dimensions, list, 'raw')
+        #            if len(dimensions) else [((), reindexed.data)])
 
         rows = []
         for k, group in grouped:
