@@ -82,6 +82,9 @@ class Path(SelectionPolyExpr, Geometry):
 
         super(Path, self).__init__(data, kdims=kdims, vdims=vdims, **params)
 
+    @classmethod
+    def _interface_opts(cls):
+        return {"eltype": cls}
 
     def __getitem__(self, key):
         if isinstance(key, np.ndarray):
