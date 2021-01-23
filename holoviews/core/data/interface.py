@@ -9,7 +9,6 @@ import param
 import numpy as np
 
 from .. import util
-from ..element import Element
 from ..ndmapping import NdMapping
 
 
@@ -328,15 +327,39 @@ class Driver(param.Parameterized):
 
     @classmethod
     def array(cls, dataset, dimensions):
-        return Element.array(dataset, dimensions)
+        if dimensions is None:
+            dims = [d for d in dataset.kdims + dataset.vdims]
+        else:
+            dims = [dataset.get_dimension(d, strict=True) for d in dimensions]
+
+        columns, types = [], []
+        for dim in dims:
+            column = dataset.dimension_values(dim)
+            columns.append(column)
+            types.append(column.dtype.kind)
+        if len(set(types)) > 1:
+            columns = [c.astype('object') for c in columns]
+        return np.column_stack(columns)
 
     @classmethod
     def dframe(cls, dataset, dimensions):
-        return Element.dframe(dataset, dimensions)
+        import pandas as pd
+        if dimensions is None:
+            dimensions = [d.name for d in dataset.dimensions()]
+        else:
+            dimensions = [dataset.get_dimension(d, strict=True).name for d in dimensions]
+        column_names = dimensions
+        dim_vals = OrderedDict([(dim, dataset.dimension_values(dim)) for dim in column_names])
+        df = pd.DataFrame(dim_vals)
+        return df
 
     @classmethod
     def columns(cls, dataset, dimensions):
-        return Element.columns(dataset, dimensions)
+        if dimensions is None:
+            dimensions = dataset.dimensions()
+        else:
+            dimensions = [dataset.get_dimension(d, strict=True) for d in dimensions]
+        return OrderedDict([(d.name, dataset.dimension_values(d)) for d in dimensions])
 
     @classmethod
     def shape(cls, dataset, **kwargs):
