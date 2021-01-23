@@ -169,21 +169,10 @@ class DaskDriver(PandasDriver):
         return df
 
     @classmethod
-    def groupby(cls, dataset, dimensions, container_type, group_type, **kwargs):
+    def groupby(cls, dataset, dimensions):
         index_dims = [dataset.get_dimension(d) for d in dimensions]
-        element_dims = [kdim for kdim in dataset.kdims
-                        if kdim not in index_dims]
 
-        group_kwargs = {}
-        if group_type != 'raw' and issubclass(group_type, Element):
-            group_kwargs = dict(util.get_param_values(dataset),
-                                kdims=element_dims)
-        group_kwargs.update(kwargs)
-
-        # Propagate dataset
-        group_kwargs['dataset'] = dataset.dataset
-
-        data = []
+        grouped_data = []
         group_by = [d.name for d in index_dims]
         groupby = dataset.data.groupby(group_by)
         if len(group_by) == 1:
@@ -201,15 +190,13 @@ class DaskDriver(PandasDriver):
         for coord in indices:
             if any(isinstance(c, float) and np.isnan(c) for c in coord):
                 continue
+
             if len(coord) == 1:
                 coord = coord[0]
-            group = group_type(groupby.get_group(coord), **group_kwargs)
-            data.append((coord, group))
-        if issubclass(container_type, NdMapping):
-            with item_check(False), sorted_context(False):
-                return container_type(data, kdims=index_dims)
-        else:
-            return container_type(data)
+            group = groupby.get_group(coord)
+            grouped_data.append((coord, group))
+
+        return grouped_data
 
     @classmethod
     def aggregate(cls, dataset, dimensions, function, **kwargs):

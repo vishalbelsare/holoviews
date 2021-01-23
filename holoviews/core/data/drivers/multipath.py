@@ -295,6 +295,10 @@ class MultiDriver(Driver):
             group_data = cls.select(
                 dataset, **{d.name: val for d, val in zip(dimensions, unique_key)}
             )
+
+            if len(unique_key) == 1:
+                unique_key = unique_key[0]
+
             grouped_data.append((unique_key, group_data))
 
         return grouped_data

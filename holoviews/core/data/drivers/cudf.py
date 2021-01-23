@@ -150,41 +150,42 @@ class cuDFDriver(PandasDriver):
         except Exception:
             return data.values_host
 
-    @classmethod
-    def groupby(cls, dataset, dimensions, container_type, group_type, **kwargs):
-        # Get dimensions information
-        dimensions = [dataset.get_dimension(d).name for d in dimensions]
-        kdims = [kdim for kdim in dataset.kdims if kdim not in dimensions]
-
-        # Update the kwargs appropriately for Element group types
-        group_kwargs = {}
-        group_type = dict if group_type == 'raw' else group_type
-        if issubclass(group_type, Element):
-            group_kwargs.update(util.get_param_values(dataset))
-            group_kwargs['kdims'] = kdims
-        group_kwargs.update(kwargs)
-
-        # Propagate dataset
-        group_kwargs['dataset'] = dataset.dataset
-
-        # Find all the keys along supplied dimensions
-        keys = product(*(dataset.data[dimensions[0]].unique().values_host for d in dimensions))
-
-        # Iterate over the unique entries applying selection masks
-        grouped_data = []
-        for unique_key in util.unique_iterator(keys):
-            group_data = dataset.select(**dict(zip(dimensions, unique_key)))
-            if not len(group_data):
-                continue
-            group_data = group_type(group_data, **group_kwargs)
-            grouped_data.append((unique_key, group_data))
-
-        if issubclass(container_type, NdMapping):
-            with item_check(False), sorted_context(False):
-                kdims = [dataset.get_dimension(d) for d in dimensions]
-                return container_type(grouped_data, kdims=kdims)
-        else:
-            return container_type(grouped_data)
+    # TODO: parent should be enough here
+    # @classmethod
+    # def groupby(cls, dataset, dimensions, container_type, group_type, **kwargs):
+    #     # Get dimensions information
+    #     dimensions = [dataset.get_dimension(d).name for d in dimensions]
+    #     kdims = [kdim for kdim in dataset.kdims if kdim not in dimensions]
+    #
+    #     # Update the kwargs appropriately for Element group types
+    #     group_kwargs = {}
+    #     group_type = dict if group_type == 'raw' else group_type
+    #     if issubclass(group_type, Element):
+    #         group_kwargs.update(util.get_param_values(dataset))
+    #         group_kwargs['kdims'] = kdims
+    #     group_kwargs.update(kwargs)
+    #
+    #     # Propagate dataset
+    #     group_kwargs['dataset'] = dataset.dataset
+    #
+    #     # Find all the keys along supplied dimensions
+    #     keys = product(*(dataset.data[dimensions[0]].unique().values_host for d in dimensions))
+    #
+    #     # Iterate over the unique entries applying selection masks
+    #     grouped_data = []
+    #     for unique_key in util.unique_iterator(keys):
+    #         group_data = dataset.select(**dict(zip(dimensions, unique_key)))
+    #         if not len(group_data):
+    #             continue
+    #         group_data = group_type(group_data, **group_kwargs)
+    #         grouped_data.append((unique_key, group_data))
+    #
+    #     if issubclass(container_type, NdMapping):
+    #         with item_check(False), sorted_context(False):
+    #             kdims = [dataset.get_dimension(d) for d in dimensions]
+    #             return container_type(grouped_data, kdims=kdims)
+    #     else:
+    #         return container_type(grouped_data)
 
 
     @classmethod

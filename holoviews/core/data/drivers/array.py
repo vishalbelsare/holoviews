@@ -187,13 +187,12 @@ class ArrayDriver(Driver):
             mask = np.logical_and.reduce([data[:, d_idx] == group[i]
                                           for i, d_idx in enumerate(dim_idxs)])
             group_data = data[mask][:, col_idxs]
-            # if not group_type == 'raw':
-            #     if issubclass(group_type, dict):
-            #         group_data = {d.name: group_data[:, i] for i, d in
-            #                       enumerate(kdims+vdims)}
-            #     else:
-            #         group_data = group_type(group_data, **group_kwargs)
-            grouped_data.append((tuple(group), group_data))
+
+            group = tuple(group)
+            if len(group) == 1:
+                group = group[0]
+
+            grouped_data.append((group, group_data))
 
         # return OrderedDict(grouped_data)
         return grouped_data
