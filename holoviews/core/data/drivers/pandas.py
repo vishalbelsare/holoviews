@@ -10,9 +10,7 @@ import pandas as pd
 
 from holoviews.core.data.interface import Driver, DataError, TabularInterface
 from holoviews.core.dimension import dimension_name
-from holoviews.core.element import Element
 from holoviews.core.dimension import OrderedDict as cyODict
-from holoviews.core.ndmapping import NdMapping, item_check, sorted_context
 from holoviews.core import util
 
 
@@ -202,31 +200,12 @@ class PandasDriver(Driver):
             dataframes.append(data)
         return cls.concat_fn(dataframes)
 
-
     @classmethod
-    def groupby(cls, dataset, dimensions, container_type, group_type, **kwargs):
+    def groupby(cls, dataset, dimensions):
         index_dims = [dataset.get_dimension(d, strict=True) for d in dimensions]
-        element_dims = [kdim for kdim in dataset.kdims
-                        if kdim not in index_dims]
-
-        group_kwargs = {}
-        if group_type != 'raw' and issubclass(group_type, Element):
-            group_kwargs = dict(util.get_param_values(dataset),
-                                kdims=element_dims)
-        group_kwargs.update(kwargs)
-
-        # Propagate dataset
-        group_kwargs['dataset'] = dataset.dataset
-
         group_by = [d.name for d in index_dims]
-        data = [(k, group_type(v, **group_kwargs)) for k, v in
-                dataset.data.groupby(group_by, sort=False)]
-        if issubclass(container_type, NdMapping):
-            with item_check(False), sorted_context(False):
-                return container_type(data, kdims=index_dims)
-        else:
-            return container_type(data)
-
+        grouped_data = [(k, v) for k, v in dataset.data.groupby(group_by, sort=False)]
+        return grouped_data
 
     @classmethod
     def aggregate(cls, dataset, dimensions, function, **kwargs):

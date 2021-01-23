@@ -269,20 +269,9 @@ class MultiDriver(Driver):
         raise NotImplementedError('Aggregation currently not implemented')
 
     @classmethod
-    def groupby(cls, dataset, dimensions, container_type, group_type, **kwargs):
-        from .. import Dataset
-
+    def groupby(cls, dataset, dimensions):
         # Get dimensions information
         dimensions = [dataset.get_dimension(d) for d in dimensions]
-        kdims = [kdim for kdim in dataset.kdims if kdim not in dimensions]
-
-        # Update the kwargs appropriately for Element group types
-        group_kwargs = {}
-        group_type = list if group_type == 'raw' else group_type
-        if issubclass(group_type, Element):
-            group_kwargs.update(util.get_param_values(dataset))
-            group_kwargs['kdims'] = kdims
-        group_kwargs.update(kwargs)
 
         # Find all the keys along supplied dimensions
         values = []
@@ -291,25 +280,24 @@ class MultiDriver(Driver):
                 raise ValueError('MultiInterface can only apply groupby '
                                  'on scalar dimensions, %s dimension '
                                  'is not scalar' % d)
-            vals = cls.values(dataset, d, False, True)
+            vals = np.concatenate(cls.values(dataset, d, False, True))
             values.append(vals)
         values = tuple(values)
 
         # Iterate over the unique entries applying selection masks
-        ds = Dataset(values, dimensions)
+        # ds = Dataset(values, dimensions)
         keys = (tuple(vals[i] for vals in values) for i in range(len(vals)))
         grouped_data = []
         for unique_key in util.unique_iterator(keys):
-            mask = ds.interface.select_mask(ds, dict(zip(dimensions, unique_key)))
-            selection = [data for data, m in zip(dataset.data, mask) if m]
-            group_data = group_type(selection, **group_kwargs)
+            # mask = cls.select_mask(dataset, dict(zip(dimensions, unique_key)))
+            # group_data = [data for data, m in zip(dataset.data, mask) if m]
+
+            group_data = cls.select(
+                dataset, **{d.name: val for d, val in zip(dimensions, unique_key)}
+            )
             grouped_data.append((unique_key, group_data))
 
-        if issubclass(container_type, NdMapping):
-            with item_check(False), sorted_context(False):
-                return container_type(grouped_data, kdims=dimensions)
-        else:
-            return container_type(grouped_data)
+        return grouped_data
 
     @classmethod
     def sample(cls, dataset, samples=[]):

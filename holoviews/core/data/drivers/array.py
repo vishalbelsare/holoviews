@@ -195,7 +195,8 @@ class ArrayDriver(Driver):
             #         group_data = group_type(group_data, **group_kwargs)
             grouped_data.append((tuple(group), group_data))
 
-        return OrderedDict(grouped_data)
+        # return OrderedDict(grouped_data)
+        return grouped_data
 
         # if issubclass(container_type, NdMapping):
         #     with item_check(False), sorted_context(False):
@@ -255,12 +256,11 @@ class ArrayDriver(Driver):
     @classmethod
     def aggregate(cls, dataset, dimensions, function, **kwargs):
         reindexed = dataset.reindex(dimensions)
-        grouped = cls.groupby(reindexed, dimensions)
-        # grouped = (cls.groupby(reindexed, dimensions, list, 'raw')
-        #            if len(dimensions) else [((), reindexed.data)])
+        grouped = (cls.groupby(reindexed, dimensions)
+                   if len(dimensions) else [((), reindexed.data)])
 
         rows = []
-        for k, group in grouped:
+        for k, group in list(grouped):
             if isinstance(function, np.ufunc):
                 reduced = function.reduce(group, axis=0, **kwargs)
             else:

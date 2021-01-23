@@ -245,12 +245,12 @@ class SpatialPandasDriver(MultiDriver):
             return Driver.range(dataset, dim)
 
     @classmethod
-    def groupby(cls, dataset, dimensions, container_type, group_type, **kwargs):
+    def groupby(cls, dataset, dimensions):
         geo_dims = cls.geom_dims(dataset)
         if any(d in geo_dims for d in dimensions):
             raise DataError("SpatialPandasInterface does not allow grouping "
                             "by geometry dimension.", cls)
-        return PandasDriver.groupby(dataset, dimensions, container_type, group_type, **kwargs)
+        return PandasDriver.groupby(dataset, dimensions)
 
     @classmethod
     def aggregate(cls, columns, dimensions, function, **kwargs):

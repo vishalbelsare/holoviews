@@ -1076,9 +1076,7 @@ argument to specify a selection specification""")
                             for d in dimensions]
             return DynamicMap(load_subset, kdims=dynamic_dims)
 
-        grouped_data = self.interface.groupby(
-            self, dim_names, **kwargs
-        )
+        grouped_data = self.interface.groupby(self, dim_names)
 
         kdims = [kdim for kdim in self.kdims if kdim not in dimensions]
         vdims = self.vdims
@@ -1089,6 +1087,9 @@ argument to specify a selection specification""")
             group_kwargs.update(util.get_param_values(self))
             group_kwargs['kdims'] = kdims
         group_kwargs.update(kwargs)
+
+        # Propagate dataset
+        group_kwargs['dataset'] = self.dataset
 
         # Replace raw group data with group_type objects
         if not group_type == 'raw':

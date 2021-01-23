@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 import sys
 import warnings
+from collections import OrderedDict
 
 import six
 import param
@@ -484,6 +485,9 @@ class Interface(param.Parameterized):
 
     name = param.String(default=None)
 
+    kdims_spec = param.Dict()
+    vdims_spec = param.Dict()
+
     drivers_by_kind = {}
     drivers_by_datatype = {}
     datatypes_by_kind = {}
@@ -493,9 +497,9 @@ class Interface(param.Parameterized):
         super(Interface, self).__init__(**params)
         self.driver = driver
 
-    # @property
-    # def interface_opts(self):
-    #     return {p: getattr(self, p) for p in self.param.objects()}
+    @property
+    def interface_opts(self):
+        return {p: getattr(self, p) for p in self.param.objects()}
 
     @classmethod
     def get_datatypes_for_kinds(cls, kinds):
@@ -565,7 +569,10 @@ class Interface(param.Parameterized):
                 (data, dims, extra_kws) = driver_cls.init(
                     data, kdims_spec, vdims_spec, **interface_opts
                 )
-                interface = interface_cls(driver_cls, **interface_opts)
+                interface = interface_cls(
+                    driver_cls, kdims_spec=kdims_spec, vdims_spec=vdims_spec,
+                    **interface_opts
+                )
                 return data, interface, dims, extra_kws
             except DataError:
                 pass
@@ -706,8 +713,9 @@ class TabularInterface(Interface):
     def select(self, *args, **kwargs):
         return self.driver.select(*args, **kwargs)
 
-    def groupby(self, *args, **kwargs):
-        return self.driver.groupby(*args, **kwargs)
+    def groupby(self, dataset, *args, **kwargs):
+        grouped_list = self.driver.groupby(dataset, *args, **kwargs)
+        return OrderedDict(grouped_list)
 
     def reindex(self, *args, **kwargs):
         return self.driver.reindex(*args, **kwargs)
@@ -758,8 +766,9 @@ class GriddedInterface(Interface):
     def select(self, *args, **kwargs):
         return self.driver.select(*args, **kwargs)
 
-    def groupby(self, *args, **kwargs):
-        return self.driver.groupby(*args, **kwargs)
+    def groupby(self, dataset, *args, **kwargs):
+        grouped_list = self.driver.groupby(dataset, *args, **kwargs)
+        return OrderedDict(grouped_list)
 
     def reindex(self, *args, **kwargs):
         return self.driver.reindex(*args, **kwargs)
@@ -841,7 +850,8 @@ class GeometryInterface(Interface):
         return self.driver.add_dimension(dataset, *args, **kwargs)
 
     def groupby(self, dataset, *args, **kwargs):
-        return self.driver.groupby(dataset, *args, **kwargs)
+        grouped_list = self.driver.groupby(dataset, *args, **kwargs)
+        return OrderedDict(grouped_list)
 
     def iloc(self, dataset, index):
         return self.driver.iloc(dataset, index, geom_type=self.geom_type)
