@@ -50,7 +50,7 @@ class SpatialPandasDriver(MultiDriver):
         return cols[0]
 
     @classmethod
-    def init(cls, data, kdims_spec, vdims_spec, auto_indexable_1d=False, eltype=None, **kwargs):
+    def init(cls, data, kdims_spec, vdims_spec, auto_indexable_1d=False, geom_type=None, **kwargs):
         import pandas as pd
         from spatialpandas import GeoDataFrame, GeoSeries
 
@@ -75,7 +75,7 @@ class SpatialPandasDriver(MultiDriver):
             if 'shapely' in sys.modules:
                 data = from_shapely(data)
             if isinstance(data, list):
-                data = from_multi(data, kdims, vdims, eltype)
+                data = from_multi(data, kdims, vdims, geom_type)
         elif not isinstance(data, GeoDataFrame):
             raise ValueError("SpatialPandasInterface only support spatialpandas DataFrames.")
         elif 'geometry' not in data:
@@ -793,7 +793,6 @@ def to_geom_dict(data, kdims, vdims, interface=None):
     """Converts data from any list format to a dictionary based format.
 
     Args:
-        eltype: Element type to convert
         data: The original data
         kdims: The declared key dimensions
         vdims: The declared value dimensions
@@ -821,11 +820,11 @@ def to_geom_dict(data, kdims, vdims, interface=None):
     return new_dict
 
 
-def from_multi(data, kdims, vdims, eltype):
+def from_multi(data, kdims, vdims, geom_type):
     """Converts list formats into spatialpandas.GeoDataFrame.
 
     Args:
-        eltype: Element type to convert
+        geom_type: Geometry type string
         data: The original data
         kdims: The declared key dimensions
         vdims: The declared value dimensions
@@ -855,8 +854,7 @@ def from_multi(data, kdims, vdims, eltype):
         if len(geom_types) == 1:
             geom = geom_types[0]
         else:
-            # TODO: eltype removed
-            geom = SpatialPandasDriver.geom_type(eltype) if eltype is not None else None
+            geom = geom_type if geom_type is not None else None
         data = to_spatialpandas(new_data, xname, yname, columns, geom)
     return data
 

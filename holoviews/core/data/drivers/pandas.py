@@ -29,7 +29,7 @@ class PandasDriver(Driver):
         return dataset.data.dtypes[idx].type
 
     @classmethod
-    def init(cls, data, kdims_spec, vdims_spec, auto_indexable_1d=False, **kwargs):
+    def init(cls, data, kdims_spec, vdims_spec, auto_indexable_1d=False, name=None, **kwargs):
 
         kdims, vdims = kdims_spec["value"], vdims_spec["value"]
 
@@ -128,7 +128,7 @@ class PandasDriver(Driver):
                 elif len(data) < min_dims:
                     raise DataError('Data contains fewer columns than the %s element expects. Expected '
                                     'at least %d columns but found only %d columns.' %
-                                    (eltype.__name__, min_dims, len(data)))
+                                    (name, min_dims, len(data)))
                 elif not cls.expanded(data):
                     raise ValueError('PandasInterface expects data to be of uniform shape.')
                 data = pd.DataFrame(dict(zip(columns, data)), columns=columns)

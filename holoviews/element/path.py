@@ -58,6 +58,8 @@ class Path(SelectionPolyExpr, Geometry):
 
     datatype = param.ObjectSelector(default=Interface.get_datatypes_for_kinds(['geometry']))
 
+    _geom_type = "Line"
+
     def __init__(self, data, kdims=None, vdims=None, **params):
         if isinstance(data, tuple) and len(data) == 2:
             # Add support for (x, ys) where ys defines multiple paths
@@ -84,7 +86,7 @@ class Path(SelectionPolyExpr, Geometry):
 
     @classmethod
     def _interface_opts(cls):
-        return {"eltype": cls}
+        return {"geom_type": cls._geom_type}
 
     def __getitem__(self, key):
         if isinstance(key, np.ndarray):
@@ -333,6 +335,8 @@ class Polygons(Contours):
 
     # Defines which key the DictInterface uses to look for holes
     _hole_key = 'holes'
+
+    _geom_type = "Polygon"
 
     @property
     def has_holes(self):

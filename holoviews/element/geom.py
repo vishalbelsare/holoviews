@@ -37,6 +37,12 @@ class Points(Selection2DExpr, Geometry):
 
     _auto_indexable_1d = True
 
+    _geom_type = "Point"
+
+    @classmethod
+    def _interface_opts(cls):
+        return {"geom_type": cls._geom_type}
+
 
 class VectorField(Selection2DExpr, Geometry):
     """

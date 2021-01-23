@@ -31,7 +31,7 @@ class MultiDriver(Driver):
     multi = True
 
     @classmethod
-    def init(cls, data, kdims_spec, vdims_spec, auto_indexable_1d=False, eltype=None, **kwargs):
+    def init(cls, data, kdims_spec, vdims_spec, auto_indexable_1d=False, geom_type=None, **kwargs):
         from holoviews.element import Path, Polygons
 
         kdims = kdims_spec["value"]
@@ -50,8 +50,7 @@ class MultiDriver(Driver):
         elif not isinstance(data, list):
             interface = [Driver.interfaces.get(st).applies(data)
                          for st in cls.subtypes if st in Interface.drivers_by_datatype]
-            # TODO: remove eltype here
-            if (interface or isinstance(data, tuple)) and issubclass(eltype, Path):
+            if (interface or isinstance(data, tuple) and geom_type in ("Line", "Polygon")):
                 data = [data]
             else:
                 raise ValueError('MultiInterface data must be a list of tabular data types.')
@@ -100,7 +99,7 @@ class MultiDriver(Driver):
 
             # Build interface, searching for appropriate driver
             d, driver, dims, _ = Driver.initialize(
-                eltype, d, kdims, vdims, datatype=drivers
+                d, kdims, vdims, datatype=drivers
             )
 
             if prev_driver:
@@ -140,20 +139,20 @@ class MultiDriver(Driver):
     def geom_type(cls, dataset):
         from holoviews.element import Polygons, Path, Points
         if isinstance(dataset, type):
-            eltype = dataset
+            dstype = dataset
         else:
-            eltype = type(dataset)
+            dstype = type(dataset)
             if isinstance(dataset.data, list):
                 ds = cls._inner_dataset_template(dataset)
                 if hasattr(ds.interface, 'geom_type'):
                     geom_type = ds.interface.geom_type(ds)
                     if geom_type is not None:
                         return geom_type
-        if issubclass(eltype, Polygons):
+        if issubclass(dstype, Polygons):
             return 'Polygon'
-        elif issubclass(eltype, Path):
+        elif issubclass(dstype, Path):
             return 'Line'
-        elif issubclass(eltype, Points):
+        elif issubclass(dstype, Points):
             return 'Point'
 
     @classmethod

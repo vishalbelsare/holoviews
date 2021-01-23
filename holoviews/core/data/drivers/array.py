@@ -63,11 +63,6 @@ class ArrayDriver(Driver):
             except:
                 data = None
 
-        # if kdims is None:
-        #     kdims = eltype.kdims
-        # if vdims is None:
-        #     vdims = eltype.vdims
-
         if data is None or data.ndim > 2 or data.dtype.kind in ['S', 'U', 'O']:
             raise ValueError("ArrayInterface interface could not handle input type.")
         elif data.ndim == 1:
