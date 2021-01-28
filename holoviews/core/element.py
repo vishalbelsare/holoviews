@@ -1,15 +1,17 @@
 from itertools import groupby
+from collections import OrderedDict
 import numpy as np
 
 import param
 
-from .dimension import Dimensioned, ViewableElement, asdim
+from .dimension import ViewableElement
+from holodata.dimension import asdim, Dimensioned
 from .layout import Composable, Layout, NdLayout
-from .ndmapping import OrderedDict, NdMapping
+from holodata.ndmapping import NdMapping
 from .overlay import Overlayable, NdOverlay, CompositeOverlay
 from .spaces import HoloMap, GridSpace
 from .tree import AttrTree
-from .util import get_param_values
+from holodata.util import get_param_values
 
 
 class Element(ViewableElement, Composable, Overlayable):

@@ -7,11 +7,11 @@ from collections import OrderedDict
 
 import numpy as np
 
-from holoviews.core import util
-from holoviews.core.dimension import Dimension, asdim, dimension_name
+
+from holodata.dimension import asdim, dimension_name, Dimension
+from holodata.interface import dask_array_module, DataError, Driver, GriddedInterface
 from .grid import GridDriver
-from holoviews.core.data.interface import Driver, DataError, dask_array_module, \
-    GriddedInterface
+from holodata import util
 
 
 def is_cupy(array):

@@ -7,9 +7,9 @@ try:
 except:
     raise SkipTest("Could not import pandas, skipping PandasInterface tests.")
 
-from holoviews.core.dimension import Dimension
+from holodata.dimension import Dimension
 from holoviews.core.data import Dataset
-from holoviews.core.data.interface import DataError
+from holodata.interface import DataError
 from holoviews.core.spaces import HoloMap
 from holoviews.element import Scatter, Points, Distribution
 

@@ -15,8 +15,9 @@ from ..core.options import (Store, StoreOptions, SkipRendering,
                             AbbreviatedException)
 from ..core import (
     ViewableElement, HoloMap, AdjointLayout, NdLayout, GridSpace,
-    Layout, CompositeOverlay, DynamicMap, Dimensioned
+    Layout, CompositeOverlay, DynamicMap
 )
+from holodata.dimension import Dimensioned
 from ..core.traversal import unique_dimkeys
 from ..core.io import FileArchive
 from ..core.util import mimebundle_to_html
@@ -209,7 +210,7 @@ def map_display(vmap, max_frames):
 @display_hook
 def layout_display(layout, max_frames):
     if isinstance(layout, AdjointLayout):
-        layout = Layout(layout).opts(layout.opts.get('plot')) 
+        layout = Layout(layout).opts(layout.opts.get('plot'))
     if not isinstance(layout, (Layout, NdLayout)): return None
 
     nframes = len(unique_dimkeys(layout)[1])

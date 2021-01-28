@@ -1,4 +1,5 @@
 from collections import OrderedDict, defaultdict
+
 try:
     import itertools.izip as zip
 except ImportError:
@@ -6,11 +7,10 @@ except ImportError:
 
 import numpy as np
 
-from holoviews.core.data.interface import Driver, DataError, TabularInterface
-from holoviews.core.dimension import dimension_name
-from holoviews.core.dimension import OrderedDict as cyODict
-from holoviews.core.util import isscalar
-from holoviews.core import util
+from holodata.interface import DataError, Driver, TabularInterface
+from holodata.dimension import dimension_name
+from holodata import util
+from holodata.util import isscalar
 
 
 
@@ -21,7 +21,7 @@ class DictDriver(Driver):
     are collections representing the values in that column.
     """
 
-    types = (dict, OrderedDict, cyODict)
+    types = (dict, OrderedDict)
 
     datatype = 'dictionary'
 
@@ -34,7 +34,7 @@ class DictDriver(Driver):
 
     @classmethod
     def init(cls, data, kdims_spec, vdims_spec, auto_indexable_1d=False, **kwargs):
-        odict_types = (OrderedDict, cyODict)
+        odict_types = (OrderedDict,)
 
         kdims = kdims_spec["value"]
         kdims = kdims if kdims is not None else kdims_spec["default"]
@@ -68,7 +68,7 @@ class DictDriver(Driver):
                 data = {dimensions[0]: data}
         elif (isinstance(data, list) and isinstance(data[0], tuple) and len(data[0]) == 2
               and any(isinstance(v, tuple) for v in data[0])):
-            dict_data = zip(*((util.wrap_tuple(k)+util.wrap_tuple(v))
+            dict_data = zip(*((util.wrap_tuple(k) + util.wrap_tuple(v))
                               for k, v in data))
             data = {k: np.array(v) for k, v in zip(dimensions, dict_data)}
         # Ensure that interface does not consume data of other types
@@ -82,11 +82,12 @@ class DictDriver(Driver):
             # e.g. {('A', 'B'): (1, 2)} (should consider deprecating)
             dict_data = sorted(data.items())
             k, v = dict_data[0]
-            if len(util.wrap_tuple(k)) != len(kdims) or len(util.wrap_tuple(v)) != len(vdims):
+            if len(util.wrap_tuple(k)) != len(kdims) or len(
+                   util.wrap_tuple(v)) != len(vdims):
                 raise ValueError("Dictionary data not understood, should contain a column "
                                  "per dimension or a mapping between key and value dimension "
                                  "values.")
-            dict_data = zip(*((util.wrap_tuple(k)+util.wrap_tuple(v))
+            dict_data = zip(*((util.wrap_tuple(k) + util.wrap_tuple(v))
                               for k, v in dict_data))
             data = {k: np.array(v) for k, v in zip(dimensions, dict_data)}
 

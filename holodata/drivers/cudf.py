@@ -8,14 +8,13 @@ try:
 except ImportError:
     pass
 
-from itertools import product
-
 import numpy as np
 
-from holoviews.core import util
-from holoviews.core.dimension import dimension_name
-from holoviews.core.data.interface import DataError, Driver, TabularInterface
+from holodata import util
+from holodata.dimension import dimension_name
+from holodata.interface import DataError, Driver, TabularInterface
 from .pandas import PandasDriver
+
 
 
 class cuDFDriver(PandasDriver):
@@ -199,7 +198,7 @@ class cuDFDriver(PandasDriver):
             if isinstance(sel, tuple):
                 sel = slice(*sel)
             arr = cls.values(dataset, dim, keep_index=True)
-            if util.isdatetime(arr) and util.pd:
+            if util.isdatetime(arr):
                 try:
                     sel = util.parse_datetime_selection(sel)
                 except:
@@ -268,6 +267,7 @@ class cuDFDriver(PandasDriver):
 
     @classmethod
     def aggregate(cls, dataset, dimensions, function, **kwargs):
+        import pandas as pd
         data = dataset.data
         cols = [d.name for d in dataset.kdims if d in dimensions]
         vdims = dataset.dimensions('value', label='name')
@@ -287,7 +287,7 @@ class cuDFDriver(PandasDriver):
                 raise ValueError('%s aggregation is not supported on cudf DataFrame.' % agg)
             agg = getattr(reindexed, agg)()
             data = dict(((col, [v]) for col, v in zip(agg.index.values_host, agg.to_array())))
-            df = util.pd.DataFrame(data, columns=list(agg.index.values_host))
+            df = pd.DataFrame(data, columns=list(agg.index.values_host))
 
         dropped = []
         for vd in vdims:

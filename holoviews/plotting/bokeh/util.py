@@ -39,12 +39,13 @@ try:
 except:
     Chart = type(None) # Create stub for isinstance check
 
-from ...core.ndmapping import NdMapping
+from holodata.ndmapping import NdMapping
 from ...core.overlay import Overlay
 from ...core.util import (
     LooseVersion, _getargspec, basestring, callable_name, cftime_types,
-    cftime_to_timestamp, pd, unique_array, isnumeric, arraylike_types
+    pd, arraylike_types
 )
+from holodata.util import unique_array, cftime_to_timestamp, isnumeric
 from ...core.spaces import get_nested_dmaps, DynamicMap
 from ..util import dim_axis_label
 

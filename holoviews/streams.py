@@ -15,8 +15,9 @@ from types import FunctionType
 import param
 import numpy as np
 
+import holodata.util
 from .core import util
-from .core.ndmapping import UniformNdMapping
+from holodata.ndmapping import UniformNdMapping
 
 # Types supported by Pointer derived streams
 pointer_types = (Number, util.basestring, tuple)+util.datetime_types
@@ -163,8 +164,8 @@ class Stream(param.Parameterized):
             for precedence, subscriber in stream._subscribers:
                 subscriber_precedence[precedence].append(subscriber)
         sorted_subscribers = sorted(subscriber_precedence.items(), key=lambda x: x[0])
-        subscribers = util.unique_iterator([s for _, subscribers in sorted_subscribers
-                                            for s in subscribers])
+        subscribers = holodata.util.unique_iterator([s for _, subscribers in sorted_subscribers
+                                                     for s in subscribers])
 
         with triggering_streams(streams):
             for subscriber in subscribers:
@@ -343,7 +344,7 @@ class Stream(param.Parameterized):
         same name. Returns a new clone of the stream instance with the
         specified name mapping.
         """
-        params = {k: v for k, v in self.param.get_param_values() if k != 'name'}
+        params = {k: v for k, v in holodata.util.get_param_values() if k != 'name'}
         return self.__class__(rename=mapping,
                               source=(self._source() if self._source else None),
                               linked=self.linked, **params)
@@ -384,7 +385,7 @@ class Stream(param.Parameterized):
 
     @property
     def contents(self):
-        filtered = {k: v for k, v in self.param.get_param_values() if k != 'name'}
+        filtered = {k: v for k, v in holodata.util.get_param_values() if k != 'name'}
         return {self._rename.get(k, k): v for (k, v) in filtered.items()
                 if self._rename.get(k, True) is not None}
 
@@ -432,7 +433,7 @@ class Stream(param.Parameterized):
     def __repr__(self):
         cls_name = self.__class__.__name__
         kwargs = ','.join('%s=%r' % (k, v)
-                          for (k, v) in self.param.get_param_values() if k != 'name')
+                          for (k, v) in holodata.util.get_param_values() if k != 'name')
         if not self._rename:
             return '%s(%s)' % (cls_name, kwargs)
         else:

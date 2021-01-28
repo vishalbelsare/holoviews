@@ -13,6 +13,7 @@ import param
 
 from param.parameterized import add_metaclass
 
+import holodata.dimension
 from . import util
 from .pprint import PrettyPrinter
 
@@ -29,7 +30,8 @@ class AccessorPipelineMeta(type):
     def pipelined(mcs, __call__):
         def pipelined_call(*args, **kwargs):
             from ..operation.element import method as method_op, factory
-            from .data import Dataset, MultiDimensionalMapping
+            from .data import Dataset
+            from holodata.ndmapping import MultiDimensionalMapping
             inst = args[0]
 
             if not hasattr(inst._obj, '_pipeline'):
@@ -316,7 +318,7 @@ class Redim(object):
         Returns:
             list: List of dimensions with replacements applied
         """
-        from .dimension import Dimension
+        from holodata.dimension import Dimension
 
         replaced = []
         for d in dimensions:
@@ -364,7 +366,7 @@ class Redim(object):
         return dimension
 
     def _create_expression_transform(self, kdims, vdims, exclude=[]):
-        from .dimension import dimension_name
+        from holodata.dimension import dimension_name
         from ..util.transform import dim
 
         def _transform_expression(expression):
@@ -405,7 +407,7 @@ class Redim(object):
         obj = self._obj
         redimmed = obj
         if obj._deep_indexable and self.mode != 'dataset':
-            deep_mapped = [(k, v.redim(specs, **dimensions))
+            deep_mapped = [(k, holodata.dimension.redim(specs, **dimensions))
                            for k, v in obj.items()]
             redimmed = obj.clone(deep_mapped)
 
@@ -439,7 +441,7 @@ class Redim(object):
 
         from ..util import Dynamic
         def dynamic_redim(obj, **dynkwargs):
-            return obj.redim(specs, **dimensions)
+            return holodata.dimension.redim(specs, **dimensions)
         dmap = Dynamic(obj, streams=obj.streams, operation=dynamic_redim)
         dmap.data = OrderedDict(self._filter_cache(redimmed, kdims))
         with util.disable_constant(dmap):

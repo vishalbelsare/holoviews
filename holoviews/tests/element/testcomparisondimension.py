@@ -2,7 +2,7 @@
 Test cases for Dimension and Dimensioned object comparison.
 """
 import sys
-from holoviews.core import Dimension, Dimensioned
+from holodata.dimension import Dimension, Dimensioned
 from holoviews.element.comparison import ComparisonTestCase
 
 py3 = (sys.version_info.major == 3)

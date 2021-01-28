@@ -2,7 +2,8 @@ import numpy as np
 
 import param
 
-from ..core import Dimension, Dataset, Element2D
+from ..core import Dataset, Element2D
+from holodata.dimension import Dimension
 from .selection import Selection2DExpr, SelectionGeomExpr
 
 

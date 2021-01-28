@@ -1,8 +1,10 @@
 
-from collections import defaultdict
-from ..core import OrderedDict
+from collections import defaultdict, OrderedDict
+
+import holodata.util
 from ..core import Store
 from ..core.util import basestring
+
 
 class KeywordSettings(object):
     """
@@ -231,7 +233,7 @@ class OutputSettings(KeywordSettings):
                 % cls.defaults['info'])
         css =   ("css     : Optional css style attributes to apply to the figure image tag")
         widget_location = "widget_location : The position of the widgets relative to the plot"
-        
+
         descriptions = [backend, fig, holomap, widgets, fps, max_frames, size,
                         dpi, filename, info, css, widget_location]
         keywords = ['backend', 'fig', 'holomap', 'widgets', 'fps', 'max_frames',
@@ -286,7 +288,7 @@ class OutputSettings(KeywordSettings):
         if prev_backend in Store.renderers:
             prev_renderer = Store.renderers[prev_backend]
             prev_backend_spec = prev_backend+':'+prev_renderer.mode
-            prev_params = {k: v for k, v in prev_renderer.param.get_param_values()
+            prev_params = {k: v for k, v in holodata.util.get_param_values()
                            if k in cls.render_params}
         else:
             prev_renderer = None
@@ -312,7 +314,7 @@ class OutputSettings(KeywordSettings):
                 backend_spec = prev_backend_spec
             backend = backend_spec.split(':')[0]
             renderer = Store.renderers[backend]
-            render_params = {k: v for k, v in renderer.param.get_param_values()
+            render_params = {k: v for k, v in holodata.util.get_param_values()
                              if k in cls.render_params}
 
             # Set options on selected renderer and set display hook options

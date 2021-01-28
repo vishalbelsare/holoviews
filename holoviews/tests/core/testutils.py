@@ -16,12 +16,15 @@ except:
     pd = None
 
 from holoviews.core.util import (
-    sanitize_identifier_fn, find_range, max_range, wrap_tuple_streams,
-    deephash, merge_dimensions, get_path, make_path_unique, compute_density,
-    date_range, dt_to_int, compute_edges, isfinite, cross_index, closest_match,
-    dimension_range, tree_attribute
+    wrap_tuple_streams,
+    deephash, get_path, make_path_unique, compute_edges, closest_match,
+    tree_attribute
 )
-from holoviews import Dimension, Element
+from holodata.util import merge_dimensions, date_range, dt_to_int, isfinite, \
+    cross_index, max_range, find_range, dimension_range, sanitize_identifier_fn, \
+    compute_density
+from holoviews import Element
+from holodata.dimension import Dimension
 from holoviews.streams import PointerXY
 from holoviews.element.comparison import ComparisonTestCase
 

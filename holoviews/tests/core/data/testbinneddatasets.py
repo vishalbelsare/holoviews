@@ -3,14 +3,14 @@ Tests for binned interfaces including GridInterface and XArrayInterface
 """
 
 from unittest import SkipTest
+from collections import OrderedDict
 
 import numpy as np
 
-from holoviews.core.dimension import Dimension
+from holodata.dimension import Dimension
 from holoviews.core.spaces import HoloMap
 from holoviews.core.data import Dataset
-from holoviews.core.data.interface import DataError
-from holoviews.core.util import OrderedDict
+from holodata.interface import DataError
 from holoviews.element import Histogram, QuadMesh
 from holoviews.element.comparison import ComparisonTestCase
 from holoviews.util.transform import dim
@@ -167,7 +167,7 @@ class Binned2DTest(ComparisonTestCase):
         expected = QuadMesh((self.xs, self.ys, self.zs*2))
         self.assertEqual(expected, transformed)
 
-        
+
 
 class Irregular2DBinsTest(ComparisonTestCase):
 

@@ -1,10 +1,12 @@
+from collections import OrderedDict
+
 import param
 import numpy as np
 
-from ..core.dimension import Dimension, process_dimensions
+from holodata.dimension import process_dimensions, Dimension
 from ..core.data import Dataset
 from ..core.element import Element, Element2D
-from ..core.util import get_param_values, unique_iterator, OrderedDict
+from holodata.util import unique_iterator, get_param_values
 from .selection import Selection1DExpr, Selection2DExpr
 
 

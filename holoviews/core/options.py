@@ -37,14 +37,17 @@ import traceback
 import difflib
 import inspect
 from contextlib import contextmanager
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 
 import numpy as np
 
 import param
+
+import holodata.util
 from .accessors import Opts # noqa (clean up in 2.0)
 from .tree import AttrTree
-from .util import sanitize_identifier, group_sanitizer,label_sanitizer, basestring, OrderedDict
+from .util import basestring
+from holodata.util import sanitize_identifier, group_sanitizer, label_sanitizer
 from .pprint import InfoPrinter
 
 
@@ -339,7 +342,7 @@ class Cycle(param.Parameterized):
 
     def __call__(self, values=None, **params):
         values = values if values else self.values
-        return self.__class__(**dict(self.param.get_param_values(), values=values, **params))
+        return self.__class__(**dict(holodata.util.get_param_values(), values=values, **params))
 
 
     def __len__(self):

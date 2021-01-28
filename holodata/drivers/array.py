@@ -1,4 +1,3 @@
-from collections import OrderedDict
 try:
     import itertools.izip as zip
 except ImportError:
@@ -6,9 +5,9 @@ except ImportError:
 
 import numpy as np
 
-from holoviews.core.data.interface import Driver, DataError, TabularInterface
-from holoviews.core.dimension import dimension_name
-from holoviews.core import util
+from holodata.interface import DataError, Driver, TabularInterface
+from holodata.dimension import dimension_name
+from holodata import util
 
 
 class ArrayDriver(Driver):
@@ -42,7 +41,7 @@ class ArrayDriver(Driver):
             data = np.column_stack(dataset)
         elif isinstance(data, dict) and not all(d in data for d in dimensions):
             dict_data = sorted(data.items())
-            dataset = zip(*((util.wrap_tuple(k)+util.wrap_tuple(v))
+            dataset = zip(*((util.wrap_tuple(k) + util.wrap_tuple(v))
                             for k, v in dict_data))
             data = np.column_stack(list(dataset))
         elif isinstance(data, tuple):

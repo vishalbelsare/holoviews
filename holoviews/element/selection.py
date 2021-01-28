@@ -5,6 +5,7 @@ elements.
 
 import numpy as np
 
+import holodata.util
 from ..core import util, NdOverlay
 from ..streams import SelectionXY, Selection1D, Lasso
 from ..util.transform import dim
@@ -29,14 +30,14 @@ class SelectionIndexExpr(object):
         if len(index_cols) == 1:
             index_dim = index_cols[0]
             vals = dim(index_dim).apply(self.iloc[index], expanded=False)
-            expr = dim(index_dim).isin(list(util.unique_iterator(vals)))
+            expr = dim(index_dim).isin(list(holodata.util.unique_iterator(vals)))
         else:
             get_shape = dim(self.dataset.get_dimension(index_cols[0]), np.shape)
             index_cols = [dim(self.dataset.get_dimension(c), np.ravel) for c in index_cols]
-            vals = dim(index_cols[0], util.unique_zip, *index_cols[1:]).apply(
+            vals = dim(index_cols[0], holodata.util.unique_zip, *index_cols[1:]).apply(
                 self.iloc[index], expanded=True, flat=True
             )
-            contains = dim(index_cols[0], util.lzip, *index_cols[1:]).isin(vals, object=True)
+            contains = dim(index_cols[0], holodata.util.lzip, *index_cols[1:]).isin(vals, object=True)
             expr = dim(contains, np.reshape, get_shape)
         return expr, None, None
 
@@ -162,14 +163,14 @@ class Selection2DExpr(SelectionIndexExpr):
         if len(index_cols) == 1:
             index_dim = index_cols[0]
             vals = dim(index_dim).apply(sel, expanded=False, flat=True)
-            expr = dim(index_dim).isin(list(util.unique_iterator(vals)))
+            expr = dim(index_dim).isin(list(holodata.util.unique_iterator(vals)))
         else:
             get_shape = dim(self.dataset.get_dimension(), np.shape)
             index_cols = [dim(self.dataset.get_dimension(c), np.ravel) for c in index_cols]
-            vals = dim(index_cols[0], util.unique_zip, *index_cols[1:]).apply(
+            vals = dim(index_cols[0], holodata.util.unique_zip, *index_cols[1:]).apply(
                 sel, expanded=True, flat=True
             )
-            contains = dim(index_cols[0], util.lzip, *index_cols[1:]).isin(vals, object=True)
+            contains = dim(index_cols[0], holodata.util.lzip, *index_cols[1:]).isin(vals, object=True)
             expr = dim(contains, np.reshape, get_shape)
         return expr
 
@@ -434,7 +435,7 @@ class Selection1DExpr(Selection2DExpr):
             prev = len(data)
             contiguous = []
             for l, u in data:
-                if not util.isfinite(l) or not util.isfinite(u):
+                if not holodata.util.isfinite(l) or not holodata.util.isfinite(u):
                     continue
                 overlap = False
                 for i, (pl, pu) in enumerate(contiguous):

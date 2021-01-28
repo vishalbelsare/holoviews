@@ -1,10 +1,10 @@
 import sys
 
 from collections import OrderedDict
+from collections import OrderedDict as cyODict
 
 import numpy as np
 
-from holoviews.core.dimension import OrderedDict as cyODict
 from holoviews.core.data import Dataset
 
 from .base import HeterogeneousColumnTests, ScalarColumnTests, InterfaceTests

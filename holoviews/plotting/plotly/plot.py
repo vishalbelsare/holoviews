@@ -1,13 +1,13 @@
 from __future__ import absolute_import, division, unicode_literals
-
+from collections import OrderedDict
 import param
 
 from holoviews.plotting.util import attach_streams
-from ...core import (OrderedDict, NdLayout, AdjointLayout, Empty,
+from ...core import (NdLayout, AdjointLayout, Empty,
                      HoloMap, GridSpace, GridMatrix)
 from ...element import Histogram
 from ...core.options import Store
-from ...core.util import wrap_tuple
+from holodata.util import wrap_tuple
 from ..plot import (
     DimensionedPlot, GenericLayoutPlot, GenericCompositePlot,
     GenericElementPlot, GenericAdjointLayoutPlot, CallbackPlot

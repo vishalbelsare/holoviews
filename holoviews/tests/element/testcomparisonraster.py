@@ -4,7 +4,8 @@ Test cases for the Comparisons class over the Raster types.
 import numpy as np
 
 
-from holoviews.core import BoundingBox, Dimension
+from holoviews.core import BoundingBox
+from holodata.dimension import Dimension
 from holoviews.core.element import HoloMap
 from holoviews.element.comparison import ComparisonTestCase
 from holoviews import Image

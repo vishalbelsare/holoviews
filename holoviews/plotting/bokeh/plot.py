@@ -1,7 +1,7 @@
 from __future__ import absolute_import, division, unicode_literals
 
 from itertools import groupby
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 
 import numpy as np
 import param
@@ -14,15 +14,16 @@ from bokeh.models.widgets import Panel, Tabs
 
 from ...selection import NoOpSelectionDisplay
 from ...core import (
-    OrderedDict, Store, AdjointLayout, NdLayout, Layout, Empty,
+    Store, AdjointLayout, NdLayout, Layout, Empty,
     GridSpace, HoloMap, Element
 )
 from ...core.options import SkipRendering
 from ...core.util import (
-    basestring, cftime_to_timestamp, cftime_types, get_method_owner,
-    is_param_method, unique_iterator, wrap_tuple, wrap_tuple_streams,
+    basestring, cftime_types, get_method_owner,
+    is_param_method, wrap_tuple_streams,
     _STANDARD_CALENDARS
 )
+from holodata.util import wrap_tuple, unique_iterator, cftime_to_timestamp
 from ..links import Link
 from ..plot import (
     DimensionedPlot, GenericCompositePlot, GenericLayoutPlot,

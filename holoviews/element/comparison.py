@@ -18,17 +18,19 @@ thus would not supply any information regarding *why* two elements are
 considered different.
 """
 from functools import partial
-import numpy as np
 from unittest.util import safe_repr
 from unittest import TestCase
+import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 
+import holodata.util
 from . import *    # noqa (All Elements need to support comparison)
-from ..core import (Element, Empty, AdjointLayout, Overlay, Dimension,
-                    HoloMap, Dimensioned, Layout, NdLayout, NdOverlay,
+from ..core import (Element, Empty, AdjointLayout, Overlay, HoloMap, Layout, NdLayout, NdOverlay,
                     GridSpace, DynamicMap, GridMatrix, OrderedDict)
+from holodata.dimension import Dimension, Dimensioned
 from ..core.options import Options, Cycle
-from ..core.util import pd, datetime_types, dt_to_int
+from ..core.util import pd, datetime_types
+from holodata.util import dt_to_int
 
 
 class ComparisonInterface(object):
@@ -610,7 +612,7 @@ class Comparison(ComparisonInterface):
     @classmethod
     def compare_boxes(cls, el1, el2, msg='Rectangles'):
         cls.compare_dataset(el1, el2, msg)
-        
+
     #=========#
     # Graphs  #
     #=========#

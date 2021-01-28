@@ -5,6 +5,7 @@ from unittest import SkipTest, skipIf
 
 import numpy as np
 
+import holodata.dimension
 from holoviews.core.data import Dataset
 from holoviews.core import util
 from holoviews.element.chart import Points
@@ -87,7 +88,7 @@ class GraphTests(ComparisonTestCase):
         paths = Graph(((self.source, self.target), self.nodes)).edgepaths
         exception = 'Ensure that the first two key dimensions on Nodes and EdgePaths match: x != x2'
         with self.assertRaisesRegexp(ValueError, exception):
-            Graph(((self.source, self.target), self.nodes, paths.redim(x='x2')))
+            Graph(((self.source, self.target), self.nodes, holodata.dimension.redim(x='x2')))
 
     def test_graph_clone_static_plot_id(self):
         self.assertEqual(self.graph.clone()._plot_id, self.graph._plot_id)
@@ -130,8 +131,8 @@ class GraphTests(ComparisonTestCase):
     def test_graph_redim_nodes(self):
         graph = Graph(((self.target, self.source),))
         redimmed = graph.redim(x='x2', y='y2')
-        self.assertEqual(redimmed.nodes, graph.nodes.redim(x='x2', y='y2'))
-        self.assertEqual(redimmed.edgepaths, graph.edgepaths.redim(x='x2', y='y2'))
+        self.assertEqual(redimmed.nodes, holodata.dimension.redim(x='x2', y='y2'))
+        self.assertEqual(redimmed.edgepaths, holodata.dimension.redim(x='x2', y='y2'))
 
 class FromNetworkXTests(ComparisonTestCase):
 
@@ -202,7 +203,7 @@ class FromNetworkXTests(ComparisonTestCase):
         graph = Graph.from_networkx(G, positions)
         self.assertEqual(graph.nodes.dimension_values(2), np.array([1, 2, 3]))
 
-        
+
 
 class ChordTests(ComparisonTestCase):
 

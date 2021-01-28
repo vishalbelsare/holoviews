@@ -9,7 +9,7 @@ from matplotlib.patches import Wedge, Circle
 from matplotlib.collections import LineCollection, PatchCollection
 
 from ...core.data import GridDriver
-from ...core.util import dimension_sanitizer, is_nan
+from holodata.util import is_nan, dimension_sanitizer
 from ...core.spaces import HoloMap
 from ..mixins import HeatMapMixin
 from .element import ColorbarPlot

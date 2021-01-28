@@ -4,9 +4,12 @@ from collections import defaultdict
 import param
 import numpy as np
 
-from ..core import Dimension, Dataset, Element2D
+import holodata.dimension
+from ..core import Dataset, Element2D
+from holodata.dimension import Dimension
 from ..core.accessors import Redim
-from ..core.util import max_range, search_indices
+from ..core.util import search_indices
+from holodata.util import max_range
 from ..core.operation import Operation
 from .chart import Points
 from .path import Path
@@ -24,9 +27,9 @@ class RedimGraph(Redim):
         redimmed = super(RedimGraph, self).__call__(specs, **dimensions)
         new_data = (redimmed.data,)
         if self._obj.nodes:
-            new_data = new_data + (self._obj.nodes.redim(specs, **dimensions),)
+            new_data = new_data + (holodata.dimension.redim(specs, **dimensions),)
         if self._obj._edgepaths:
-            new_data = new_data + (self._obj.edgepaths.redim(specs, **dimensions),)
+            new_data = new_data + (holodata.dimension.redim(specs, **dimensions),)
         return redimmed.clone(new_data)
 
 redim_graph = RedimGraph # pickle compatibility - remove in 2.0
@@ -166,8 +169,8 @@ class Graph(Dataset, Element2D):
     def _add_node_info(self, node_info):
         nodes = self.nodes.clone(datatype=['pandas', 'dictionary'])
         if isinstance(node_info, self.node_type):
-            nodes = nodes.redim(**dict(zip(nodes.dimensions('key', label=True),
-                                           node_info.kdims)))
+            nodes = holodata.dimension.redim(**dict(zip(nodes.dimensions('key', label=True),
+                                                        node_info.kdims)))
 
         if not node_info.kdims and len(node_info) != len(nodes):
             raise ValueError("The supplied node data does not match "
@@ -276,7 +279,7 @@ class Graph(Dataset, Element2D):
 The first positional argument to the Dataset.select method is expected to be a
 holoviews.util.transform.dim expression. Use the selection_specs keyword
 argument to specify a selection specification""")
-        
+
         selection = {dim: sel for dim, sel in selection.items()
                      if dim in self.dimensions('ranges')+['selection_mask']}
         if (selection_specs and not any(self.matches(sp) for sp in selection_specs)
@@ -380,7 +383,7 @@ argument to specify a selection specification""")
         Computes the node positions the first time they are requested
         if no explicit node information was supplied.
         """
-        
+
         if self._nodes is None:
             from ..operation.element import chain
             self._nodes = layout_nodes(self, only_nodes=True)

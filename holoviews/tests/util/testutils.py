@@ -3,6 +3,7 @@
 Unit tests of the helper functions in utils
 """
 from unittest import SkipTest
+from collections import OrderedDict
 import numpy as np
 
 import holoviews as hv
@@ -10,7 +11,6 @@ from holoviews import notebook_extension
 from holoviews.element.comparison import ComparisonTestCase
 from holoviews import Store
 from holoviews.util import output, opts, OutputSettings, Options
-from holoviews.core import OrderedDict
 
 from holoviews.core.options import OptionTree
 from pyviz_comms import CommManager

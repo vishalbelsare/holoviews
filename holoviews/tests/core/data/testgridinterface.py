@@ -6,7 +6,8 @@ from unittest import SkipTest, skipIf
 
 import numpy as np
 from holoviews.core.data import Dataset
-from holoviews.core.util import pd, date_range
+from holoviews.core.util import pd
+from holodata.util import date_range
 from holoviews.element import Image, Curve, RGB, HSV
 from holoviews.util.transform import dim
 

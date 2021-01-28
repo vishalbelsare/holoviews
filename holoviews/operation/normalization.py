@@ -17,7 +17,7 @@ import param
 from ..core.operation import Operation
 from ..element import Raster
 from ..core import Overlay
-from ..core.util import match_spec
+from holodata.util import match_spec
 
 
 class Normalization(Operation):

@@ -8,14 +8,16 @@ import numpy as np
 
 from bokeh.models import FactorRange, Circle, VBar, HBar
 
+import holodata.util
 from .selection import BokehOverlaySelectionDisplay
 from ...core import NdOverlay
-from ...core.dimension import Dimension, Dimensioned
-from ...core.ndmapping import sorted_context
+from holodata.dimension import Dimension, Dimensioned
+from holodata.ndmapping import sorted_context
 from ...core.util import (
-    basestring, dimension_sanitizer, wrap_tuple, unique_iterator,
-    isfinite, is_dask_array, is_cupy_array
+    basestring
 )
+from holodata.util import is_dask_array, is_cupy_array, wrap_tuple, unique_iterator, \
+    isfinite, dimension_sanitizer
 from ...operation.stats import univariate_kde
 from ...util.transform import dim
 from .chart import AreaPlot
@@ -147,7 +149,7 @@ class BoxWhiskerPlot(CompositeElementPlot, ColorbarPlot, LegendPlot):
         if is_cupy:
             import cupy
             percentile = cupy.percentile
-            is_finite = cupy.isfinite
+            is_finite = holodata.util.isfinite
         elif is_dask:
             import dask.array as da
             percentile = da.percentile

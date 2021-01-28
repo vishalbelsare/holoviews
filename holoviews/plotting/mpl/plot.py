@@ -6,13 +6,15 @@ from contextlib import contextmanager
 import param
 import numpy as np
 import matplotlib as mpl
+from collections import OrderedDict
 
 from mpl_toolkits.mplot3d import Axes3D  # noqa (For 3D plots)
 from matplotlib import pyplot as plt
 from matplotlib import gridspec, animation, rcParams
 from matplotlib.font_manager import font_scalings
 
-from ...core import (OrderedDict, HoloMap, AdjointLayout, NdLayout,
+import holodata.util
+from ...core import (HoloMap, AdjointLayout, NdLayout,
                      GridSpace, Element, CompositeOverlay, Empty,
                      Collator, GridMatrix, Layout)
 from ...core.options import Store, SkipRendering
@@ -1052,7 +1054,7 @@ class LayoutPlot(GenericLayoutPlot, CompositePlot):
             override_opts = {}
             sublabel_opts = {}
             if pos == 'main':
-                own_params = self.param.get_param_values(onlychanged=True)
+                own_params = holodata.util.get_param_values(onlychanged=True)
                 sublabel_opts = {k: v for k, v in own_params
                                  if 'sublabel_' in k}
             elif pos == 'right':

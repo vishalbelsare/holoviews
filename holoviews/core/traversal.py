@@ -7,8 +7,8 @@ or mutate the matching elements.
 from collections import defaultdict
 from operator import itemgetter
 
-from .dimension import Dimension
-from .util import merge_dimensions
+from holodata.dimension import Dimension
+from holodata.util import merge_dimensions
 
 try:
     import itertools.izip as zip
@@ -46,7 +46,8 @@ def unique_dimkeys(obj, default_dim='Frame'):
     Returns the list of dimensions followed by the list of unique
     keys.
     """
-    from .ndmapping import NdMapping, item_check
+    from holodata.ndmapping import NdMapping
+    from holodata.ndmapping import item_check
     from .spaces import HoloMap
     key_dims = obj.traverse(lambda x: (tuple(x.kdims),
                                        list(x.data.keys())), (HoloMap,))

@@ -9,9 +9,11 @@ try:
 except:
     cartesian_to_axial = None
 
-from ...core import Dimension, Operation
+from ...core import Operation
+from holodata.dimension import Dimension
 from ...core.options import Compositor
-from ...core.util import basestring, isfinite, max_range
+from ...core.util import basestring
+from holodata.util import isfinite, max_range
 from ...element import HexTiles
 from ...util.transform import dim as dim_transform
 from .element import ColorbarPlot

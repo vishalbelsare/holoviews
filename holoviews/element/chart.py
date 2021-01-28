@@ -1,9 +1,10 @@
 import numpy as np
 import param
 
+import holodata.util
 from ..core import util
-from ..core import Dimension, Dataset, Element2D
-from ..core.dimension import process_dimensions
+from ..core import Dataset, Element2D
+from holodata.dimension import process_dimensions, Dimension
 from ..core.data import GridDriver
 from .geom import Rectangles, Points, VectorField # noqa: backward compatible import
 from .selection import Selection1DExpr, Selection2DExpr
@@ -133,7 +134,7 @@ class ErrorBars(Selection1DExpr, Chart):
             upper = np.nanmax(mean+pos_error)
             if not dimension_range:
                 return (lower, upper)
-            return util.dimension_range(lower, upper, dim.range, dim.soft_range)
+            return holodata.util.dimension_range(lower, upper, dim.range, dim.soft_range)
         return super(ErrorBars, self).range(dim, data_range)
 
 

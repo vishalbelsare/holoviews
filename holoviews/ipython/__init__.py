@@ -9,7 +9,7 @@ from IPython.core.completer import IPCompleter
 from IPython.display import HTML, publish_display_data
 from param import ipython as param_ext
 
-from ..core.dimension import LabelledData
+from holodata.label import LabelledData
 from ..core.tree import AttrTree
 from ..core.options import Store
 from ..element.comparison import ComparisonTestCase

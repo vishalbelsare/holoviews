@@ -1,15 +1,14 @@
-from __future__ import absolute_import
-
 import sys
 import warnings
 from collections import OrderedDict
 
-import six
-import param
 import numpy as np
+import param
+import six
 
-from .. import util
-from ..ndmapping import NdMapping
+import holodata.drivers
+from holodata.ndmapping import NdMapping
+from holodata import util
 
 
 def get_array_types():
@@ -19,6 +18,7 @@ def get_array_types():
         array_types += (da.Array,)
     return array_types
 
+
 def dask_array_module():
     try:
         import dask.array as da
@@ -26,11 +26,13 @@ def dask_array_module():
     except:
         return None
 
+
 def is_dask(array):
     da = dask_array_module()
     if da is None:
         return False
     return da and isinstance(array, da.Array)
+
 
 def cached(method):
     """
@@ -271,7 +273,9 @@ class Driver(param.Parameterized):
         """
         Utility function to concatenate an NdMapping of Dataset objects.
         """
-        from . import Dataset, default_datatype
+        # TODO: remove default new_type
+        from holoviews.core import Dataset
+        from holodata.drivers import default_datatype
         new_type = new_type or Dataset
         if isinstance(datasets, NdMapping):
             dimensions = datasets.kdims
@@ -623,7 +627,6 @@ class Interface(param.Parameterized):
         return self.driver.dimension_type(dataset, dim)
 
 
-# Interface should get a reference to a driver class
 class TabularInterface(Interface):
     kind = "tabular"
 
@@ -669,6 +672,7 @@ class TabularInterface(Interface):
     def geom_dims(self, *args, **kwargs):
         # TODO: Remove after separating dictionary fro geodictionary
         return self.driver.geom_dims(*args, **kwargs)
+
 
 class GriddedInterface(Interface):
     kind = "gridded"
@@ -721,6 +725,7 @@ class GriddedInterface(Interface):
 
     def shape(self, dataset, gridded=False):
         return self.driver.shape(dataset, gridded=gridded)
+
 
 class ImageInterface(GriddedInterface):
 

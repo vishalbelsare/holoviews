@@ -4,9 +4,10 @@ from unittest import SkipTest, skipIf
 
 import numpy as np
 
-from holoviews import (Dimension, Curve, Points, Image, Dataset, RGB, Path,
+from holoviews import (Curve, Points, Image, Dataset, RGB, Path,
                        Graph, TriMesh, QuadMesh, NdOverlay, Contours, Spikes,
                        Spread, Area, Rectangles, Segments, Polygons)
+from holodata.dimension import Dimension
 from holoviews.element.comparison import ComparisonTestCase
 from numpy import nan
 
@@ -733,7 +734,7 @@ class DatashaderCatAggregateTests(ComparisonTestCase):
                               'C': Image((xs, ys, [[nan, nan], [0.3, nan]]), vdims='z')},
                              kdims=['cat'])
         self.assertEqual(img, expected)
-        
+
 
 
 class DatashaderShadeTests(ComparisonTestCase):
@@ -1047,7 +1048,7 @@ class DatashaderSpreadTests(ComparisonTestCase):
         spreaded = spread(Image(arr))
         arr = np.array([[0, 0, 0], [2, 3, 2], [2, 3, 2]]).T
         self.assertEqual(spreaded, Image(arr))
-        
+
 
 class DatashaderStackTests(ComparisonTestCase):
 

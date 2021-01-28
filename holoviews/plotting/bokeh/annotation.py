@@ -20,7 +20,8 @@ except:
                  '-': None}
 from bokeh.transform import dodge
 
-from ...core.util import datetime_types, dimension_sanitizer, basestring
+from ...core.util import datetime_types, basestring
+from holodata.util import dimension_sanitizer
 from ...element import HLine, VLine, VSpan
 from ..plot import GenericElementPlot
 from .element import AnnotationPlot, ElementPlot, CompositeElementPlot, ColorbarPlot
@@ -36,7 +37,7 @@ class TextPlot(ElementPlot, AnnotationPlot):
     _plot_methods = dict(single='text', batched='text')
 
     selection_display = None
-    
+
     def get_data(self, element, ranges, style):
         mapping = dict(x='x', y='y', text='text')
         if self.static_source:

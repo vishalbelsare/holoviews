@@ -6,7 +6,8 @@ import numpy as np
 from bokeh.models import Patches
 
 from ...core.data import Dataset
-from ...core.util import basestring, max_range, dimension_sanitizer
+from ...core.util import basestring
+from holodata.util import max_range, dimension_sanitizer
 from ...util.transform import dim
 from .graphs import GraphPlot
 

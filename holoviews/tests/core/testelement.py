@@ -1,4 +1,5 @@
-from holoviews.core import Dimension, Element
+from holoviews.core import Element
+from holodata.dimension import Dimension
 from holoviews.element.comparison import ComparisonTestCase
 
 

@@ -1,6 +1,7 @@
 import param
 
-from ..core import Dimension, Element3D
+from ..core import Element3D
+from holodata.dimension import Dimension
 from .geom import Points
 from .path import Path
 from .raster import Image
@@ -82,7 +83,7 @@ class Trisurface(TriSurface):
 class Scatter3D(Element3D, Points):
     """
     Scatter3D is a 3D element representing the position of a collection
-    of coordinates in a 3D space. The key dimensions represent the 
+    of coordinates in a 3D space. The key dimensions represent the
     position of each coordinate along the x-, y- and z-axis while the
     value dimensions can optionally supply additional information.
     """

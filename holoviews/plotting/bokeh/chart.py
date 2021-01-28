@@ -1,6 +1,6 @@
 from __future__ import absolute_import, division, unicode_literals
 
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 
 import numpy as np
 import param
@@ -12,10 +12,9 @@ from bokeh.models.tools import BoxSelectTool
 from bokeh.transform import jitter
 
 from ...core.data import Dataset
-from ...core.dimension import dimension_name
-from ...core.util import (
-    OrderedDict, basestring, dimension_sanitizer, isfinite
-)
+from holodata.dimension import dimension_name
+from ...core.util import basestring
+from holodata.util import isfinite, dimension_sanitizer
 from ...operation import interpolate_curve
 from ...util.transform import dim
 from ..mixins import AreaMixin, BarsMixin, SpikesMixin
@@ -693,7 +692,7 @@ class SpikesPlot(SpikesMixin, ColorbarPlot):
 
     selection_display = BokehOverlaySelectionDisplay()
 
-    style_opts = base_properties + line_properties + ['cmap', 'palette'] 
+    style_opts = base_properties + line_properties + ['cmap', 'palette']
 
     _nonvectorized_styles = base_properties + ['cmap']
     _plot_methods = dict(single='segment')

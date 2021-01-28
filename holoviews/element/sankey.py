@@ -1,16 +1,17 @@
 from __future__ import division
 
-from collections import Counter
+from collections import Counter, OrderedDict
 from functools import cmp_to_key
 from itertools import cycle
 
 import param
 import numpy as np
 
-from ..core.dimension import Dimension
+from holodata.dimension import Dimension
 from ..core.data import Dataset
 from ..core.operation import Operation
-from ..core.util import OrderedDict, unique_array, RecursionError, get_param_values
+from ..core.util import RecursionError
+from holodata.util import unique_array, get_param_values
 from .graphs import Graph, Nodes, EdgePaths
 from .util import quadratic_bezier
 

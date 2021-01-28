@@ -3,7 +3,7 @@ from unittest import SkipTest, skipIf
 import numpy as np
 import holoviews as hv
 
-from holoviews.core.dimension import Dimension
+from holodata.dimension import Dimension
 from holoviews.core.options import Compositor, Store
 from holoviews.core.util import pd
 from holoviews.element import (Distribution, Bivariate, Points, Image,

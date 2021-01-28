@@ -6,9 +6,9 @@ try:
 except ImportError:
     from collections import Iterable
 
-from holoviews.core import util
-from holoviews.core.data.interface import Driver, cached, TabularInterface, DataError
-from holoviews.core.data.drivers import pandas
+from holodata.interface import cached, DataError, Driver, TabularInterface
+from holodata.drivers import pandas
+from holodata import util
 
 
 class IbisDriver(Driver):
@@ -360,7 +360,8 @@ class IbisDriver(Driver):
                 continue
             predicate = None
             for i, v in enumerate(sample):
-                p = data[dims[i].name] == ibis.literal(util.numpy_scalar_to_python(v))
+                p = data[dims[i].name] == ibis.literal(
+                    util.numpy_scalar_to_python(v))
                 if predicate is None:
                     predicate = p
                 else:

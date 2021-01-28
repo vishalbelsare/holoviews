@@ -11,8 +11,9 @@ try:
 except:
     raise SkipTest("Could not import xarray, skipping XArrayInterface tests.")
 
-from holoviews.core.data import Dataset, concat
-from holoviews.core.dimension import Dimension
+from holoviews.core.data import Dataset
+from holodata.drivers import concat
+from holodata.dimension import Dimension
 from holoviews.core.spaces import HoloMap
 from holoviews.element import Image, RGB, HSV, QuadMesh
 

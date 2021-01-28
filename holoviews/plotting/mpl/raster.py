@@ -5,7 +5,7 @@ import numpy as np
 
 from ...core import CompositeOverlay, Element
 from ...core import traversal
-from ...core.util import match_spec, max_range, unique_iterator
+from holodata.util import unique_iterator, match_spec, max_range
 from ...element.raster import Image, Raster, RGB
 from .element import ElementPlot, ColorbarPlot, OverlayPlot
 from .plot import MPLPlot, GridPlot, mpl_rc_context

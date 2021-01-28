@@ -6,8 +6,9 @@ import numpy as np
 from matplotlib.collections import PatchCollection, LineCollection
 from matplotlib.dates import date2num, DateFormatter
 
+import holodata.util
 from ...core import util
-from ...core.dimension import Dimension
+from holodata.dimension import Dimension
 from ...core.options import abbreviated_exception
 from ...element import Polygons
 from .element import ColorbarPlot
@@ -57,11 +58,11 @@ class PathPlot(ColorbarPlot):
         paths, cvals, dims = [], [], {}
         for path in element.split(datatype='columns'):
             xarr, yarr = path[xdim.name], path[ydim.name]
-            if util.isdatetime(xarr):
+            if holodata.util.isdatetime(xarr):
                 dt_format = Dimension.type_formatters.get(type(xarr[0]), generic_dt_format)
                 xarr = date2num(xarr)
                 dims[0] = xdim(value_format=DateFormatter(dt_format))
-            if util.isdatetime(yarr):
+            if holodata.util.isdatetime(yarr):
                 dt_format = Dimension.type_formatters.get(type(yarr[0]), generic_dt_format)
                 yarr = date2num(yarr)
                 dims[1] = ydim(value_format=DateFormatter(dt_format))
@@ -161,7 +162,7 @@ class ContourPlot(PathPlot):
                                   for _ in range(len(sps))])
 
         if array.dtype.kind not in 'uif':
-            array = util.search_indices(array, util.unique_array(array))
+            array = util.search_indices(array, holodata.util.unique_array(array))
         style['array'] = array
         self._norm_kwargs(element, ranges, style, cdim)
         return (paths,), style, {}

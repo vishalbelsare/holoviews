@@ -1,5 +1,6 @@
 from collections import OrderedDict
 
+import holodata.util
 from . import util
 from .pprint import PrettyPrinter
 
@@ -17,7 +18,7 @@ class AttrTree(object):
     1
     """
     _disabled_prefixes = [] # Underscore attributes that should be
-    _sanitizer = util.sanitize_identifier
+    _sanitizer = holodata.util.sanitize_identifier
 
     @classmethod
     def merge(cls, trees):

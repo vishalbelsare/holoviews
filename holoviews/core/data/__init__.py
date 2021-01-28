@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 
+import holodata.util
+
 try:
     import itertools.izip as zip
 except ImportError:
@@ -8,6 +10,7 @@ except ImportError:
 import sys
 import types
 import copy
+from collections import OrderedDict
 
 from contextlib import contextmanager
 
@@ -20,57 +23,33 @@ from param.parameterized import add_metaclass, ParameterizedMetaclass
 from .. import util
 from ..accessors import Redim
 from ..dimension import (
-    Dimension, Dimensioned, LabelledData, dimension_name, process_dimensions,
     ViewableElement
 )
+from holodata.dimension import dimension_name, process_dimensions, Dimension
+from holodata.label import LabelledData
 from ..element import Element
-from ..ndmapping import OrderedDict, MultiDimensionalMapping, NdMapping, sorted_context, \
-    item_check
+from holodata.ndmapping import item_check, sorted_context, MultiDimensionalMapping, \
+    NdMapping
 from ..spaces import HoloMap, DynamicMap
 
 # Imports register drivers, so order matters
-from holoviews.core.data.drivers.pandas import PandasDriver           # noqa (API import)
-from holoviews.core.data.drivers.array import ArrayDriver             # noqa (API import)
-from holoviews.core.data.drivers.cudf import cuDFDriver               # noqa (API import)
-from holoviews.core.data.drivers.dask import DaskDriver               # noqa (API import)
-from holoviews.core.data.drivers.dictionary import DictDriver         # noqa (API import)
-from holoviews.core.data.drivers.grid import GridDriver               # noqa (API import)
-from holoviews.core.data.drivers.ibis import IbisDriver               # noqa (API import)
-from .interface import Interface, Driver  # noqa (API import)
-from holoviews.core.data.drivers.multipath import MultiDriver         # noqa (API import)
-from holoviews.core.data.drivers.image import ImageDriver             # noqa (API import)
-from holoviews.core.data.drivers.spatialpandas import SpatialPandasDriver # noqa (API import)
-from holoviews.core.data.drivers.xarray import XArrayDriver           # noqa (API import)
+from holodata.drivers.pandas import PandasDriver           # noqa (API import)
+from holodata.drivers.array import ArrayDriver             # noqa (API import)
+from holodata.drivers.cudf import cuDFDriver               # noqa (API import)
+from holodata.drivers.dask import DaskDriver               # noqa (API import)
+from holodata.drivers.dictionary import DictDriver         # noqa (API import)
+from holodata.drivers.grid import GridDriver               # noqa (API import)
+from holodata.drivers.ibis import IbisDriver               # noqa (API import)
+from holodata.interface import Driver, Interface
+from holodata.drivers.multipath import MultiDriver         # noqa (API import)
+from holodata.drivers.image import ImageDriver             # noqa (API import)
+from holodata.drivers.spatialpandas import SpatialPandasDriver # noqa (API import)
+from holodata.drivers.xarray import XArrayDriver           # noqa (API import)
 
-default_datatype = 'dataframe'
 
 # datatypes = ['tabular', 'gridded']
 # datatypes = ['dataframe', 'dictionary', 'grid', 'xarray', 'dask',
 #              'cuDF', 'spatialpandas', 'array', 'multitabular', 'ibis']
-datatypes = Interface.get_datatypes_for_kinds(["tabular", "gridded", "geometry"])
-
-
-def concat(datasets, datatype=None):
-    """Concatenates collection of datasets along NdMapping dimensions.
-
-    Concatenates multiple datasets wrapped in an NdMapping type along
-    all of its dimensions. Before concatenation all datasets are cast
-    to the same datatype, which may be explicitly defined or
-    implicitly derived from the first datatype that is
-    encountered. For columnar data concatenation adds the columns for
-    the dimensions being concatenated along and then concatenates all
-    the old and new columns. For gridded data a new axis is created
-    for each dimension being concatenated along and then
-    hierarchically concatenates along each dimension.
-
-    Args:
-        datasets: NdMapping of Datasets to concatenate
-        datatype: Datatype to cast data to before concatenation
-
-    Returns:
-        Concatenated dataset
-    """
-    return Driver.concatenate(datasets, datatype)
 
 
 class DataConversion(object):
@@ -290,7 +269,7 @@ class iloc(Accessor):
 
     @classmethod
     def _perform_getitem(cls, dataset, index):
-        index = util.wrap_tuple(index)
+        index = holodata.util.wrap_tuple(index)
         if len(index) == 1:
             index = (index[0], slice(None))
         elif len(index) > 2:
@@ -304,7 +283,7 @@ class iloc(Accessor):
         data = dataset.interface.iloc(dataset, (rows, cols))
         kdims = dataset.kdims
         vdims = dataset.vdims
-        if util.isscalar(data):
+        if holodata.util.isscalar(data):
             return data
         elif cols == slice(None):
             pass
@@ -318,7 +297,7 @@ class iloc(Accessor):
             kdims = [d for d in dims if d in kdims]
             vdims = [d for d in dims if d in vdims]
 
-        datatypes = util.unique_iterator([dataset.interface.datatype]+dataset.datatype)
+        datatypes = holodata.util.unique_iterator([dataset.interface.datatype] + dataset.datatype)
         datatype = [dt for dt in datatypes if dt in Driver.interfaces and
                     not Driver.interfaces[dt].gridded]
         if not datatype: datatype = ['dataframe', 'dictionary']
@@ -336,7 +315,7 @@ class ndloc(Accessor):
     @classmethod
     def _perform_getitem(cls, dataset, indices):
         ds = dataset
-        indices = util.wrap_tuple(indices)
+        indices = holodata.util.wrap_tuple(indices)
         if not ds.interface.gridded:
             raise IndexError('Cannot use ndloc on non nd-dimensional datastructure')
         selected = dataset.interface.ndloc(ds, indices)
@@ -346,6 +325,10 @@ class ndloc(Accessor):
         if hasattr(ds, 'bounds'):
             params['bounds'] = None
         return dataset.clone(selected, datatype=[ds.interface.datatype]+ds.datatype, **params)
+
+
+default_datatype = 'dataframe'
+datatypes = Interface.get_datatypes_for_kinds(["tabular", "gridded", "geometry"])
 
 
 @add_metaclass(PipelineMeta)
@@ -427,7 +410,7 @@ class Dataset(Element):
                     data.get_dimension(vd) if isinstance(vd, util.basestring) else vd
                     for vd in kwargs['vdims']
                 ]
-            pvals = util.get_param_values(data)
+            pvals = holodata.util.get_param_values(data)
             kwargs.update([(l, pvals[l]) for l in ['group', 'label']
                            if l in pvals and l not in kwargs])
         if isinstance(data, Dataset):
@@ -458,6 +441,12 @@ class Dataset(Element):
             **interface_opts
         )
         (data, self.interface, dims, extra_kws) = initialized
+
+        if type(self) is Dataset:
+            # Extra kws are to add extra info to params of Dataset subclasses.
+            # When we are a dataset, ignore it to avoid param warning
+            extra_kws = {}
+
         super(Dataset, self).__init__(data, **dict(kwargs, **dict(dims, **extra_kws)))
         self.interface.validate(self, validate_vdims)
 
@@ -501,7 +490,7 @@ class Dataset(Element):
 
         # Process params and dimensions
         if isinstance(data, Element):
-            pvals = util.get_param_values(data)
+            pvals = holodata.util.get_param_values(data)
             kdims = pvals.get('kdims') if kdims is None else kdims
             vdims = pvals.get('vdims') if vdims is None else vdims
 
@@ -571,7 +560,8 @@ class Dataset(Element):
         if self._dataset is None:
             if type(self) is Dataset:
                 return self
-            datatype = list(util.unique_iterator(self.datatype+Dataset.datatype))
+            datatype = list(
+                holodata.util.unique_iterator(self.datatype + Dataset.datatype))
             dataset = Dataset(
                 self, dataset=None, pipeline=None, transforms=None, _validate_vdims=False,
                 datatype=datatype, interface_opts=self._interface_opts()
@@ -688,7 +678,7 @@ class Dataset(Element):
 
         if dim is None or (not data_range and not dimension_range):
             return (None, None)
-        elif all(util.isfinite(v) for v in dim.range) and dimension_range:
+        elif all(holodata.util.isfinite(v) for v in dim.range) and dimension_range:
             return dim.range
         elif dim in self.dimensions() and data_range and bool(self):
             lower, upper = self.interface.range(self, dim)
@@ -696,7 +686,7 @@ class Dataset(Element):
             lower, upper = (np.NaN, np.NaN)
         if not dimension_range:
             return lower, upper
-        return util.dimension_range(lower, upper, dim.range, dim.soft_range)
+        return holodata.util.dimension_range(lower, upper, dim.range, dim.soft_range)
 
 
     def add_dimension(self, dimension, dim_pos, dim_val, vdim=False, **kwargs):
@@ -879,7 +869,7 @@ argument to specify a selection specification""")
            (4) A boolean array index matching the length of the Dataset
                object.
         """
-        slices = util.process_ellipses(self, slices, vdim_selection=True)
+        slices = holodata.util.process_ellipses(self, slices, vdim_selection=True)
         if getattr(getattr(slices, 'dtype', None), 'kind', None) == 'b':
             if not len(slices) == len(self):
                 raise IndexError("Boolean index must match length of sliced object")
@@ -946,7 +936,7 @@ argument to specify a selection specification""")
             for dim, val in kwargs.items():
                 sample[self.get_dimension_index(dim)] = val
             samples = [tuple(sample)]
-        elif isinstance(samples, tuple) or util.isscalar(samples):
+        elif isinstance(samples, tuple) or holodata.util.isscalar(samples):
             if self.ndims == 1:
                 xlim = self.range(0)
                 lower, upper = (xlim[0], xlim[1]) if bounds is None else bounds
@@ -970,7 +960,7 @@ argument to specify a selection specification""")
             else:
                 raise NotImplementedError("Regular sampling not implemented "
                                           "for elements with more than two dimensions.")
-            samples = list(util.unique_iterator(self.closest(linsamples)))
+            samples = list(holodata.util.unique_iterator(self.closest(linsamples)))
 
         # Note: Special handling sampling of gridded 2D data as Curve
         # may be replaced with more general handling
@@ -996,11 +986,12 @@ argument to specify a selection specification""")
                 reindexed = selection.clone(new_type=Dataset, datatype=datatype).reindex(kdims)
                 selection = tuple(reindexed.columns(kdims+self.vdims).values())
 
-            datatype = list(util.unique_iterator(self.datatype+['dataframe', 'dict']))
+            datatype = list(
+                holodata.util.unique_iterator(self.datatype + ['dataframe', 'dict']))
             return self.clone(selection, kdims=kdims, new_type=new_type,
                               datatype=datatype)
 
-        lens = set(len(util.wrap_tuple(s)) for s in samples)
+        lens = set(len(holodata.util.wrap_tuple(s)) for s in samples)
         if len(lens) > 1:
             raise IndexError('Sample coordinates must all be of the same length.')
 
@@ -1009,7 +1000,7 @@ argument to specify a selection specification""")
                 samples = self.closest(samples)
             except NotImplementedError:
                 pass
-        samples = [util.wrap_tuple(s) for s in samples]
+        samples = [holodata.util.wrap_tuple(s) for s in samples]
         sampled = self.interface.sample(self, samples)
         return self.clone(sampled, new_type=Table, datatype=datatype)
 
@@ -1160,7 +1151,7 @@ argument to specify a selection specification""")
             group_dims = [kd for kd in self.kdims if kd not in dimensions]
             kdims = [self.get_dimension(d) for d in kwargs.pop('kdims', group_dims)]
             drop_dim = len(group_dims) != len(kdims)
-            group_kwargs = dict(util.get_param_values(self), kdims=kdims)
+            group_kwargs = dict(holodata.util.get_param_values(self), kdims=kdims)
             group_kwargs.update(kwargs)
             def load_subset(*args):
                 constraint = dict(zip(dim_names, args))
@@ -1186,7 +1177,7 @@ argument to specify a selection specification""")
         # Get group
         group_kwargs = {}
         if group_type != 'raw' and issubclass(group_type, Element):
-            group_kwargs.update(util.get_param_values(self))
+            group_kwargs.update(holodata.util.get_param_values(self))
             group_kwargs['kdims'] = kdims
         group_kwargs.update(kwargs)
 
@@ -1246,7 +1237,7 @@ argument to specify a selection specification""")
         keep_index = kwargs.pop('keep_index', True)
         transforms = OrderedDict()
         for s, transform in list(args)+list(kwargs.items()):
-            transforms[util.wrap_tuple(s)] = transform
+            transforms[holodata.util.wrap_tuple(s)] = transform
 
         new_data = OrderedDict()
         for signature, transform in transforms.items():
@@ -1406,7 +1397,7 @@ argument to specify a selection specification""")
         """
         if 'datatype' not in overrides:
             datatypes = [self.interface.datatype] + self.datatype
-            overrides['datatype'] = list(util.unique_iterator(datatypes))
+            overrides['datatype'] = list(holodata.util.unique_iterator(datatypes))
 
         if data is None:
             overrides['_validate_vdims'] = False

@@ -2,7 +2,7 @@ from unittest import SkipTest
 
 import numpy as np
 
-from holoviews.core import Dimension
+from holodata.dimension import Dimension
 from holoviews.element import HexTiles
 from holoviews.plotting.bokeh.hex_tiles import hex_binning
 from holoviews.plotting.bokeh.util import bokeh_version

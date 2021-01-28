@@ -9,7 +9,7 @@ import threading
 import uuid
 import warnings
 
-from collections import Counter, defaultdict
+from collections import Counter, defaultdict, OrderedDict
 from functools import partial
 from itertools import groupby, product
 
@@ -22,8 +22,8 @@ from panel.io.state import state
 from panel.io.server import unlocked
 from pyviz_comms import JupyterComm
 
+import holodata.util
 from ..selection import NoOpSelectionDisplay
-from ..core import OrderedDict
 from ..core import util, traversal
 from ..core.data import Dataset, disable_pipeline
 from ..core.element import Element, Element3D
@@ -32,7 +32,8 @@ from ..core.layout import Empty, NdLayout, Layout
 from ..core.options import Store, Compositor, SkipRendering, lookup_options
 from ..core.overlay import NdOverlay
 from ..core.spaces import HoloMap, DynamicMap
-from ..core.util import stream_parameters, isfinite
+from ..core.util import stream_parameters
+from holodata.util import isfinite
 from ..element import Table, Graph, Contours
 from ..streams import Stream, RangeXY, RangeX, RangeY
 from ..util.transform import dim
@@ -507,7 +508,7 @@ class DimensionedPlot(Plot):
                             zip(dimensions, key)]
         groups = [', '.join(dimension_labels[i*group_size:(i+1)*group_size])
                   for i in range(len(dimension_labels))]
-        return util.bytes_to_unicode(separator.join(g for g in groups if g))
+        return holodata.util.bytes_to_unicode(separator.join(g for g in groups if g))
 
 
     def _format_title(self, key, dimensions=True, separator='\n'):
@@ -526,9 +527,9 @@ class DimensionedPlot(Plot):
             else self.title_format
         )
 
-        title = util.bytes_to_unicode(title_str).format(
-            label=util.bytes_to_unicode(label),
-            group=util.bytes_to_unicode(group),
+        title = holodata.util.bytes_to_unicode(title_str).format(
+            label=holodata.util.bytes_to_unicode(label),
+            group=holodata.util.bytes_to_unicode(group),
             type=type_name,
             dimensions=dim_title
         )
@@ -654,8 +655,8 @@ class DimensionedPlot(Plot):
         norm_opts = {}
 
         # Get all elements' type.group.label specs and ids
-        type_val_fn = lambda x: (x.id, (type(x).__name__, util.group_sanitizer(x.group, escape=False),
-                                        util.label_sanitizer(x.label, escape=False))) \
+        type_val_fn = lambda x: (x.id, (type(x).__name__, holodata.util.group_sanitizer(x.group, escape=False),
+                                        holodata.util.label_sanitizer(x.label, escape=False))) \
             if isinstance(x, Element) else None
         element_specs = {(idspec[0], idspec[1]) for idspec in obj.traverse(type_val_fn)
                          if idspec is not None}
@@ -691,12 +692,12 @@ class DimensionedPlot(Plot):
 
     @classmethod
     def _merge_group_ranges(cls, ranges):
-        hard_range = util.max_range(ranges['hard'], combined=False)
-        soft_range = util.max_range(ranges['soft'])
-        robust_range = util.max_range(ranges.get('robust', []))
-        data_range = util.max_range(ranges['data'])
-        combined = util.dimension_range(data_range[0], data_range[1],
-                                        hard_range, soft_range)
+        hard_range = holodata.util.max_range(ranges['hard'], combined=False)
+        soft_range = holodata.util.max_range(ranges['soft'])
+        robust_range = holodata.util.max_range(ranges.get('robust', []))
+        data_range = holodata.util.max_range(ranges['data'])
+        combined = holodata.util.dimension_range(data_range[0], data_range[1],
+                                                 hard_range, soft_range)
         dranges = {'data': data_range, 'hard': hard_range,
                    'soft': soft_range, 'combined': combined,
                    'robust': robust_range, 'values': ranges}
@@ -711,7 +712,7 @@ class DimensionedPlot(Plot):
                     expanded = np.array(expanded, dtype=dtype)
                 except Exception:
                     pass
-            dranges['factors'] = util.unique_array(expanded)
+            dranges['factors'] = holodata.util.unique_array(expanded)
         return dranges
 
     @classmethod
@@ -738,7 +739,7 @@ class DimensionedPlot(Plot):
                 else:
                     dtype = None
 
-                if all(util.isfinite(r) for r in el_dim.range):
+                if all(holodata.util.isfinite(r) for r in el_dim.range):
                     data_range = (None, None)
                 elif dtype is not None and dtype.kind in 'SU':
                     data_range = ('', '')
@@ -783,10 +784,10 @@ class DimensionedPlot(Plot):
                     factors = None
                     if values.dtype.kind == 'M':
                         drange = values.min(), values.max()
-                    elif util.isscalar(values):
+                    elif holodata.util.isscalar(values):
                         drange = values, values
                     elif values.dtype.kind in 'US':
-                        factors = util.unique_array(values)
+                        factors = holodata.util.unique_array(values)
                     elif len(values) == 0:
                         drange = np.NaN, np.NaN
                     else:
@@ -795,7 +796,7 @@ class DimensionedPlot(Plot):
                                 warnings.filterwarnings('ignore', r'All-NaN (slice|axis) encountered')
                                 drange = (np.nanmin(values), np.nanmax(values))
                         except:
-                            factors = util.unique_array(values)
+                            factors = holodata.util.unique_array(values)
                     if dim_name not in group_ranges:
                         group_ranges[dim_name] = {
                             'id': [], 'data': [], 'hard': [], 'soft': []
@@ -840,7 +841,7 @@ class DimensionedPlot(Plot):
                     if (isinstance(values, np.ndarray) and values.dtype.kind == 'O' and
                         all(isinstance(v, (np.ndarray)) for v in values)):
                         values = np.concatenate(values) if len(values) else []
-                    factors = util.unique_array(values)
+                    factors = holodata.util.unique_array(values)
                     group_ranges[dim_name]['factors'].append(factors)
                 group_ranges[dim_name]['id'].append(id(el))
 
@@ -852,8 +853,8 @@ class DimensionedPlot(Plot):
                 if t in ('factors', 'id'):
                     continue
                 matching &= (
-                    len({'date' if isinstance(v, util.datetime_types) else 'number'
-                         for rng in rs for v in rng if util.isfinite(v)}) < 2
+                        len({'date' if isinstance(v, util.datetime_types) else 'number'
+                             for rng in rs for v in rng if holodata.util.isfinite(v)}) < 2
                 )
             if matching:
                 group_dim_ranges[gdim] = values
@@ -899,8 +900,8 @@ class DimensionedPlot(Plot):
                     elif g in ('factors', 'values'):
                         prev_ranges[d][g] = drange
                     else:
-                        prev_ranges[d][g] = util.max_range([prange, drange],
-                                                           combined=g=='hard')
+                        prev_ranges[d][g] = holodata.util.max_range([prange, drange],
+                                                                    combined=g=='hard')
         else:
             # Override global range
             ranges[group] = OrderedDict(dim_ranges)
@@ -1332,8 +1333,8 @@ class GenericElementPlot(DimensionedPlot):
             padding = padding_opt
         xpad, ypad, zpad = get_axis_padding(padding)
         if not self.overlaid and not self.batched:
-            xspan = x1-x0 if util.is_number(x0) and util.is_number(x1) else None
-            yspan = y1-y0 if util.is_number(y0) and util.is_number(y1) else None
+            xspan = x1-x0 if holodata.util.is_number(x0) and holodata.util.is_number(x1) else None
+            yspan = y1-y0 if holodata.util.is_number(y0) and holodata.util.is_number(y1) else None
             aspect = self.get_aspect(xspan, yspan)
             if aspect > 1:
                 xpad = tuple(xp/aspect for xp in xpad) if isinstance(xpad, tuple) else xpad/aspect
@@ -1378,14 +1379,14 @@ class GenericElementPlot(DimensionedPlot):
         elif xdim == 'categorical':
             x0, x1 = '', ''
         elif range_type == 'combined':
-            x0, x1 = util.dimension_range(x0, x1, xhrange, xsrange, xpad, self.logx)
+            x0, x1 = holodata.util.dimension_range(x0, x1, xhrange, xsrange, xpad, self.logx)
 
         if range_type == 'soft':
             y0, y1 = ysrange
         elif range_type == 'hard':
             y0, y1 = yhrange
         elif range_type == 'combined':
-            y0, y1 = util.dimension_range(y0, y1, yhrange, ysrange, ypad, self.logy)
+            y0, y1 = holodata.util.dimension_range(y0, y1, yhrange, ysrange, ypad, self.logy)
         elif ydim == 'categorical':
             y0, y1 = '', ''
         elif ydim is None:
@@ -1397,7 +1398,7 @@ class GenericElementPlot(DimensionedPlot):
             elif range_type == 'data':
                 z0, z1 = zhrange
             elif range_type=='combined':
-                z0, z1 = util.dimension_range(z0, z1, zhrange, zsrange, zpad, self.logz)
+                z0, z1 = holodata.util.dimension_range(z0, z1, zhrange, zsrange, zpad, self.logz)
             elif zdim == 'categorical':
                 z0, z1 = '', ''
             elif zdim is None:
@@ -1470,8 +1471,8 @@ class GenericElementPlot(DimensionedPlot):
         else:
             x0, y0, x1, y1 = combined
 
-        x0, x1 = util.dimension_range(x0, x1, self.xlim, (None, None))
-        y0, y1 = util.dimension_range(y0, y1, self.ylim, (None, None))
+        x0, x1 = holodata.util.dimension_range(x0, x1, self.xlim, (None, None))
+        y0, y1 = holodata.util.dimension_range(y0, y1, self.ylim, (None, None))
 
         if not self.drawn:
             x_range, y_range = ((y0, y1), (x0, x1)) if self.invert_axes else ((x0, x1), (y0, y1))
@@ -1489,7 +1490,7 @@ class GenericElementPlot(DimensionedPlot):
                     self._trigger.append(stream)
 
         if self.projection == '3d':
-            z0, z1 = util.dimension_range(z0, z1, self.zlim, (None, None))
+            z0, z1 = holodata.util.dimension_range(z0, z1, self.zlim, (None, None))
             return (x0, y0, z0, x1, y1, z1)
         return (x0, y0, x1, y1)
 
@@ -1706,7 +1707,7 @@ class GenericOverlayPlot(GenericElementPlot):
                                    'during plotting' % obj.last)
                 return None
         elif self.batched and 'batched' in plottype._plot_methods:
-            param_vals = dict(self.param.get_param_values())
+            param_vals = dict(holodata.util.get_param_values())
             propagate = {opt: param_vals[opt] for opt in self._propagate_options
                          if opt in param_vals}
             opts['batched'] = self.batched
@@ -1790,7 +1791,7 @@ class GenericOverlayPlot(GenericElementPlot):
 
         subplot.cyclic_index = cyclic_index
         if subplot.overlay_dims:
-            odim_key = util.wrap_tuple(spec[-1])
+            odim_key = holodata.util.wrap_tuple(spec[-1])
             new_dims = zip(subplot.overlay_dims, odim_key)
             subplot.overlay_dims = util.OrderedDict(new_dims)
 
@@ -1828,7 +1829,7 @@ class GenericOverlayPlot(GenericElementPlot):
             if isinstance(layer, CompositeOverlay):
                 sp_ranges = ranges
             else:
-                sp_ranges = util.match_spec(layer, ranges) if ranges else {}
+                sp_ranges = holodata.util.match_spec(layer, ranges) if ranges else {}
             for rt in extents:
                 extent = subplot.get_extents(layer, sp_ranges, range_type=rt)
                 extents[rt].append(extent)
@@ -1861,10 +1862,10 @@ class GenericOverlayPlot(GenericElementPlot):
 
         # Apply padding
         xpad, ypad, zpad = self.get_padding(overlay, (x0, y0, z0, x1, y1, z1))
-        x0, x1 = util.dimension_range(x0, x1, (hx0, hx1), (sx0, sx1), xpad, self.logx)
-        y0, y1 = util.dimension_range(y0, y1, (hy0, hy1), (sy0, sy1), ypad, self.logy)
+        x0, x1 = holodata.util.dimension_range(x0, x1, (hx0, hx1), (sx0, sx1), xpad, self.logx)
+        y0, y1 = holodata.util.dimension_range(y0, y1, (hy0, hy1), (sy0, sy1), ypad, self.logy)
         if len(extents['data']) == 6:
-            z0, z1 = util.dimension_range(z0, z1, (hz0, hz1), (sz0, sz1), zpad, self.logz)
+            z0, z1 = holodata.util.dimension_range(z0, z1, (hz0, hz1), (sz0, sz1), zpad, self.logz)
             padded = (x0, y0, z0, x1, y1, z1)
         else:
             padded = (x0, y0, x1, y1)
@@ -1877,10 +1878,10 @@ class GenericOverlayPlot(GenericElementPlot):
             x0, y0, x1, y1 = combined
 
         # Apply xlim, ylim, zlim plot option
-        x0, x1 = util.dimension_range(x0, x1, self.xlim, (None, None))
-        y0, y1 = util.dimension_range(y0, y1, self.ylim, (None, None))
+        x0, x1 = holodata.util.dimension_range(x0, x1, self.xlim, (None, None))
+        y0, y1 = holodata.util.dimension_range(y0, y1, self.ylim, (None, None))
         if self.projection == '3d':
-            z0, z1 = util.dimension_range(z0, z1, getattr(self, 'zlim', (None, None)), (None, None))
+            z0, z1 = holodata.util.dimension_range(z0, z1, getattr(self, 'zlim', (None, None)), (None, None))
             return (x0, y0, z0, x1, y1, z1)
         return (x0, y0, x1, y1)
 
@@ -1941,8 +1942,8 @@ class GenericCompositePlot(DimensionedPlot):
         dim_title = self._frame_title(key, 3, separator) if dimensions else ''
         layout = self.layout
         type_name = type(self.layout).__name__
-        group = util.bytes_to_unicode(layout.group if layout.group != type_name else '')
-        label = util.bytes_to_unicode(layout.label)
+        group = holodata.util.bytes_to_unicode(layout.group if layout.group != type_name else '')
+        label = holodata.util.bytes_to_unicode(layout.label)
         return (label, group, type_name, dim_title)
 
 

@@ -1,5 +1,5 @@
-from .. import Dimensioned
-from holoviews.core.data import Interface
+from holodata.dimension import Dimensioned
+from holodata.interface import Interface
 
 
 class TabularDataset(Dimensioned):

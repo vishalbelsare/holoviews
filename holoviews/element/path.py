@@ -4,14 +4,18 @@ geometries in 2D space. In addition to three general elements are
 Path, Contours and Polygons, it defines a number of elements to
 quickly draw common shapes.
 """
+from collections import OrderedDict
 
 import numpy as np
-
 import param
-from ..core import Dataset, Interface
+
+import holodata.dimension
+import holodata.util
+from ..core import Dataset
+from holodata.interface import Interface
 from ..core.data import MultiDriver
-from ..core.dimension import Dimension, asdim
-from ..core.util import OrderedDict, disable_constant
+from holodata.dimension import asdim, Dimension
+from ..core.util import disable_constant
 from .geom import Geometry
 from .selection import SelectionPolyExpr
 
@@ -75,7 +79,7 @@ class Path(SelectionPolyExpr, Geometry):
             for path in data:
                 if path.kdims != kdims:
                     redim = {okd.name: nkd for okd, nkd in zip(path.kdims, kdims)}
-                    path = path.redim(**redim)
+                    path = holodata.dimension.redim(**redim)
                 if path.interface.multi and isinstance(path.data, list):
                     paths += path.data
                 else:
@@ -389,7 +393,7 @@ class BaseShape(Path):
         containing the specified args and kwargs.
         """
         link = overrides.pop('link', True)
-        settings = dict(self.param.get_param_values(), **overrides)
+        settings = dict(holodata.util.get_param_values(), **overrides)
         if 'id' not in settings:
             settings['id'] = self.id
         if not args and link:

@@ -17,18 +17,23 @@ import dask.dataframe as dd
 from datashader.colors import color_lookup
 from param.parameterized import bothmethod
 
+import holodata.dimension
+import holodata.util
+
 try:
     from datashader.bundling import (directly_connect_edges as connect_edges,
                                      hammer_bundle)
 except:
     hammer_bundle, connect_edges = object, object
 
-from ..core import (Operation, Element, Dimension, NdOverlay,
+from ..core import (Operation, Element, NdOverlay,
                     CompositeOverlay, Dataset, Overlay, OrderedDict)
+from holodata.dimension import Dimension
 from ..core.data import PandasDriver, XArrayDriver, DaskDriver, cuDFDriver
 from ..core.util import (
-    Iterable, LooseVersion, basestring, cftime_types, cftime_to_timestamp,
-    datetime_types, dt_to_int, isfinite, get_param_values, max_range, config)
+    Iterable, LooseVersion, basestring, cftime_types, datetime_types, config)
+from holodata.util import dt_to_int, cftime_to_timestamp, isfinite, max_range, \
+    get_param_values
 from ..element import (Image, Path, Curve, RGB, Graph, TriMesh,
                        QuadMesh, Contours, Spikes, Area, Rectangles,
                        Spread, Segments, Scatter, Points, Polygons)
@@ -438,7 +443,7 @@ class aggregate(AggregationOperation):
 
         if overlay_aggregate.applies(element, agg_fn):
             params = dict(
-                {p: v for p, v in self.param.get_param_values() if p != 'name'},
+                {p: v for p, v in holodata.util.get_param_values() if p != 'name'},
                 dynamic=False, **{p: v for p, v in self.p.items()
                                   if p not in ('name', 'dynamic')})
             return overlay_aggregate(element, **params)
@@ -527,7 +532,7 @@ class overlay_aggregate(aggregate):
         info = self._get_sampling(element, x, y, ndims)
         (x_range, y_range), (xs, ys), (width, height), (xtype, ytype) = info
         ((x0, x1), (y0, y1)), _ = self._dt_transform(x_range, y_range, xs, ys, xtype, ytype)
-        agg_params = dict({k: v for k, v in dict(self.param.get_param_values(),
+        agg_params = dict({k: v for k, v in dict(holodata.util.get_param_values(),
                                                  **self.p).items()
                            if k in aggregate.param},
                           x_range=(x0, x1), y_range=(y0, y1))
@@ -1456,7 +1461,7 @@ class rasterize(AggregationOperation):
         all_allowed_kws = set()
         all_supplied_kws = set()
         for predicate, transform in self._transforms:
-            merged_param_values = dict(self.param.get_param_values(), **self.p)
+            merged_param_values = dict(holodata.util.get_param_values(), **self.p)
 
             # If aggregator or interpolation are 'default', pop parameter so
             # datashader can choose the default aggregator itself
@@ -1697,8 +1702,8 @@ class _connect_edges(Operation):
         index = element.nodes.kdims[2].name
         rename_edges = {d.name: v for d, v in zip(element.kdims[:2], ['source', 'target'])}
         rename_nodes = {d.name: v for d, v in zip(element.nodes.kdims[:2], ['x', 'y'])}
-        position_df = element.nodes.redim(**rename_nodes).dframe([0, 1, 2]).set_index(index)
-        edges_df = element.redim(**rename_edges).dframe([0, 1])
+        position_df = holodata.dimension.redim(**rename_nodes).dframe([0, 1, 2]).set_index(index)
+        edges_df = holodata.dimension.redim(**rename_edges).dframe([0, 1])
         paths = self._bundle(position_df, edges_df)
         paths = paths.rename(columns={v: k for k, v in rename_nodes.items()})
         paths = split_dataframe(paths) if self.p.split else [paths]

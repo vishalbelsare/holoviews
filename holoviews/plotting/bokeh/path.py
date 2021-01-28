@@ -5,6 +5,7 @@ from collections import defaultdict
 import param
 import numpy as np
 
+import holodata.util
 from ...core import util
 from ...element import Contours, Polygons
 from ...util.transform import dim
@@ -65,7 +66,7 @@ class PathPlot(LegendPlot, ColorbarPlot):
             return
 
         for k, v in self.overlay_dims.items():
-            dim = util.dimension_sanitizer(k.name)
+            dim = holodata.util.dimension_sanitizer(k.name)
             if dim not in data:
                 data[dim] = [v for _ in range(len(list(data.values())[0]))]
 
@@ -99,9 +100,9 @@ class PathPlot(LegendPlot, ColorbarPlot):
         hover = 'hover' in self.handles
         vals = defaultdict(list)
         if hover:
-            vals.update({util.dimension_sanitizer(vd.name): [] for vd in element.vdims})
+            vals.update({holodata.util.dimension_sanitizer(vd.name): [] for vd in element.vdims})
         if cdim and self.color_index is not None:
-            dim_name = util.dimension_sanitizer(cdim.name)
+            dim_name = holodata.util.dimension_sanitizer(cdim.name)
             cmapper = self._get_colormapper(cdim, element, ranges, style)
             mapping['line_color'] = {'field': dim_name, 'transform': cmapper}
             vals[dim_name] = []
@@ -123,7 +124,7 @@ class PathPlot(LegendPlot, ColorbarPlot):
                 if vd == cdim:
                     continue
                 values = path.dimension_values(vd)[:-1]
-                vd_name = util.dimension_sanitizer(vd.name)
+                vd_name = holodata.util.dimension_sanitizer(vd.name)
                 vals[vd_name].append(values)
 
         values = {d: np.concatenate(vs) if len(vs) else [] for d, vs in vals.items()}
@@ -205,7 +206,7 @@ class ContourPlot(PathPlot):
         scalar_kwargs = {'per_geom': True} if interface.multi else {}
         npath = len([vs for vs in data.values()][0])
         for d in element.vdims:
-            dim = util.dimension_sanitizer(d.name)
+            dim = holodata.util.dimension_sanitizer(d.name)
             if dim not in data:
                 if element.level is not None:
                     data[dim] = np.full(npath, element.level)
@@ -215,7 +216,7 @@ class ContourPlot(PathPlot):
                     data[dim] = element.split(datatype='array', dimensions=[d])
 
         for k, v in self.overlay_dims.items():
-            dim = util.dimension_sanitizer(k.name)
+            dim = holodata.util.dimension_sanitizer(k.name)
             if dim not in data:
                 data[dim] = [v for _ in range(len(list(data.values())[0]))]
 
@@ -260,7 +261,7 @@ class ContourPlot(PathPlot):
             return data, mapping, style
 
         ncontours = len(xs)
-        dim_name = util.dimension_sanitizer(cdim.name)
+        dim_name = holodata.util.dimension_sanitizer(cdim.name)
         if element.level is not None:
             values = np.full(ncontours, float(element.level))
         else:
@@ -273,7 +274,7 @@ class ContourPlot(PathPlot):
         elif values.dtype.kind in 'SUO' and len(values):
             if isinstance(values[0], np.ndarray):
                 values = np.concatenate(values)
-            factors = util.unique_array(values)
+            factors = holodata.util.unique_array(values)
         cmapper = self._get_colormapper(cdim, element, ranges, style, factors)
         mapping[self._color_style] = {'field': dim_name, 'transform': cmapper}
         if self.show_legend:

@@ -2,9 +2,10 @@ import datetime as dt
 from unittest import SkipTest
 
 import numpy as np
-from holoviews import Dimension, Image, Curve, RGB, HSV, Dataset, Table
-from holoviews.core.util import date_range
-from holoviews.core.data.interface import DataError
+from holoviews import Image, Curve, RGB, HSV, Dataset, Table
+from holodata.dimension import Dimension
+from holodata.util import date_range
+from holodata.interface import DataError
 
 from .base import DatatypeContext, GriddedInterfaceTests, InterfaceTests
 
@@ -443,7 +444,8 @@ class BaseRGBElementInterfaceTests(InterfaceTests):
 
     def test_dataset_reindex_constant(self):
         with DatatypeContext([self.datatype, 'dictionary', 'dataframe', 'grid'], self.rgb):
-            ds = Dataset(self.rgb.select(x=0))
+            d = self.rgb.select(x=0)
+            ds = Dataset(d)
             reindexed = ds.reindex(['y'], ['R'])
         data = Dataset(ds.columns(['y', 'R']),
                        kdims=['y'], vdims=[ds.vdims[0]])

@@ -8,6 +8,7 @@ import logging
 
 import numpy as np
 
+import holodata.util
 from holoviews.core.data import Dataset, MultiDriver
 from holoviews.element import Path, Points, Polygons
 from holoviews.element.comparison import ComparisonTestCase
@@ -160,35 +161,35 @@ class GeomTests(ComparisonTestCase):
                      {'x': [5, 4, 3, 2, 1], 'y': [2, 2, 1, 1, 0], 'value': 1}],
                     vdims='value', datatype=[self.datatype])
         self.assertIs(path.interface.driver, self.driver)
-        self.assertTrue(path.interface.isscalar(path, 'value', per_geom=True))
+        self.assertTrue(holodata.util.isscalar(path, 'value', per_geom=True))
 
     def test_unique_values_isscalar_per_geom(self):
         path = Path([{'x': [1, 2, 3, 4, 5], 'y': [0, 0, 1, 1, 2], 'value': np.full(5, 0)},
                      {'x': [5, 4, 3, 2, 1], 'y': [2, 2, 1, 1, 0], 'value': np.full(5, 1)}],
                     vdims='value', datatype=[self.datatype])
         self.assertIs(path.interface.driver, self.driver)
-        self.assertTrue(path.interface.isscalar(path, 'value', per_geom=True))
+        self.assertTrue(holodata.util.isscalar(path, 'value', per_geom=True))
 
     def test_scalar_and_unique_values_isscalar_per_geom(self):
         path = Path([{'x': [1, 2, 3, 4, 5], 'y': [0, 0, 1, 1, 2], 'value': 0},
                      {'x': [5, 4, 3, 2, 1], 'y': [2, 2, 1, 1, 0], 'value': np.full(5, 1)}],
                     vdims='value', datatype=[self.datatype])
         self.assertIs(path.interface.driver, self.driver)
-        self.assertTrue(path.interface.isscalar(path, 'value', per_geom=True))
+        self.assertTrue(holodata.util.isscalar(path, 'value', per_geom=True))
 
     def test_varying_values_not_isscalar_per_geom(self):
         path = Path([{'x': [1, 2, 3, 4, 5], 'y': [0, 0, 1, 1, 2], 'value': np.arange(5)},
                      {'x': [5, 4, 3, 2, 1], 'y': [2, 2, 1, 1, 0], 'value': np.full(5, 1)}],
                     vdims='value', datatype=[self.datatype])
         self.assertIs(path.interface.driver, self.driver)
-        self.assertFalse(path.interface.isscalar(path, 'value', per_geom=True))
+        self.assertFalse(holodata.util.isscalar(path, 'value', per_geom=True))
 
     def test_varying_values_and_scalar_not_isscalar_per_geom(self):
         path = Path([{'x': [1, 2, 3, 4, 5], 'y': [0, 0, 1, 1, 2], 'value': np.arange(5)},
                      {'x': [5, 4, 3, 2, 1], 'y': [2, 2, 1, 1, 0], 'value': 1}],
                     vdims='value', datatype=[self.datatype])
         self.assertIs(path.interface.driver, self.driver)
-        self.assertFalse(path.interface.isscalar(path, 'value', per_geom=True))
+        self.assertFalse(holodata.util.isscalar(path, 'value', per_geom=True))
 
     def test_scalar_value_dimension_values_expanded(self):
         path = Path([{'x': [1, 2, 3, 4, 5], 'y': [0, 0, 1, 1, 2], 'value': 0},

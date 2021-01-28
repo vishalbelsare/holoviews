@@ -4,18 +4,17 @@ import param
 import numpy as np
 
 from ..core import Dataset, OrderedDict
-from ..core.boundingregion import BoundingBox
-from ..core.data import default_datatype
+from holodata.boundingregion import BoundingBox
 from ..core.operation import Operation
-from ..core.sheetcoords import Slice
+from holodata.sheetcoords import Slice
 from ..core.util import (
-    cartesian_product, datetime_types, is_cyclic, is_nan,
-    one_to_one, sort_topologically
+    datetime_types, is_cyclic, one_to_one, sort_topologically
 )
+from holodata.util import cartesian_product, is_nan
 
 try:
     import pandas as pd
-    from ..core.data import PandasDriver
+    from ..core.data import PandasDriver, default_datatype
 except:
     pd = None
 

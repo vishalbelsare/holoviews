@@ -6,7 +6,7 @@ import re
 import numpy as np
 from plotly import colors
 
-from ...core.util import isfinite, max_range
+from holodata.util import isfinite, max_range
 from ..util import color_intervals, process_cmap
 
 # Constants

@@ -8,12 +8,13 @@ from matplotlib import cm
 from matplotlib.collections import LineCollection
 from matplotlib.dates import DateFormatter, date2num
 
-from ...core.dimension import Dimension, dimension_name
+from holodata.dimension import dimension_name, Dimension
 from ...core.options import Store, abbreviated_exception
 from ...core.util import (
-    match_spec, basestring, isfinite, dt_to_int, dt64_to_dt, search_indices,
-    unique_array, isscalar, isdatetime
+    basestring, search_indices
 )
+from holodata.util import unique_array, match_spec, isdatetime, dt_to_int, isscalar, \
+    isfinite, dt64_to_dt
 from ...element import Raster, HeatMap
 from ...operation import interpolate_curve
 from ...util.transform import dim

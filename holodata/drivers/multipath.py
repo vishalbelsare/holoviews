@@ -1,9 +1,10 @@
 import numpy as np
 
-from holoviews.core import util
+from holodata import util
+import holodata.dimension
+from holodata.interface import DataError, Driver, Interface, TabularInterface, \
+    GeometryInterface
 from .dictionary import DictDriver
-from holoviews.core.data.interface import Driver, DataError, GeometryInterface, \
-    TabularInterface, Interface
 
 
 class MultiDriver(Driver):
@@ -380,7 +381,8 @@ class MultiDriver(Driver):
         ds = cls._inner_dataset_template(dataset)
         for d in dataset.data:
             ds.data = d
-            new_data.append(ds.interface.redim(ds, dimensions))
+            # TODO: what is redim here? an interface/driver function?
+            new_data.append(holodata.dimension.redim(ds, dimensions))
         return new_data
 
     @classmethod

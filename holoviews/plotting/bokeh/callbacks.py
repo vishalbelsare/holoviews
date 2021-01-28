@@ -2,7 +2,7 @@ from __future__ import absolute_import, division, unicode_literals
 
 import time
 
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from functools import partial
 
 import numpy as np
@@ -18,11 +18,12 @@ from panel.io.state import state
 from pyviz_comms import JS_CALLBACK
 from tornado import gen
 
-from ...core import OrderedDict
+import holodata.util
 from ...core.options import CallbackError
 from ...core.util import (
-    datetime_types, dimension_sanitizer, isscalar, dt64_to_dt
+    datetime_types
 )
+from holodata.util import isscalar, dt64_to_dt, dimension_sanitizer
 from ...element import Table
 from ...streams import (
     Stream, PointerXY, RangeXY, Selection1D, RangeX, RangeY, PointerX,
@@ -1566,14 +1567,14 @@ class LinkCallback(param.Parameterized):
         self.target_plot = target_plot
         self.validate()
 
-        references = {k: v for k, v in link.param.get_param_values()
+        references = {k: v for k, v in holodata.util.get_param_values()
                       if k not in ('source', 'target', 'name')}
 
         for sh in self.source_handles+[self.source_model]:
             key = '_'.join(['source', sh])
             references[key] = source_plot.handles[sh]
 
-        for p, value in link.param.get_param_values():
+        for p, value in holodata.util.get_param_values():
             if p in ('name', 'source', 'target'):
                 continue
             references[p] = value

@@ -11,10 +11,13 @@ from functools import reduce
 import numpy as np
 
 import param
-from .dimension import Dimension, Dimensioned, ViewableElement, ViewableTree
-from .ndmapping import UniformNdMapping, ViewableUniformNdMapping
+from .dimension import ViewableElement, ViewableTree
+from holodata.dimension import Dimension, Dimensioned
+from .ndmapping import ViewableUniformNdMapping
+from holodata.ndmapping import UniformNdMapping
 from .layout import Composable, Layout, AdjointLayout
-from .util import sanitize_identifier, unique_array, dimensioned_streams
+from .util import dimensioned_streams
+from holodata.util import unique_array, sanitize_identifier
 
 
 class Overlayable(object):

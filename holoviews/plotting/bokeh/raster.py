@@ -5,7 +5,7 @@ import param
 
 from bokeh.models import DatetimeAxis, CustomJSHover
 
-from ...core.util import cartesian_product, dimension_sanitizer, isfinite
+from holodata.util import isfinite, cartesian_product, dimension_sanitizer
 from ...element import Raster
 from .element import ElementPlot, ColorbarPlot
 from .selection import BokehOverlaySelectionDisplay

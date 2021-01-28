@@ -15,7 +15,7 @@ Archives: A collection of HoloViews objects that are first collected
 from __future__ import absolute_import
 
 import re, os, time, string, zipfile, tarfile, shutil, itertools, pickle
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 
 from io import BytesIO
 from hashlib import sha256
@@ -23,12 +23,12 @@ from hashlib import sha256
 import param
 from param.parameterized import bothmethod
 
-from .dimension import LabelledData
+from holodata.label import LabelledData
 from .element import Collator, Element
 from .overlay import Overlay, Layout
-from .ndmapping import OrderedDict, NdMapping, UniformNdMapping
+from holodata.ndmapping import NdMapping, UniformNdMapping
 from .options import Store
-from .util import unique_iterator, group_sanitizer, label_sanitizer
+from holodata.util import unique_iterator, group_sanitizer, label_sanitizer
 
 
 def sanitizer(name, replacements=[(':','_'), ('/','_'), ('\\','_')]):
@@ -859,5 +859,5 @@ class FileArchive(Archive):
         "Clears the file archive"
         self._files.clear()
 
-    
+
 

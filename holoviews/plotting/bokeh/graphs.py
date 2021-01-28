@@ -9,7 +9,8 @@ from bokeh.models import (StaticLayoutProvider, NodesAndLinkedEdges,
 
 from ...core.data import Dataset
 from ...core.options import Cycle, abbreviated_exception
-from ...core.util import basestring, dimension_sanitizer, unique_array
+from ...core.util import basestring
+from holodata.util import unique_array, dimension_sanitizer
 from ...util.transform import dim
 from ..mixins import ChordMixin
 from ..util import process_cmap, get_directed_graph_paths

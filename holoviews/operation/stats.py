@@ -1,9 +1,11 @@
 import param
 import numpy as np
 
-from ..core import Dimension, Dataset, NdOverlay
+from ..core import Dataset, NdOverlay
+from holodata.dimension import Dimension
 from ..core.operation import Operation
-from ..core.util import basestring, cartesian_product, isfinite
+from ..core.util import basestring
+from holodata.util import isfinite, cartesian_product
 from ..element import (Curve, Area, Image, Distribution, Bivariate,
                        Contours, Polygons)
 

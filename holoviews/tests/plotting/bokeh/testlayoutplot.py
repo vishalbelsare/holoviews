@@ -4,7 +4,8 @@ import re
 import numpy as np
 
 from holoviews.core import (HoloMap, GridSpace, Layout, Empty, Dataset,
-                            NdOverlay, NdLayout, DynamicMap, Dimension)
+                            NdOverlay, NdLayout, DynamicMap)
+from holodata.dimension import Dimension
 from holoviews.element import Curve, Image, Points, Histogram, Scatter
 from holoviews.streams import Stream
 from holoviews.util import render, opts

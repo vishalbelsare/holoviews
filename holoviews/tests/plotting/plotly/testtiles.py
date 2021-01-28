@@ -1,3 +1,4 @@
+import holodata.dimension
 from holoviews.element import RGB, Tiles, Points, Bounds
 from holoviews.element.tiles import StamenTerrain, _ATTRIBUTIONS
 from .testplot import TestPlotlyPlot, plotly_renderer
@@ -54,7 +55,7 @@ class TestMapboxTilesPlot(TestPlotlyPlot):
         self.assertEqual(len(layers), 0)
 
     def test_styled_mapbox_tiles(self):
-        tiles = Tiles().opts(mapboxstyle="dark", accesstoken="token-str").redim.range(
+        tiles = holodata.dimension.redim.range(
             x=self.x_range, y=self.y_range
         )
 
@@ -69,7 +70,7 @@ class TestMapboxTilesPlot(TestPlotlyPlot):
         )
 
     def test_raster_layer(self):
-        tiles = StamenTerrain().redim.range(
+        tiles = holodata.dimension.redim.range(
             x=self.x_range, y=self.y_range
         ).opts(alpha=0.7, min_zoom=3, max_zoom=7)
 
@@ -126,7 +127,7 @@ class TestMapboxTilesPlot(TestPlotlyPlot):
         bounds = Bounds((self.x_range[0], self.y_range[0], 0, 0))
 
         # Overlay
-        overlay = (tiles * stamen_raster * rgb * points * bounds).redim.range(
+        overlay = holodata.dimension.redim.range(
             x=self.x_range, y=self.y_range
         )
 

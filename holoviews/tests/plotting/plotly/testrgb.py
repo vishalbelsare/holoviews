@@ -2,6 +2,8 @@ import numpy as np
 
 import PIL.Image
 
+import holodata.dimension
+
 try:
     import plotly.graph_objs as go
 except:
@@ -267,12 +269,7 @@ class TestMapboxRGBPlot(TestPlotlyPlot):
 
     def test_rgb(self):
         rgb_data = np.random.rand(10, 10, 3)
-        rgb = Tiles("") * RGB(
-            rgb_data,
-            bounds=(self.x_range[0], self.y_range[0], self.x_range[1], self.y_range[1])
-        ).opts(
-            opacity=0.5
-        ).redim.range(x=self.x_range, y=self.y_range)
+        rgb = Tiles("") * holodata.dimension.redim.range(x=self.x_range, y=self.y_range)
 
         fig_dict = plotly_renderer.get_plot_state(rgb)
         # Check dummy trace

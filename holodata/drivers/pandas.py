@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 
+from collections import OrderedDict as cyODict
+
 try:
     import itertools.izip as zip
 except ImportError:
@@ -8,10 +10,9 @@ except ImportError:
 import numpy as np
 import pandas as pd
 
-from holoviews.core.data.interface import Driver, DataError, TabularInterface
-from holoviews.core.dimension import dimension_name
-from holoviews.core.dimension import OrderedDict as cyODict
-from holoviews.core import util
+from holodata.interface import DataError, Driver, TabularInterface
+from holodata.dimension import dimension_name
+from holodata import util
 
 
 class PandasDriver(Driver):
@@ -90,7 +91,7 @@ class PandasDriver(Driver):
             # Then use defined data type
             kdims = kdims if kdims else kdims_spec["default"]
             vdims = vdims if vdims else vdims_spec["default"]
-            columns = list(util.unique_iterator([dimension_name(d) for d in kdims+vdims]))
+            columns = list(util.unique_iterator([dimension_name(d) for d in kdims + vdims]))
 
             if isinstance(data, dict) and all(c in data for c in columns):
                 data = cyODict(((d, data[d]) for d in columns))
@@ -102,11 +103,12 @@ class PandasDriver(Driver):
                   not any(isinstance(v, np.ndarray) for v in data.values())):
                 column_data = sorted(data.items())
                 k, v = column_data[0]
-                if len(util.wrap_tuple(k)) != len(kdims) or len(util.wrap_tuple(v)) != len(vdims):
+                if len(util.wrap_tuple(k)) != len(kdims) or len(
+                        util.wrap_tuple(v)) != len(vdims):
                     raise ValueError("Dictionary data not understood, should contain a column "
                                     "per dimension or a mapping between key and value dimension "
                                     "values.")
-                column_data = zip(*((util.wrap_tuple(k)+util.wrap_tuple(v))
+                column_data = zip(*((util.wrap_tuple(k) + util.wrap_tuple(v))
                                     for k, v in column_data))
                 data = cyODict(((c, col) for c, col in zip(columns, column_data)))
             elif isinstance(data, np.ndarray):
@@ -161,8 +163,7 @@ class PandasDriver(Driver):
         dimension = dataset.get_dimension(dimension, strict=True)
         column = dataset.data[dimension.name]
         if column.dtype.kind == 'O':
-            if (not isinstance(dataset.data, pd.DataFrame) or
-                util.LooseVersion(pd.__version__) < '0.17.0'):
+            if not isinstance(dataset.data, pd.DataFrame):
                 column = column.sort(inplace=False)
             else:
                 column = column.sort_values()
@@ -185,8 +186,7 @@ class PandasDriver(Driver):
 
     @classmethod
     def concat_fn(cls, dataframes, **kwargs):
-        if util.pandas_version >= '0.23.0':
-            kwargs['sort'] = False
+        kwargs['sort'] = False
         return pd.concat(dataframes, **kwargs)
 
 
@@ -270,8 +270,7 @@ class PandasDriver(Driver):
         import pandas as pd
         cols = [dataset.get_dimension(d, strict=True).name for d in by]
 
-        if (not isinstance(dataset.data, pd.DataFrame) or
-            util.LooseVersion(pd.__version__) < '0.17.0'):
+        if not isinstance(dataset.data, pd.DataFrame):
             return dataset.data.sort(columns=cols, ascending=not reverse)
         return dataset.data.sort_values(by=cols, ascending=not reverse)
 

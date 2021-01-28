@@ -5,7 +5,7 @@ import param
 import matplotlib.cm as cm
 from mpl_toolkits.mplot3d.art3d import Line3DCollection
 
-from ...core import Dimension
+from holodata.dimension import Dimension
 from ...core.options import abbreviated_exception
 from ...core.util import basestring
 from ..util import map_colors

@@ -9,8 +9,9 @@ import numpy as np
 import param
 
 from ..core.data import PandasDriver
-from ..core.dimension import Dimension
-from ..core.util import basestring, pd, resolve_dependent_value, unique_iterator
+from holodata.dimension import Dimension
+from ..core.util import basestring, pd, resolve_dependent_value
+from holodata.util import unique_iterator
 
 
 def _maybe_map(numpy_fn):

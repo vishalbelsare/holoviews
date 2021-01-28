@@ -1,8 +1,9 @@
 import os, sys, inspect, shutil
 
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from types import FunctionType
 
+import holodata.util
 
 try:
     from pathlib import Path
@@ -13,13 +14,14 @@ import param
 from pyviz_comms import extension as _pyviz_extension
 
 from ..core import (
-    Dataset, DynamicMap, HoloMap, Dimensioned, ViewableElement,
+    Dataset, DynamicMap, HoloMap, ViewableElement,
     StoreOptions, Store
 )
+from holodata.dimension import Dimensioned
 from ..core.options import options_policy, Keywords, Options
 from ..core.operation import Operation
 from ..core.overlay import Overlay
-from ..core.util import basestring, merge_options_to_dict, OrderedDict
+from ..core.util import basestring, merge_options_to_dict
 from ..core.operation import OperationCallable
 from ..core import util
 from ..operation.element import function
@@ -135,11 +137,11 @@ class opts(param.ParameterizedFunction):
             raise Exception("Cannot mix target specification keys such as 'Image' with non-target keywords.")
         elif not any(targets):
             # Not targets specified - add current object as target
-            sanitized_group = util.group_sanitizer(obj.group)
+            sanitized_group = holodata.util.group_sanitizer(obj.group)
             if obj.label:
                 identifier = ('%s.%s.%s' % (
                     obj.__class__.__name__, sanitized_group,
-                    util.label_sanitizer(obj.label)))
+                    holodata.util.label_sanitizer(obj.label)))
             elif  sanitized_group != obj.__class__.__name__:
                 identifier = '%s.%s' % (obj.__class__.__name__, sanitized_group)
             else:
@@ -958,7 +960,7 @@ class Dynamic(param.ParameterizedFunction):
         # Inherit dimensioned streams
         if isinstance(map_obj, DynamicMap):
             dim_streams = util.dimensioned_streams(map_obj)
-            streams = list(util.unique_iterator(streams + dim_streams))
+            streams = list(holodata.util.unique_iterator(streams + dim_streams))
 
         # If callback is a parameterized method and watch is disabled add as stream
         has_dependencies = (util.is_param_method(op, has_deps=True) or
@@ -1040,7 +1042,7 @@ class Dynamic(param.ParameterizedFunction):
                 dmap.callback.inputs[:] = list(hmap)
             return dmap
         dim_values = zip(*hmap.data.keys())
-        params = util.get_param_values(hmap)
-        kdims = [d.clone(values=list(util.unique_iterator(values))) for d, values in
+        params = holodata.util.get_param_values(hmap)
+        kdims = [d.clone(values=list(holodata.util.unique_iterator(values))) for d, values in
                  zip(hmap.kdims, dim_values)]
         return DynamicMap(dynamic_fn, streams=streams, **dict(params, kdims=kdims))

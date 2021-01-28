@@ -5,6 +5,7 @@ import numpy as np
 import param
 import re
 
+import holodata.util
 from ... import Tiles
 from ...core import util
 from ...core.element import Element
@@ -156,7 +157,7 @@ class ElementPlot(PlotlyPlot, GenericElementPlot):
 
         # Get ranges
         ranges = self.compute_ranges(self.hmap, key, ranges)
-        ranges = util.match_spec(element, ranges)
+        ranges = holodata.util.match_spec(element, ranges)
 
         # Get style
         self.style = self.lookup_options(element, 'style')
@@ -357,11 +358,11 @@ class ElementPlot(PlotlyPlot, GenericElementPlot):
             else:
                 val = v.apply(element, ranges=ranges, flat=True)
 
-            if (not util.isscalar(val) and len(util.unique_array(val)) == 1
+            if (not holodata.util.isscalar(val) and len(holodata.util.unique_array(val)) == 1
                 and not 'color' in k):
                 val = val[0]
 
-            if not util.isscalar(val):
+            if not holodata.util.isscalar(val):
                 if k in self._nonvectorized_styles:
                     element = type(element).__name__
                     raise ValueError('Mapping a dimension to the "{style}" '
@@ -614,7 +615,7 @@ class ColorbarPlot(ElementPlot):
 
         if eldim:
             auto = False
-            if util.isfinite(self.clim).all():
+            if holodata.util.isfinite(self.clim).all():
                 cmin, cmax = self.clim
             elif dim_name in ranges:
                 if self.clim_percentile and 'robust' in ranges[dim_name]:

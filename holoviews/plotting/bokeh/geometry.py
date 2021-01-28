@@ -3,7 +3,7 @@ from __future__ import absolute_import, division, unicode_literals
 import numpy as np
 import param
 
-from ...core.util import dimension_sanitizer
+from holodata.util import dimension_sanitizer
 from ..mixins import GeomMixin
 from .element import ColorbarPlot, LegendPlot
 from .selection import BokehOverlaySelectionDisplay

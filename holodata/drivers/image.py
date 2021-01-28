@@ -1,12 +1,11 @@
 import numpy as np
 
-from holoviews.core.boundingregion import BoundingBox
-from holoviews.core.dimension import dimension_name
-from holoviews.core.sheetcoords import Slice
-from holoviews.core import util
+from holodata import util
+from holodata.dimension import dimension_name
+from holodata.interface import DataError, Driver, ImageInterface as ImageInterface2
+from holodata.boundingregion import BoundingBox
+from holodata.sheetcoords import Slice
 from .grid import GridDriver
-from holoviews.core.data.interface import Driver, DataError
-from ..interface import ImageInterface as ImageInterface2
 
 
 class ImageDriver(GridDriver):

@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 
 import sys
+from collections import OrderedDict
+
 try:
     import itertools.izip as zip
 except ImportError:
@@ -9,11 +11,10 @@ except ImportError:
 import numpy as np
 import pandas as pd
 
-from holoviews.core import util
-from holoviews.core.dimension import Dimension
-from collections import OrderedDict
-from holoviews.core.data.interface import Driver, TabularInterface
+from holodata.dimension import Dimension
+from holodata.interface import Driver, TabularInterface
 from .pandas import PandasDriver
+from holodata import util
 
 
 class DaskDriver(PandasDriver):

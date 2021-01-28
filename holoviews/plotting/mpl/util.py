@@ -26,7 +26,8 @@ except:
 
 from ...core.util import (
     LooseVersion, _getargspec, arraylike_types, basestring,
-    cftime_types, is_number,)
+    cftime_types, )
+from holodata.util import is_number
 from ...element import Raster, RGB, Polygons
 from ..util import COLOR_ALIASES, RGB_HEX_REGEX
 

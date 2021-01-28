@@ -28,7 +28,9 @@ from bokeh.models.tickers import (
 from bokeh.models.tools import Tool
 from bokeh.models.widgets import Panel, Tabs
 
-from ...core import DynamicMap, CompositeOverlay, Element, Dimension, Dataset
+import holodata.util
+from ...core import DynamicMap, CompositeOverlay, Element, Dataset
+from holodata.dimension import Dimension
 from ...core.options import abbreviated_exception, SkipRendering
 from ...core import util
 from ...element import (
@@ -235,7 +237,7 @@ class ElementPlot(BokehPlot, GenericElementPlot):
         else:
             dims = list(self.overlay_dims.keys())
         dims += element.dimensions()
-        return list(util.unique_iterator(dims)), {}
+        return list(holodata.util.unique_iterator(dims)), {}
 
 
     def _init_tools(self, element, callbacks=[]):
@@ -243,7 +245,7 @@ class ElementPlot(BokehPlot, GenericElementPlot):
         Processes the list of tools to be supplied to the plot.
         """
         tooltips, hover_opts = self._hover_opts(element)
-        tooltips = [(ttp.pprint_label, '@{%s}' % util.dimension_sanitizer(ttp.name))
+        tooltips = [(ttp.pprint_label, '@{%s}' % holodata.util.dimension_sanitizer(ttp.name))
                     if isinstance(ttp, Dimension) else ttp for ttp in tooltips]
         if not tooltips: tooltips = None
 
@@ -307,7 +309,7 @@ class ElementPlot(BokehPlot, GenericElementPlot):
         tool = self.handles['hover']
         if 'hv_created' in tool.tags:
             tooltips, hover_opts = self._hover_opts(element)
-            tooltips = [(ttp.pprint_label, '@{%s}' % util.dimension_sanitizer(ttp.name))
+            tooltips = [(ttp.pprint_label, '@{%s}' % holodata.util.dimension_sanitizer(ttp.name))
                         if isinstance(ttp, Dimension) else ttp for ttp in tooltips]
             tool.tooltips = tooltips
         else:
@@ -326,12 +328,12 @@ class ElementPlot(BokehPlot, GenericElementPlot):
             return
 
         for d in (dimensions or element.dimensions()):
-            dim = util.dimension_sanitizer(d.name)
+            dim = holodata.util.dimension_sanitizer(d.name)
             if dim not in data:
                 data[dim] = element.dimension_values(d)
 
         for k, v in self.overlay_dims.items():
-            dim = util.dimension_sanitizer(k.name)
+            dim = holodata.util.dimension_sanitizer(k.name)
             if dim not in data:
                 data[dim] = [v for _ in range(len(list(data.values())[0]))]
 
@@ -832,8 +834,8 @@ class ElementPlot(BokehPlot, GenericElementPlot):
                                'be ignored.' % ax_type)
         elif data_aspect:
             plot = self.handles['plot']
-            xspan = r-l if util.is_number(l) and util.is_number(r) else None
-            yspan = t-b if util.is_number(b) and util.is_number(t) else None
+            xspan = r-l if holodata.util.is_number(l) and holodata.util.is_number(r) else None
+            yspan = t-b if holodata.util.is_number(b) and holodata.util.is_number(t) else None
 
             if self.drawn or (fixed_width and fixed_height) or (constrained_width or constrained_height):
                 # After initial draw or if aspect is explicit
@@ -877,7 +879,7 @@ class ElementPlot(BokehPlot, GenericElementPlot):
                 desired_yspan = xspan/(ratio/frame_aspect)
                 if ((np.allclose(desired_xspan, xspan, rtol=0.05) and
                      np.allclose(desired_yspan, yspan, rtol=0.05)) or
-                    not (util.isfinite(xspan) and util.isfinite(yspan))):
+                    not (holodata.util.isfinite(xspan) and holodata.util.isfinite(yspan))):
                     pass
                 elif desired_yspan >= yspan:
                     desired_yspan = current_xspan/(ratio/frame_aspect)
@@ -940,7 +942,7 @@ class ElementPlot(BokehPlot, GenericElementPlot):
                     high += offset
             if shared:
                 shared = (axis_range.start, axis_range.end)
-                low, high = util.max_range([(low, high), shared])
+                low, high = holodata.util.max_range([(low, high), shared])
             if invert: low, high = high, low
             if not isinstance(low, util.datetime_types) and log and (low is None or low <= 0):
                 low = 0.01 if high < 0.01 else 10**(np.log10(high)-2)
@@ -949,10 +951,10 @@ class ElementPlot(BokehPlot, GenericElementPlot):
                     "than or equal to zero, please supply explicit "
                     "lower-bound to override default of %.3f." % low)
             updates = {}
-            if util.isfinite(low):
+            if holodata.util.isfinite(low):
                 updates['start'] = (axis_range.start, low)
                 updates['reset_start'] = updates['start']
-            if util.isfinite(high):
+            if holodata.util.isfinite(high):
                 updates['end'] = (axis_range.end, high)
                 updates['reset_end'] = updates['end']
             for k, (old, new) in updates.items():
@@ -1088,11 +1090,11 @@ class ElementPlot(BokehPlot, GenericElementPlot):
             else:
                 val = self._element_transform(v, element, ranges)
 
-            if (not util.isscalar(val) and len(util.unique_array(val)) == 1 and
+            if (not holodata.util.isscalar(val) and len(holodata.util.unique_array(val)) == 1 and
                 ((not 'color' in k or validate('color', val)) or k in self._nonvectorized_styles)):
                 val = val[0]
 
-            if not util.isscalar(val):
+            if not holodata.util.isscalar(val):
                 if k in self._nonvectorized_styles:
                     element = type(element).__name__
                     raise ValueError('Mapping a dimension to the "{style}" '
@@ -1114,11 +1116,11 @@ class ElementPlot(BokehPlot, GenericElementPlot):
             if k == 'angle':
                 val = np.deg2rad(val)
             elif k.endswith('font_size'):
-                if util.isscalar(val) and isinstance(val, int):
+                if holodata.util.isscalar(val) and isinstance(val, int):
                     val = str(v)+'pt'
                 elif isinstance(val, np.ndarray) and val.dtype.kind in 'ifu':
                     val = [str(int(s))+'pt' for s in val]
-            if util.isscalar(val):
+            if holodata.util.isscalar(val):
                 key = val
             else:
                 # Node marker does not handle {'field': ...}
@@ -1136,7 +1138,7 @@ class ElementPlot(BokehPlot, GenericElementPlot):
                     if range_key in ranges and 'factors' in ranges[range_key]:
                         factors = ranges[range_key]['factors']
                     else:
-                        factors = util.unique_array(val)
+                        factors = holodata.util.unique_array(val)
                     if isinstance(val, util.arraylike_types) and val.dtype.kind == 'b':
                         factors = factors.astype(str)
                     kwargs['factors'] = factors
@@ -1368,13 +1370,13 @@ class ElementPlot(BokehPlot, GenericElementPlot):
             element = [el for el in self.hmap.data.values() if el][-1]
         else:
             element = self.hmap.last
-        key = util.wrap_tuple(self.hmap.last_key)
+        key = holodata.util.wrap_tuple(self.hmap.last_key)
         ranges = self.compute_ranges(self.hmap, key, ranges)
         self.current_ranges = ranges
         self.current_frame = element
         self.current_key = key
         style_element = element.last if self.batched else element
-        ranges = util.match_spec(style_element, ranges)
+        ranges = holodata.util.match_spec(style_element, ranges)
         # Initialize plot, source and glyph
         if plot is None:
             plot = self._init_plot(key, style_element, ranges=ranges, plots=plots)
@@ -1505,7 +1507,7 @@ class ElementPlot(BokehPlot, GenericElementPlot):
         else:
             self.ranges.update(ranges)
         self.param.set_param(**self.lookup_options(style_element, 'plot').options)
-        ranges = util.match_spec(style_element, ranges)
+        ranges = holodata.util.match_spec(style_element, ranges)
         self.current_ranges = ranges
         plot = self.handles['plot']
         if not self.overlaid:
@@ -1547,7 +1549,7 @@ class ElementPlot(BokehPlot, GenericElementPlot):
         current_frames = [el for f in self.traverse(lambda x: x.current_frame)
                           for el in (f.traverse(lambda x: x, [Element])
                                      if f else [])]
-        current_frames = util.unique_iterator(current_frames)
+        current_frames = holodata.util.unique_iterator(current_frames)
         return any(self.lookup_options(frame, 'norm').options.get('framewise')
                    for frame in current_frames)
 
@@ -1836,7 +1838,7 @@ class ColorbarPlot(ElementPlot):
         ncolors = None if factors is None else len(factors)
         if eldim:
             # check if there's an actual value (not np.nan)
-            if all(util.isfinite(cl) for cl in self.clim):
+            if all(holodata.util.isfinite(cl) for cl in self.clim):
                 low, high = self.clim
             elif dim_name in ranges:
                 if self.clim_percentile and 'robust' in ranges[dim_name]:
@@ -1844,10 +1846,10 @@ class ColorbarPlot(ElementPlot):
                 else:
                     low, high = ranges[dim_name]['combined']
                 dlow, dhigh = ranges[dim_name]['data']
-                if (util.is_int(low, int_like=True) and
-                    util.is_int(high, int_like=True) and
-                    util.is_int(dlow) and
-                    util.is_int(dhigh)):
+                if (holodata.util.is_int(low, int_like=True) and
+                    holodata.util.is_int(high, int_like=True) and
+                    holodata.util.is_int(dlow) and
+                    holodata.util.is_int(dhigh)):
                     low, high = int(low), int(high)
             elif isinstance(eldim, dim):
                 low, high = np.nan, np.nan
@@ -1856,8 +1858,8 @@ class ColorbarPlot(ElementPlot):
             if self.symmetric:
                 sym_max = max(abs(low), high)
                 low, high = -sym_max, sym_max
-            low = self.clim[0] if util.isfinite(self.clim[0]) else low
-            high = self.clim[1] if util.isfinite(self.clim[1]) else high
+            low = self.clim[0] if holodata.util.isfinite(self.clim[0]) else low
+            high = self.clim[1] if holodata.util.isfinite(self.clim[1]) else high
         else:
             low, high = None, None
 
@@ -1921,7 +1923,7 @@ class ColorbarPlot(ElementPlot):
             return data, mapping
 
         cdata = element.dimension_values(cdim)
-        field = util.dimension_sanitizer(cdim.name)
+        field = holodata.util.dimension_sanitizer(cdim.name)
         dtypes = 'iOSU' if int_categories else 'OSU'
 
         if factors is None and (isinstance(cdata, list) or cdata.dtype.kind in dtypes):
@@ -1929,7 +1931,7 @@ class ColorbarPlot(ElementPlot):
             if range_key in ranges and 'factors' in ranges[range_key]:
                 factors = ranges[range_key]['factors']
             else:
-                factors = util.unique_array(cdata)
+                factors = holodata.util.unique_array(cdata)
         if factors is not None and int_categories and cdata.dtype.kind == 'i':
             field += '_str__'
             cdata = [str(f) for f in cdata]
@@ -1957,12 +1959,12 @@ class ColorbarPlot(ElementPlot):
                 colormapper = LinearColorMapper
             if self.cnorm == 'log' or self.logz:
                 colormapper = LogColorMapper
-                if util.is_int(low) and util.is_int(high) and low == 0:
+                if holodata.util.is_int(low) and holodata.util.is_int(high) and low == 0:
                     low = 1
                     if 'min' not in colors:
                         # Make integer 0 be transparent
                         colors['min'] = 'rgba(0, 0, 0, 0)'
-                elif util.is_number(low) and low <= 0:
+                elif holodata.util.is_number(low) and low <= 0:
                     self.param.warning(
                         "Log color mapper lower bound <= 0 and will not "
                         "render corrrectly. Ensure you set a positive "
@@ -1983,9 +1985,9 @@ class ColorbarPlot(ElementPlot):
                 low -= offset
                 high += offset
             opts = {}
-            if util.isfinite(low):
+            if holodata.util.isfinite(low):
                 opts['low'] = low
-            if util.isfinite(high):
+            if holodata.util.isfinite(high):
                 opts['high'] = high
             color_opts = [('NaN', 'nan_color'), ('max', 'high_color'), ('min', 'low_color')]
             opts.update({opt: colors[name] for name, opt in color_opts if name in colors})
@@ -2175,7 +2177,8 @@ class OverlayPlot(GenericOverlayPlot, LegendPlot):
                 continue
             if label in legend_labels:
                 prev_item = legend_labels[label]
-                prev_item.renderers[:] = list(util.unique_iterator(prev_item.renderers+item.renderers))
+                prev_item.renderers[:] = list(
+                    holodata.util.unique_iterator(prev_item.renderers + item.renderers))
             else:
                 legend_labels[label] = item
                 legend_items.append(item)
@@ -2191,7 +2194,7 @@ class OverlayPlot(GenericOverlayPlot, LegendPlot):
                 continue
             renderers += item.renderers
             filtered.append(item)
-        legend.items[:] = list(util.unique_iterator(filtered))
+        legend.items[:] = list(holodata.util.unique_iterator(filtered))
 
         if self.multiple_legends:
             remove_legend(plot, legend)
@@ -2269,7 +2272,7 @@ class OverlayPlot(GenericOverlayPlot, LegendPlot):
                 tool_renderers = [] if tool.renderers == 'auto' else tool.renderers
                 hover_renderers = [] if hover.renderers == 'auto' else hover.renderers
                 renderers = tool_renderers + hover_renderers
-                tool.renderers = list(util.unique_iterator(renderers))
+                tool.renderers = list(holodata.util.unique_iterator(renderers))
                 if 'hover' not in self.handles:
                     self.handles['hover'] = tool
 
@@ -2279,7 +2282,7 @@ class OverlayPlot(GenericOverlayPlot, LegendPlot):
         for k, sp in self.subplots.items():
             el = overlay.data.get(k)
             if el is not None:
-                elranges = util.match_spec(el, ranges)
+                elranges = holodata.util.match_spec(el, ranges)
                 xfs, yfs = sp._get_factors(el, elranges)
                 xfactors.append(xfs)
                 yfactors.append(yfs)
@@ -2287,7 +2290,7 @@ class OverlayPlot(GenericOverlayPlot, LegendPlot):
             xfactors = np.concatenate(xfactors)
         if yfactors:
             yfactors = np.concatenate(yfactors)
-        return util.unique_array(xfactors), util.unique_array(yfactors)
+        return holodata.util.unique_array(xfactors), holodata.util.unique_array(yfactors)
 
 
     def _get_axis_dims(self, element):
@@ -2298,7 +2301,7 @@ class OverlayPlot(GenericOverlayPlot, LegendPlot):
 
 
     def initialize_plot(self, ranges=None, plot=None, plots=None):
-        key = util.wrap_tuple(self.hmap.last_key)
+        key = holodata.util.wrap_tuple(self.hmap.last_key)
         nonempty = [(k, el) for k, el in self.hmap.data.items() if el]
         if not nonempty:
             raise SkipRendering('All Overlays empty, cannot initialize plot.')

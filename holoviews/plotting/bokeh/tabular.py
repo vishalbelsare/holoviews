@@ -8,10 +8,11 @@ from bokeh.models.widgets import (
     DateEditor, StringFormatter, StringEditor, IntEditor
 )
 
-from ...core import Dataset, Dimension
+from ...core import Dataset
+from holodata.dimension import Dimension
 from ...element import ItemTable
 from ...streams import Buffer
-from ...core.util import dimension_sanitizer, isdatetime
+from holodata.util import isdatetime, dimension_sanitizer
 from ..plot import GenericElementPlot
 from .plot import BokehPlot
 from .selection import TabularSelectionDisplay

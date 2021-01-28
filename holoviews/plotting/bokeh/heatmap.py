@@ -6,7 +6,7 @@ import numpy as np
 from bokeh.models.glyphs import AnnularWedge
 
 from ...core.data import GridDriver
-from ...core.util import is_nan, dimension_sanitizer
+from holodata.util import is_nan, dimension_sanitizer
 from ...core.spaces import HoloMap
 from .element import ColorbarPlot, CompositeElementPlot
 from .selection import BokehOverlaySelectionDisplay

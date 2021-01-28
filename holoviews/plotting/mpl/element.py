@@ -3,6 +3,7 @@ from __future__ import absolute_import, division, unicode_literals
 import math
 import warnings
 from types import FunctionType
+from collections import OrderedDict
 
 import param
 import numpy as np
@@ -12,8 +13,9 @@ from matplotlib import ticker
 from matplotlib.dates import date2num
 from matplotlib.image import AxesImage
 
+import holodata.util
 from ...core import util
-from ...core import (OrderedDict, NdOverlay, DynamicMap, Dataset,
+from ...core import (NdOverlay, DynamicMap, Dataset,
                      CompositeOverlay, Element3D, Element)
 from ...core.options import abbreviated_exception
 from ...element import Graph, Path
@@ -325,9 +327,9 @@ class ElementPlot(GenericElementPlot, MPLPlot):
             axis.autoscale_view(scalex=True, scaley=True)
             return
 
-        valid_lim = lambda c: util.isnumeric(c) and not np.isnan(c)
+        valid_lim = lambda c: holodata.util.isnumeric(c) and not np.isnan(c)
         coords = [coord if np.isreal(coord) or isinstance(coord, np.datetime64) else np.NaN for coord in extents]
-        coords = [date2num(util.dt64_to_dt(c)) if isinstance(c, np.datetime64) else c
+        coords = [date2num(holodata.util.dt64_to_dt(c)) if isinstance(c, np.datetime64) else c
                   for c in coords]
         if self.projection == '3d' or len(extents) == 6:
             l, b, zmin, r, t, zmax = coords
@@ -358,7 +360,7 @@ class ElementPlot(GenericElementPlot, MPLPlot):
     def _compute_limits(self, low, high, log, invert, low_key, high_key):
         scale = True
         lims = {}
-        valid_lim = lambda c: util.isnumeric(c) and not np.isnan(c)
+        valid_lim = lambda c: holodata.util.isnumeric(c) and not np.isnan(c)
         if not isinstance(low, util.datetime_types) and log and (low is None or low <= 0):
             low = 0.01 if high < 0.01 else 10**(np.log10(high)-2)
             self.param.warning(
@@ -477,7 +479,7 @@ class ElementPlot(GenericElementPlot, MPLPlot):
             return
 
         ranges = self.compute_ranges(self.hmap, key, ranges)
-        ranges = util.match_spec(element, ranges)
+        ranges = holodata.util.match_spec(element, ranges)
 
         max_cycles = self.style._max_cycles
         style = self.lookup_options(element, 'style')
@@ -502,7 +504,7 @@ class ElementPlot(GenericElementPlot, MPLPlot):
         self.current_frame = element
         self.current_key = key
 
-        ranges = util.match_spec(element, ranges)
+        ranges = holodata.util.match_spec(element, ranges)
 
         style = dict(zorder=self.zorder, **self.style[self.cyclic_index])
         if self.show_legend:
@@ -581,7 +583,7 @@ class ElementPlot(GenericElementPlot, MPLPlot):
             else:
                 val = v.apply(element, ranges)
 
-            if (not np.isscalar(val) and len(util.unique_array(val)) == 1 and
+            if (not np.isscalar(val) and len(holodata.util.unique_array(val)) == 1 and
                 (not 'color' in k or validate('color', val))):
                 val = val[0]
 
@@ -609,7 +611,7 @@ class ElementPlot(GenericElementPlot, MPLPlot):
                     if range_key in ranges and 'factors' in ranges[range_key]:
                         factors = ranges[range_key]['factors']
                     else:
-                        factors = util.unique_array(val)
+                        factors = holodata.util.unique_array(val)
                     val = util.search_indices(val, factors)
                 k = prefix+'c'
 
@@ -854,7 +856,7 @@ class ColorbarPlot(ElementPlot):
         clim = opts.pop(prefix+'clims', None)
 
         # check if there's an actual value (not np.nan)
-        if clim is None and util.isfinite(self.clim).all():
+        if clim is None and holodata.util.isfinite(self.clim).all():
             clim = self.clim
 
         if clim is None:
@@ -895,7 +897,7 @@ class ColorbarPlot(ElementPlot):
                 if range_key in ranges and 'factors' in ranges[range_key]:
                     factors = ranges[range_key]['factors']
                 else:
-                    factors = util.unique_array(values)
+                    factors = holodata.util.unique_array(values)
                 clim = (0, len(factors)-1)
                 categorical = True
         else:
@@ -969,7 +971,7 @@ class ColorbarPlot(ElementPlot):
                 if range_key in ranges and 'factors' in ranges[range_key]:
                     factors = ranges[range_key]['factors']
                 else:
-                    factors = util.unique_array(values)
+                    factors = holodata.util.unique_array(values)
                 palette = [cmap.get(f, colors.get('NaN', {'color': self._default_nan})['color'])
                            for f in factors]
             else:

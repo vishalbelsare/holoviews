@@ -3,7 +3,9 @@ from collections import OrderedDict
 
 import numpy as np
 
-from holoviews.core import Dimension, DynamicMap, NdOverlay, HoloMap
+import holodata.dimension
+from holoviews.core import DynamicMap, NdOverlay, HoloMap
+from holodata.dimension import Dimension
 from holoviews.element import Curve, Image, Scatter, Labels
 from holoviews.streams import Stream, PointDraw
 from holoviews.plotting.util import process_cmap
@@ -966,6 +968,6 @@ class TestOverlayPlot(TestBokehPlot):
     def test_categorical_overlay_dimension_values_skip_factor(self):
         curve = Curve([('C', 1), ('B', 3)])
         scatter = Scatter([('A', 2)])
-        plot = bokeh_renderer.get_plot((curve*scatter).redim.values(x=['A', 'C']))
+        plot = bokeh_renderer.get_plot(holodata.dimension.redim.values(x=['A', 'C']))
         x_range = plot.handles['x_range']
         self.assertEqual(x_range.factors, ['A', 'C'])

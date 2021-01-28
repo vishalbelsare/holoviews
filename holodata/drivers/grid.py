@@ -2,8 +2,8 @@ from __future__ import absolute_import
 
 import sys
 import datetime as dt
-
 from collections import OrderedDict, defaultdict
+from typing import Iterable
 
 try:
     import itertools.izip as zip
@@ -13,12 +13,13 @@ except ImportError:
 import numpy as np
 
 from .dictionary import DictDriver
-from holoviews.core.data.interface import Driver, DataError, GriddedInterface
-from holoviews.core.dimension import dimension_name
-from holoviews.core.dimension import OrderedDict as cyODict
-from holoviews.core.ndmapping import NdMapping, sorted_context
-from holoviews.core import util
-from holoviews.core.data.interface import is_dask, dask_array_module, get_array_types
+from holodata.dimension import dimension_name, Dimensioned
+from holodata.ndmapping import sorted_context, NdMapping
+from holodata.interface import (
+    get_array_types, dask_array_module, is_dask, DataError, Driver, GriddedInterface
+)
+
+from holodata import util
 
 
 
@@ -38,7 +39,7 @@ class GridDriver(DictDriver):
     longitudes can specify the position of NxM temperature samples.
     """
 
-    types = (dict, OrderedDict, cyODict)
+    types = (dict, OrderedDict)
 
     datatype = 'grid'
 
@@ -153,10 +154,9 @@ class GridDriver(DictDriver):
 
     @classmethod
     def concat(cls, datasets, dimensions, vdims):
-        from .. import Dataset
         with sorted_context(False):
             datasets = NdMapping(datasets, kdims=dimensions)
-            datasets = datasets.clone([(k, v.data if isinstance(v, Dataset) else v)
+            datasets = datasets.clone([(k, v.data if isinstance(v, Dimensioned) else v)
                                        for k, v in datasets.data.items()])
         if len(datasets.kdims) > 1:
             items = datasets.groupby(datasets.kdims[:-1]).data.items()
@@ -377,7 +377,7 @@ class GridDriver(DictDriver):
             if stop is not None:
                 new_start = length - stop
             return slice(new_start-1, new_stop-1)
-        elif isinstance(index, util.Iterable):
+        elif isinstance(index, Iterable):
             new_index = []
             for ind in index:
                 new_index.append(length-ind)
@@ -496,6 +496,7 @@ class GridDriver(DictDriver):
 
     @classmethod
     def key_select_mask(cls, dataset, values, ind):
+
         if util.pd and values.dtype.kind == 'M':
             ind = util.parse_datetime_selection(ind)
         if isinstance(ind, tuple):

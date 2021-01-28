@@ -4,12 +4,13 @@ import numpy as np
 import colorsys
 import param
 
-from ..core import util, config, Dimension, Element2D, Overlay, Dataset
+import holodata.util
+from ..core import util, config, Element2D, Overlay, Dataset
 from ..core.data import ImageDriver, GridDriver
-from ..core.data.interface import DataError, Interface
-from ..core.dimension import dimension_name
-from ..core.boundingregion import BoundingRegion, BoundingBox
-from ..core.sheetcoords import SheetCoordinateSystem, Slice
+from holodata.interface import DataError, Interface
+from holodata.dimension import dimension_name, Dimension
+from holodata.boundingregion import BoundingRegion, BoundingBox
+from holodata.sheetcoords import SheetCoordinateSystem, Slice
 from .chart import Curve
 from .geom import Selection2DExpr
 from .graphs import TriMesh
@@ -53,7 +54,7 @@ class Raster(Element2D):
 
     def __getitem__(self, slices):
         if slices in self.dimensions(): return self.dimension_values(slices)
-        slices = util.process_ellipses(self,slices)
+        slices = holodata.util.process_ellipses(self, slices)
         if not isinstance(slices, tuple):
             slices = (slices, slice(None))
         elif len(slices) > (2 + self.depth):
@@ -81,7 +82,7 @@ class Raster(Element2D):
             lower, upper = np.nanmin(self.data), np.nanmax(self.data)
             if not dimension_range:
                 return lower, upper
-            return util.dimension_range(lower, upper, dimension.range, dimension.soft_range)
+            return holodata.util.dimension_range(lower, upper, dimension.range, dimension.soft_range)
         return super(Raster, self).range(dim, data_range, dimension_range)
 
 
@@ -129,7 +130,7 @@ class Raster(Element2D):
             X, Y = samples
             samples = zip(X, Y)
 
-        params = dict(self.param.get_param_values(onlychanged=True),
+        params = dict(holodata.util.get_param_values(onlychanged=True),
                       vdims=self.vdims)
         if len(sample_values) == self.ndims or len(samples):
             if not len(samples):
@@ -189,7 +190,7 @@ class Raster(Element2D):
             if oidx and hasattr(self, 'bounds'):
                 reduced = reduced[::-1]
             data = zip(x_vals, reduced)
-            params = dict(dict(self.param.get_param_values(onlychanged=True)),
+            params = dict(dict(holodata.util.get_param_values(onlychanged=True)),
                           kdims=other_dimension, vdims=self.vdims)
             params.pop('bounds', None)
             params.pop('extents', None)
@@ -307,9 +308,9 @@ class Image(Selection2DExpr, Dataset, Raster, SheetCoordinateSystem):
         dim2, dim1 = self.interface.shape(self, gridded=True)[:2]
         if bounds is None:
             xvals = self.dimension_values(0, False)
-            l, r, xdensity, _ = util.bound_range(xvals, xdensity, self._time_unit)
+            l, r, xdensity, _ = holodata.util.bound_range(xvals, xdensity, self._time_unit)
             yvals = self.dimension_values(1, False)
-            b, t, ydensity, _ = util.bound_range(yvals, ydensity, self._time_unit)
+            b, t, ydensity, _ = holodata.util.bound_range(yvals, ydensity, self._time_unit)
             bounds = BoundingBox(points=((l, b), (r, t)))
         elif np.isscalar(bounds):
             bounds = BoundingBox(radius=bounds)
@@ -321,15 +322,15 @@ class Image(Selection2DExpr, Dataset, Raster, SheetCoordinateSystem):
         if self.interface.driver is ImageDriver and not isinstance(data, (np.ndarray, Image)):
             data_bounds = self.bounds.lbrt()
 
-        non_finite = all(not util.isfinite(v) for v in bounds.lbrt())
+        non_finite = all(not holodata.util.isfinite(v) for v in bounds.lbrt())
         if non_finite:
             bounds = BoundingBox(points=((0, 0), (0, 0)))
             xdensity = xdensity or 1
             ydensity = ydensity or 1
         else:
             l, b, r, t = bounds.lbrt()
-            xdensity = xdensity if xdensity else util.compute_density(l, r, dim1, self._time_unit)
-            ydensity = ydensity if ydensity else util.compute_density(b, t, dim2, self._time_unit)
+            xdensity = xdensity if xdensity else holodata.util.compute_density(l, r, dim1, self._time_unit)
+            ydensity = ydensity if ydensity else holodata.util.compute_density(b, t, dim2, self._time_unit)
         SheetCoordinateSystem.__init__(self, bounds, xdensity, ydensity)
         if non_finite:
            self.bounds = BoundingBox(points=((np.nan, np.nan), (np.nan, np.nan)))
@@ -369,8 +370,8 @@ class Image(Selection2DExpr, Dataset, Raster, SheetCoordinateSystem):
                              'curvilinear coordinates.'.format(
                                  clsname=clsname, dims=dims))
 
-        xvalid = util.validate_regular_sampling(xvals, self.rtol)
-        yvalid = util.validate_regular_sampling(yvals, self.rtol)
+        xvalid = holodata.util.validate_regular_sampling(xvals, self.rtol)
+        yvalid = holodata.util.validate_regular_sampling(yvals, self.rtol)
         msg = ("{clsname} dimension{dims} not evenly sampled to relative "
                "tolerance of {rtol}. Please use the QuadMesh element for "
                "irregularly sampled data or set a higher tolerance on "
@@ -403,10 +404,10 @@ class Image(Selection2DExpr, Dataset, Raster, SheetCoordinateSystem):
         not_close = False
         for r, c in zip(bounds, self.bounds.lbrt()):
             if isinstance(r, util.datetime_types):
-                r = util.dt_to_int(r)
+                r = holodata.util.dt_to_int(r)
             if isinstance(c, util.datetime_types):
-                c = util.dt_to_int(c)
-            if util.isfinite(r) and not np.isclose(r, c, rtol=self.rtol):
+                c = holodata.util.dt_to_int(c)
+            if holodata.util.isfinite(r) and not np.isclose(r, c, rtol=self.rtol):
                 not_close = True
         if not_close:
             raise ValueError('Supplied Image bounds do not match the coordinates defined '
@@ -490,7 +491,8 @@ class Image(Selection2DExpr, Dataset, Raster, SheetCoordinateSystem):
             selection = (y, x)
             sliced = False
 
-        datatype = list(util.unique_iterator([self.interface.datatype]+self.datatype))
+        datatype = list(
+            holodata.util.unique_iterator([self.interface.datatype] + self.datatype))
         data = self.interface.ndloc(self, selection)
         if not sliced:
             if np.isscalar(data):
@@ -758,7 +760,7 @@ class HSV(RGB):
         if len(self.vdims) == 4:
             hsv += (data[3],)
 
-        params = util.get_param_values(self)
+        params = holodata.util.get_param_values(self)
         del params['vdims']
         return RGB(coords+hsv, bounds=self.bounds,
                    xdensity=self.xdensity, ydensity=self.ydensity,
@@ -861,7 +863,7 @@ class QuadMesh(Selection2DExpr, Dataset, Element2D):
             ts = ts + (np.concatenate([zs, zs]),)
 
         # Construct TriMesh
-        params = util.get_param_values(self)
+        params = holodata.util.get_param_values(self)
         params['kdims'] = params['kdims'] + TriMesh.node_type.kdims[2:]
         nodes = TriMesh.node_type(vertices+(np.arange(len(vertices[0])),),
                                   **{k: v for k, v in params.items()

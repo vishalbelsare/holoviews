@@ -1,4 +1,4 @@
-from collections import namedtuple
+from collections import namedtuple, OrderedDict
 
 import numpy as np
 import param
@@ -6,7 +6,6 @@ import param
 from param.parameterized import bothmethod
 
 from .core.data import Dataset
-from .core.dimension import OrderedDict
 from .core.element import Element, Layout
 from .core.options import CallbackError, Store
 from .core.overlay import NdOverlay, Overlay

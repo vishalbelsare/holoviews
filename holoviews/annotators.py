@@ -12,7 +12,7 @@ from panel.layout import Row, Tabs
 from panel.util import param_name
 
 from .core import DynamicMap, HoloMap, ViewableElement, Element, Layout, Overlay, Store
-from .core.util import isscalar
+from holodata.util import isscalar
 from .element import Rectangles, Path, Polygons, Points, Table, Curve
 from .plotting.links import VertexTableLink, DataLink, RectanglesTableLink, SelectionLink
 from .streams import BoxEdit, PolyDraw, PolyEdit, Selection1D, PointDraw, CurveEdit

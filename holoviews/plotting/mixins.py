@@ -2,7 +2,9 @@ from __future__ import absolute_import, division, unicode_literals
 
 import numpy as np
 
-from ..core import util, Dataset, Dimension
+import holodata.util
+from ..core import util, Dataset
+from holodata.dimension import Dimension
 from ..element import Bars
 from ..element.util import categorical_aggregate2d
 from .util import get_axis_padding
@@ -26,13 +28,13 @@ class GeomMixin(object):
                 for r in ranges[kdim]:
                     if r == 'factors':
                         new_range[r] = list(
-                            util.unique_iterator(list(ranges[kdim0][r])+
-                                                 list(ranges[kdim1][r]))
+                            holodata.util.unique_iterator(list(ranges[kdim0][r]) +
+                                                          list(ranges[kdim1][r]))
                         )
                     else:
                         # combine (x0, x1) and (y0, y1) in range calculation
-                        new_range[r] = util.max_range([ranges[kd][r]
-                                                       for kd in [kdim0, kdim1]])
+                        new_range[r] = holodata.util.max_range([ranges[kd][r]
+                                                                for kd in [kdim0, kdim1]])
             ranges[kdim0] = new_range
             ranges[kdim1] = new_range
         return super(GeomMixin, self).get_extents(element, ranges, range_type)
@@ -50,8 +52,8 @@ class ChordMixin(object):
         no_labels = (element.nodes.get_dimension(self.label_index) is None and
                      self.labels is None)
         rng = 1.1 if no_labels else 1.4
-        x0, x1 = util.max_range([xdim.range, (-rng, rng)])
-        y0, y1 = util.max_range([ydim.range, (-rng, rng)])
+        x0, x1 = holodata.util.max_range([xdim.range, (-rng, rng)])
+        y0, y1 = holodata.util.max_range([ydim.range, (-rng, rng)])
         return (x0, y0, x1, y1)
 
 
@@ -77,14 +79,14 @@ class HeatMapMixin(object):
 
 
 class SpikesMixin(object):
-    
+
     def get_extents(self, element, ranges, range_type='combined'):
         opts = self.lookup_options(element, 'plot').options
         if len(element.dimensions()) > 1 and 'spike_length' not in opts:
             ydim = element.get_dimension(1)
             s0, s1 = ranges[ydim.name]['soft']
-            s0 = min(s0, 0) if util.isfinite(s0) else 0
-            s1 = max(s1, 0) if util.isfinite(s1) else 0
+            s0 = min(s0, 0) if holodata.util.isfinite(s0) else 0
+            s1 = max(s1, 0) if holodata.util.isfinite(s1) else 0
             ranges[ydim.name]['soft'] = (s0, s1)
         proxy_dim = None
         if 'spike_length' in opts or len(element.dimensions()) == 1:
@@ -113,19 +115,19 @@ class SpikesMixin(object):
 
 
 class AreaMixin(object):
-    
+
     def get_extents(self, element, ranges, range_type='combined'):
         vdims = element.vdims[:2]
         vdim = vdims[0].name
         if len(vdims) > 1:
             new_range = {}
             for r in ranges[vdim]:
-                new_range[r] = util.max_range([ranges[vd.name][r] for vd in vdims])
+                new_range[r] = holodata.util.max_range([ranges[vd.name][r] for vd in vdims])
             ranges[vdim] = new_range
         else:
             s0, s1 = ranges[vdim]['soft']
-            s0 = min(s0, 0) if util.isfinite(s0) else 0
-            s1 = max(s1, 0) if util.isfinite(s1) else 0
+            s0 = min(s0, 0) if holodata.util.isfinite(s0) else 0
+            s1 = max(s1, 0) if holodata.util.isfinite(s1) else 0
             ranges[vdim]['soft'] = (s0, s1)
         return super(AreaMixin, self).get_extents(element, ranges, range_type)
 
@@ -147,8 +149,8 @@ class BarsMixin(object):
 
         vdim = element.vdims[0].name
         s0, s1 = ranges[vdim]['soft']
-        s0 = min(s0, 0) if util.isfinite(s0) else 0
-        s1 = max(s1, 0) if util.isfinite(s1) else 0
+        s0 = min(s0, 0) if holodata.util.isfinite(s0) else 0
+        s1 = max(s1, 0) if holodata.util.isfinite(s1) else 0
         ranges[vdim]['soft'] = (s0, s1)
         if range_type not in ('combined', 'data'):
             return super(BarsMixin, self).get_extents(element, ranges, range_type)
@@ -159,7 +161,7 @@ class BarsMixin(object):
             ds = Dataset(element)
             pos_range = ds.select(**{vdim: (0, None)}).aggregate(xdim, function=np.sum).range(vdim)
             neg_range = ds.select(**{vdim: (None, 0)}).aggregate(xdim, function=np.sum).range(vdim)
-            y0, y1 = util.max_range([pos_range, neg_range])
+            y0, y1 = holodata.util.max_range([pos_range, neg_range])
         else:
             y0, y1 = ranges[vdim]['combined']
 
@@ -168,8 +170,8 @@ class BarsMixin(object):
 
         padding = 0 if self.overlaid else self.padding
         _, ypad, _ = get_axis_padding(padding)
-        y0, y1 = util.dimension_range(y0, y1, ranges[vdim]['hard'], ranges[vdim]['soft'], ypad, self.logy)
-        y0, y1 = util.dimension_range(y0, y1, self.ylim, (None, None))
+        y0, y1 = holodata.util.dimension_range(y0, y1, ranges[vdim]['hard'], ranges[vdim]['soft'], ypad, self.logy)
+        y0, y1 = holodata.util.dimension_range(y0, y1, self.ylim, (None, None))
         return ('', y0, '', y1)
 
     def _get_coords(self, element, ranges, as_string=True):

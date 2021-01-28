@@ -14,11 +14,12 @@ from ..core import (HoloMap, DynamicMap, CompositeOverlay, Layout,
                     Overlay, GridSpace, NdLayout, NdOverlay, AdjointLayout)
 from ..core.options import CallbackError, Cycle
 from ..core.operation import Operation
-from ..core.ndmapping import item_check
+from holodata.ndmapping import item_check
 from ..core.spaces import get_nested_streams
-from ..core.util import (match_spec, wrap_tuple, basestring, get_overlay_spec,
-                         unique_iterator, closest_match, is_number, isfinite,
-                         python2sort, disable_constant, arraylike_types)
+from ..core.util import (basestring, get_overlay_spec,
+                         closest_match, disable_constant, arraylike_types)
+from holodata.util import wrap_tuple, unique_iterator, match_spec, python2sort, \
+    is_number, isfinite
 from ..streams import LinkedStream
 from ..util.transform import dim
 
@@ -706,7 +707,7 @@ def _list_cmaps(provider=None, records=False):
             from colorcet import palette_n, glasbey_hv
             cet_maps = palette_n.copy()
             cet_maps['glasbey_hv'] = glasbey_hv # Add special hv-specific map
-            cmaps += info('colorcet', cet_maps) 
+            cmaps += info('colorcet', cet_maps)
             cmaps += info('colorcet', [p+'_r' for p in cet_maps])
         except:
             pass

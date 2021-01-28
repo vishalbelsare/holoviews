@@ -3,12 +3,15 @@ from unittest import SkipTest
 import numpy as np
 import pandas as pd
 
+import holodata.dimension
+
 try:
     import dask.dataframe as dd
 except:
     dd = None
 
-from holoviews import Dataset, Curve, Dimension, Scatter, Distribution
+from holoviews import Dataset, Curve, Scatter, Distribution
+from holodata.dimension import Dimension
 from holoviews.core import Apply, Redim
 from holoviews.element.comparison import ComparisonTestCase
 from holoviews.operation import histogram, function
@@ -803,11 +806,11 @@ class AccessorTestCase(DatasetPropertyTestCase):
         )
 
     def test_redim_curve(self):
-        curve = self.ds.to.curve('a', 'b', groupby=[]).redim.unit(
+        curve = holodata.dimension.redim.unit(
             a='kg', b='m'
         )
 
-        curve2 = self.ds2.to.curve('a', 'b', groupby=[]).redim.unit(
+        curve2 = holodata.dimension.redim.unit(
             a='kg', b='m'
         )
         self.assertNotEqual(curve, curve2)

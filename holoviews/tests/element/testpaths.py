@@ -3,7 +3,7 @@ Unit tests of Path types.
 """
 import numpy as np
 from holoviews import Dataset, Ellipse, Box, Polygons, Path
-from holoviews.core.data.interface import DataError
+from holodata.interface import DataError
 from holoviews.element.comparison import ComparisonTestCase
 
 
@@ -83,7 +83,7 @@ class PathTests(ComparisonTestCase):
         self.assertEqual(subpaths[0], Path([(0, 1), (1, 2)]))
         self.assertEqual(subpaths[1], Path([(2, 3), (3, 4)]))
 
-                         
+
 class PolygonsTests(ComparisonTestCase):
 
     def setUp(self):

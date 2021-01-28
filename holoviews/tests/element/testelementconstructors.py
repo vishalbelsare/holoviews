@@ -1,12 +1,13 @@
 import param
 import numpy as np
 
-from holoviews import (Dimension, Dataset, Element, Annotation, Curve,
+from holoviews import (Dataset, Element, Annotation, Curve,
                        Path, Histogram, HeatMap, Contours, Scatter,
                        Points, Polygons, VectorField, Spikes, Area,
                        Bars, ErrorBars, BoxWhisker, Raster, Image,
                        QuadMesh, RGB, Graph, TriMesh, Div, Tiles,
                        Trisurface)
+from holodata.dimension import Dimension
 from holoviews.element.path import BaseShape
 from holoviews.element.comparison import ComparisonTestCase
 

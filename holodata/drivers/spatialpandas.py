@@ -6,10 +6,11 @@ import warnings
 from collections import defaultdict
 
 import numpy as np
+import pandas as pd
 
-from holoviews.core.dimension import dimension_name
-from holoviews.core.util import isscalar, unique_iterator, pd, unique_array
-from holoviews.core.data.interface import DataError, Driver, GeometryInterface
+from holodata.dimension import dimension_name
+from holodata.interface import DataError, Driver, GeometryInterface
+from holodata.util import unique_iterator, unique_array, isscalar
 from .multipath import MultiDriver, ensure_ring
 from .pandas import PandasDriver
 
@@ -814,7 +815,7 @@ def to_geom_dict(data, kdims, vdims, interface=None):
         if d in (xname, yname):
             scalar = False
         else:
-            scalar = new_el.interface.isscalar(new_el, d)
+            scalar = isscalar(new_el, d)
         vals = new_el.dimension_values(d, not scalar)
         new_dict[d.name] = vals[0] if scalar else vals
     return new_dict

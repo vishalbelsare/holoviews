@@ -11,14 +11,16 @@ import param
 
 from param import _is_number
 
+import holodata.util
 from ..core import (Operation, NdOverlay, Overlay, GridMatrix,
-                    HoloMap, Dataset, Element, Collator, Dimension)
+                    HoloMap, Dataset, Element, Collator)
+from holodata.dimension import Dimension
 from ..core.data import ArrayDriver, DictDriver, default_datatype
-from ..core.data.interface import dask_array_module
-from ..core.util import (group_sanitizer, label_sanitizer, pd,
-                         basestring, datetime_types, isfinite, dt_to_int,
-                         isdatetime, is_dask_array, is_cupy_array,
-                         is_ibis_expr)
+from holodata.interface import dask_array_module
+from ..core.util import (pd,
+                         basestring, datetime_types)
+from holodata.util import is_dask_array, is_cupy_array, is_ibis_expr, isdatetime, \
+    dt_to_int, isfinite, group_sanitizer, label_sanitizer
 from ..element.chart import Histogram, Scatter
 from ..element.raster import Image, RGB
 from ..element.path import Contours, Polygons
@@ -723,7 +725,7 @@ class histogram(Operation):
                 data = cupy.asnumpy(data)
                 is_cupy = False
             else:
-                is_finite = cupy.isfinite
+                is_finite = holodata.util.isfinite
 
         # Mask data
         if is_ibis_expr(data):
@@ -775,7 +777,7 @@ class histogram(Operation):
             else:
                 edges = np.linspace(start, end, steps)
         if is_cupy:
-            edges = cupy.asarray(edges)
+            edges = holodata.util.asarray(edges)
 
         if not is_dask_array(data) and no_data:
             nbins = self.p.num_bins if self.p.bins is None else len(self.p.bins)-1
