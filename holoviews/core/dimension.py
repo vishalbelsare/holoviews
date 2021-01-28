@@ -763,6 +763,123 @@ class LabelledData(param.Parameterized):
         super(LabelledData, self).__setstate__({})
 
 
+class StoreReprMimebundleMixin(param.Parameterized):
+    def _repr_mimebundle_(self, include=None, exclude=None):
+        """
+        Resolves the class hierarchy for the class rendering the
+        object using any display hooks registered on Store.display
+        hooks.  The output of all registered display_hooks is then
+        combined and returned.
+        """
+        return Store.render(self)
+
+
+class OptsMixin(param.Parameterized):
+    @property
+    def opts(self):
+        return Opts(self)
+
+    def __repr__(self):
+        return PrettyPrinter.pprint(self)
+
+    def __str__(self):
+        return repr(self)
+
+    def __unicode__(self):
+        return unicode(PrettyPrinter.pprint(self))
+
+    def __call__(self, options=None, **kwargs):
+        self.param.warning(
+            'Use of __call__ to set options will be deprecated '	
+            'in the next major release (1.14.0). Use the equivalent .opts '
+            'method instead.')
+
+        if not kwargs and options is None:
+            return self.opts.clear()
+
+        return self.opts(options, **kwargs)
+
+    def options(self, *args, **kwargs):
+        """Applies simplified option definition returning a new object.
+
+        Applies options on an object or nested group of objects in a
+        flat format returning a new object with the options
+        applied. If the options are to be set directly on the object a
+        simple format may be used, e.g.:
+
+            obj.options(cmap='viridis', show_title=False)
+
+        If the object is nested the options must be qualified using
+        a type[.group][.label] specification, e.g.:
+
+            obj.options('Image', cmap='viridis', show_title=False)
+
+        or using:
+
+            obj.options({'Image': dict(cmap='viridis', show_title=False)})
+
+        Identical to the .opts method but returns a clone of the object
+        by default.
+
+        Args:
+            *args: Sets of options to apply to object
+                Supports a number of formats including lists of Options
+                objects, a type[.group][.label] followed by a set of
+                keyword options to apply and a dictionary indexed by
+                type[.group][.label] specs.
+            backend (optional): Backend to apply options to
+                Defaults to current selected backend
+            clone (bool, optional): Whether to clone object
+                Options can be applied inplace with clone=False
+            **kwargs: Keywords of options
+                Set of options to apply to the object
+
+        Returns:
+            Returns the cloned object with the options applied
+        """
+        backend = kwargs.get('backend', None)
+        clone = kwargs.pop('clone', True)
+
+        if len(args) == 0 and len(kwargs)==0:
+            options = None
+        elif args and isinstance(args[0], basestring):
+            options = {args[0]: kwargs}
+        elif args and isinstance(args[0], list):
+            if kwargs:
+                raise ValueError('Please specify a list of option objects, or kwargs, but not both')
+            options = args[0]
+        elif args and [k for k in kwargs.keys() if k != 'backend']:
+            raise ValueError("Options must be defined in one of two formats. "
+                             "Either supply keywords defining the options for "
+                             "the current object, e.g. obj.options(cmap='viridis'), "
+                             "or explicitly define the type, e.g. "
+                             "obj.options({'Image': {'cmap': 'viridis'}}). "
+                             "Supplying both formats is not supported.")
+        elif args and all(isinstance(el, dict) for el in args):
+            if len(args) > 1:
+                self.param.warning('Only a single dictionary can be passed '
+                                   'as a positional argument. Only processing '
+                                   'the first dictionary')
+            options = [Options(spec, **kws) for spec,kws in args[0].items()]
+        elif args:
+            options = list(args)
+        elif kwargs:
+            options = {type(self).__name__: kwargs}
+
+        from ..util import opts
+        if options is None:
+            expanded_backends = [(backend, {})]
+        elif isinstance(options, list): # assuming a flat list of Options objects
+            expanded_backends = opts._expand_by_backend(options, backend)
+        else:
+            expanded_backends = [(backend, opts._expand_options(options, backend))]
+
+        obj = self
+        for backend, expanded in expanded_backends:
+            obj = obj.opts._dispatch_opts(expanded, backend=backend, clone=clone)
+        return obj
+
+
 class Dimensioned(LabelledData):
     """
     Dimensioned is a base class that allows the data contents of a
@@ -861,10 +978,6 @@ class Dimensioned(LabelledData):
     @property
     def apply(self):
         return Apply(self)
-
-    @property
-    def opts(self):
-        return Opts(self)
 
     @property
     def redim(self):
@@ -1206,118 +1319,7 @@ class Dimensioned(LabelledData):
         return util.dimension_range(lower, upper, dimension.range, dimension.soft_range)
 
 
-    def __repr__(self):
-        return PrettyPrinter.pprint(self)
-
-    def __str__(self):
-        return repr(self)
-
-    def __unicode__(self):
-        return unicode(PrettyPrinter.pprint(self))
-
-    def __call__(self, options=None, **kwargs):
-        self.param.warning(
-            'Use of __call__ to set options will be deprecated '	
-            'in the next major release (1.14.0). Use the equivalent .opts '
-            'method instead.')	
-
-        if not kwargs and options is None:	
-            return self.opts.clear()
-
-        return self.opts(options, **kwargs)
-
-    def options(self, *args, **kwargs):
-        """Applies simplified option definition returning a new object.
-
-        Applies options on an object or nested group of objects in a
-        flat format returning a new object with the options
-        applied. If the options are to be set directly on the object a
-        simple format may be used, e.g.:
-
-            obj.options(cmap='viridis', show_title=False)
-
-        If the object is nested the options must be qualified using
-        a type[.group][.label] specification, e.g.:
-
-            obj.options('Image', cmap='viridis', show_title=False)
-
-        or using:
-
-            obj.options({'Image': dict(cmap='viridis', show_title=False)})
-
-        Identical to the .opts method but returns a clone of the object
-        by default.
-
-        Args:
-            *args: Sets of options to apply to object
-                Supports a number of formats including lists of Options
-                objects, a type[.group][.label] followed by a set of
-                keyword options to apply and a dictionary indexed by
-                type[.group][.label] specs.
-            backend (optional): Backend to apply options to
-                Defaults to current selected backend
-            clone (bool, optional): Whether to clone object
-                Options can be applied inplace with clone=False
-            **kwargs: Keywords of options
-                Set of options to apply to the object
-
-        Returns:
-            Returns the cloned object with the options applied
-        """
-        backend = kwargs.get('backend', None)
-        clone = kwargs.pop('clone', True)
-
-        if len(args) == 0 and len(kwargs)==0:
-            options = None
-        elif args and isinstance(args[0], basestring):
-            options = {args[0]: kwargs}
-        elif args and isinstance(args[0], list):
-            if kwargs:
-                raise ValueError('Please specify a list of option objects, or kwargs, but not both')
-            options = args[0]
-        elif args and [k for k in kwargs.keys() if k != 'backend']:
-            raise ValueError("Options must be defined in one of two formats. "
-                             "Either supply keywords defining the options for "
-                             "the current object, e.g. obj.options(cmap='viridis'), "
-                             "or explicitly define the type, e.g. "
-                             "obj.options({'Image': {'cmap': 'viridis'}}). "
-                             "Supplying both formats is not supported.")
-        elif args and all(isinstance(el, dict) for el in args):
-            if len(args) > 1:
-                self.param.warning('Only a single dictionary can be passed '
-                                   'as a positional argument. Only processing '
-                                   'the first dictionary')
-            options = [Options(spec, **kws) for spec,kws in args[0].items()]
-        elif args:
-            options = list(args)
-        elif kwargs:
-            options = {type(self).__name__: kwargs}
-
-        from ..util import opts
-        if options is None:
-            expanded_backends = [(backend, {})]
-        elif isinstance(options, list): # assuming a flat list of Options objects
-            expanded_backends = opts._expand_by_backend(options, backend)
-        else:
-            expanded_backends = [(backend, opts._expand_options(options, backend))]
-
-        obj = self
-        for backend, expanded in expanded_backends:
-            obj = obj.opts._dispatch_opts(expanded, backend=backend, clone=clone)
-        return obj
-
-    def _repr_mimebundle_(self, include=None, exclude=None):
-        """
-        Resolves the class hierarchy for the class rendering the
-        object using any display hooks registered on Store.display
-        hooks.  The output of all registered display_hooks is then
-        combined and returned.
-        """
-        return Store.render(self)
-
-
-
-class ViewableElement(Dimensioned):
+class ViewableElement(Dimensioned, OptsMixin, StoreReprMimebundleMixin):
     """
     A ViewableElement is a dimensioned datastructure that may be
     associated with a corresponding atomic visualization. An atomic
@@ -1334,7 +1336,7 @@ class ViewableElement(Dimensioned):
 
 
 
-class ViewableTree(AttrTree, Dimensioned):
+class ViewableTree(AttrTree, Dimensioned, OptsMixin, StoreReprMimebundleMixin):
     """
     A ViewableTree is an AttrTree with Viewable objects as its leaf
     nodes. It combines the tree like data structure of a tree while
@@ -1358,7 +1360,7 @@ class ViewableTree(AttrTree, Dimensioned):
     @classmethod
     def from_values(cls, vals):
         "Deprecated method to construct tree from list of objects"
-        name = cls.__name__        
+        name = cls.__name__
         param.main.param.warning("%s.from_values is deprecated, the %s "
                                  "constructor may now be used directly."
                                  % (name, name))

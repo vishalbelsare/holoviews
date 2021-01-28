@@ -14,7 +14,8 @@ import param
 
 from . import traversal, util
 from .accessors import Opts, Redim
-from .dimension import OrderedDict, Dimension, ViewableElement
+from .dimension import OrderedDict, Dimension, ViewableElement, OptsMixin, \
+    StoreReprMimebundleMixin
 from .layout import Layout, AdjointLayout, NdLayout, Empty
 from .ndmapping import UniformNdMapping, NdMapping, item_check
 from .overlay import Overlay, CompositeOverlay, NdOverlay, Overlayable
@@ -23,7 +24,7 @@ from ..streams import Stream
 
 
 
-class HoloMap(UniformNdMapping, Overlayable):
+class HoloMap(UniformNdMapping, Overlayable, OptsMixin, StoreReprMimebundleMixin):
     """
     A HoloMap is an n-dimensional mapping of viewable elements or
     overlays. Each item in a HoloMap has an tuple key defining the

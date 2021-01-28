@@ -20,7 +20,8 @@ from param.parameterized import add_metaclass, ParameterizedMetaclass
 from .. import util
 from ..accessors import Redim
 from ..dimension import (
-    Dimension, Dimensioned, LabelledData, dimension_name, process_dimensions
+    Dimension, Dimensioned, LabelledData, dimension_name, process_dimensions,
+    ViewableElement
 )
 from ..element import Element
 from ..ndmapping import OrderedDict, MultiDimensionalMapping, NdMapping, sorted_context, \
@@ -1430,7 +1431,7 @@ argument to specify a selection specification""")
     # will find them to wrap with pipeline support
     def options(self, *args, **kwargs):
         return super(Dataset, self).options(*args, **kwargs)
-    options.__doc__ = Dimensioned.options.__doc__
+    options.__doc__ = ViewableElement.options.__doc__
 
     def map(self, *args, **kwargs):
         return super(Dataset, self).map(*args, **kwargs)
