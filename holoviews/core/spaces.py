@@ -14,17 +14,16 @@ import param
 
 from . import traversal, util
 from .accessors import Opts, Redim
-from .dimension import OrderedDict, Dimension, ViewableElement, OptsMixin, \
-    StoreReprMimebundleMixin
+from .dimension import OrderedDict, Dimension, ViewableElement, ViewableMixin
 from .layout import Layout, AdjointLayout, NdLayout, Empty
-from .ndmapping import UniformNdMapping, NdMapping, item_check
+from .ndmapping import UniformNdMapping, NdMapping, item_check, ViewableUniformNdMapping
 from .overlay import Overlay, CompositeOverlay, NdOverlay, Overlayable
 from .options import Store, StoreOptions
 from ..streams import Stream
 
 
 
-class HoloMap(UniformNdMapping, Overlayable, OptsMixin, StoreReprMimebundleMixin):
+class HoloMap(ViewableUniformNdMapping, Overlayable):
     """
     A HoloMap is an n-dimensional mapping of viewable elements or
     overlays. Each item in a HoloMap has an tuple key defining the
@@ -226,8 +225,6 @@ class HoloMap(UniformNdMapping, Overlayable, OptsMixin, StoreReprMimebundleMixin
         else:
             return DynamicMap(callback=callback, kdims=dimensions,
                               streams=streams)
-
-
 
     def __mul__(self, other, reverse=False):
         """Overlays items in the object with another object
@@ -1847,7 +1844,7 @@ class DynamicMap(HoloMap):
 
 
 
-class GridSpace(UniformNdMapping):
+class GridSpace(ViewableUniformNdMapping):
     """
     Grids are distinct from Layouts as they ensure all contained
     elements to be of the same type. Unlike Layouts, which have

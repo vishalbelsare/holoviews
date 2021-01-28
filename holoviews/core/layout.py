@@ -9,7 +9,8 @@ import param
 import numpy as np
 
 from .dimension import Dimension, Dimensioned, ViewableElement, ViewableTree
-from .ndmapping import OrderedDict, NdMapping, UniformNdMapping
+from .ndmapping import OrderedDict, NdMapping, UniformNdMapping, \
+    ViewableUniformNdMapping
 from . import traversal
 
 
@@ -316,7 +317,7 @@ class AdjointLayout(Dimensioned):
 
 
 
-class NdLayout(UniformNdMapping):
+class NdLayout(ViewableUniformNdMapping):
     """
     NdLayout is a UniformNdMapping providing an n-dimensional
     data structure to display the contained Elements and containers

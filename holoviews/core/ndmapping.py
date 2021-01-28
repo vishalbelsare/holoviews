@@ -11,7 +11,8 @@ import numpy as np
 import param
 
 from . import util
-from .dimension import OrderedDict, Dimension, Dimensioned, ViewableElement, asdim
+from .dimension import OrderedDict, Dimension, Dimensioned, ViewableElement, asdim, \
+    ViewableMixin
 from .util import (unique_iterator, sanitize_identifier, dimension_sort,
                    basestring, wrap_tuple, process_ellipses, get_ndmapping_label)
 
@@ -810,8 +811,7 @@ class UniformNdMapping(NdMapping):
         self._label_check, self.label = None, label
         super(UniformNdMapping, self).__init__(initial_items, kdims=kdims, **params)
 
-    def clone(self, data=None, shared_data=True, new_type=None, link=True,
-              *args, **overrides):
+    def clone(self, data=None, shared_data=True, new_type=None, *args, **overrides):
         """Clones the object, overriding data and parameters.
 
         Args:
@@ -840,13 +840,15 @@ class UniformNdMapping(NdMapping):
             settings = {k: v for k, v in settings.items()
                       if k in new_params}
         settings = dict(settings, **overrides)
-        if 'id' not in settings and new_type in [type(self), None]:
-            settings['id'] = self.id
 
-        if data is None and shared_data:
-            data = self.data
-            if link:
-                settings['plot_id'] = self._plot_id
+        if data is not None:
+            shared_data = False
+        else:
+            if shared_data:
+                data = self.data
+            else:
+                raise NotImplementedError("clone data not implemented")
+
         # Apply name mangling for __ attribute
         pos_args = getattr(self, '_' + type(self).__name__ + '__pos_params', [])
         with item_check(not shared_data and self._check_items):
@@ -1049,3 +1051,60 @@ class UniformNdMapping(NdMapping):
 
     def __rmul__(self, other):
         return self.__mul__(other, reverse=True)
+
+
+class ViewableUniformNdMapping(UniformNdMapping, ViewableMixin):
+    def __init__(
+            self, initial_items=None, kdims=None, group=None, label=None,
+            id=None, plot_id=None, **params
+    ):
+        super(ViewableUniformNdMapping, self).__init__(initial_items, kdims, group, label, **params)
+        ViewableMixin.__init__(self, id=id, plot_id=plot_id)
+
+    def clone(self, data=None, shared_data=True, new_type=None, link=True,
+              *args, **overrides):
+        """Clones the object, overriding data and parameters.
+
+        Args:
+            data: New data replacing the existing data
+            shared_data (bool, optional): Whether to use existing data
+            new_type (optional): Type to cast object to
+            link (bool, optional): Whether clone should be linked
+                Determines whether Streams and Links attached to
+                original object will be inherited.
+            *args: Additional arguments to pass to constructor
+            **overrides: New keyword arguments to pass to constructor
+
+        Returns:
+            Cloned object
+        """
+        settings = dict(self.param.get_param_values())
+        if settings.get('group', None) != self._group:
+            settings.pop('group')
+        if settings.get('label', None) != self._label:
+            settings.pop('label')
+        if new_type is None:
+            clone_type = self.__class__
+        else:
+            clone_type = new_type
+            new_params = new_type.param.objects()
+            settings = {k: v for k, v in settings.items()
+                      if k in new_params}
+
+        if data is not None:
+            shared_data = False
+        else:
+            if shared_data:
+                data = self.data
+            else:
+                raise NotImplementedError("clone data not implemented")
+
+        settings = dict(settings, **overrides)
+
+        self.update_plot_id_settings(settings, shared_data=shared_data, link=link)
+
+        # Apply name mangling for __ attribute
+        pos_args = getattr(self, '_' + type(self).__name__ + '__pos_params', [])
+        with item_check(not shared_data and self._check_items):
+            return clone_type(data, *args, **{k:v for k,v in settings.items()
+                                              if k not in pos_args})

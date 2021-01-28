@@ -467,7 +467,7 @@ class Interface(param.Parameterized):
         if datatype is None and kind is None:
             raise ValueError("Either datatype or kind must be provided")
         elif kind is not None:
-            driver_pairs = [pair for k in kind for pair in cls.drivers_by_kind.get(k, [])]
+            driver_pairs = cls.drivers_by_kind.get(kind, [])
         else:  # datatype is not None
             driver_pairs = [
                 cls.drivers_by_datatype.get(dt)

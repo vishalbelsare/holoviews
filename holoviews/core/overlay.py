@@ -12,7 +12,7 @@ import numpy as np
 
 import param
 from .dimension import Dimension, Dimensioned, ViewableElement, ViewableTree
-from .ndmapping import UniformNdMapping
+from .ndmapping import UniformNdMapping, ViewableUniformNdMapping
 from .layout import Composable, Layout, AdjointLayout
 from .util import sanitize_identifier, unique_array, dimensioned_streams
 
@@ -296,7 +296,7 @@ class Overlay(ViewableTree, CompositeOverlay):
 
 
 
-class NdOverlay(Overlayable, UniformNdMapping, CompositeOverlay):
+class NdOverlay(Overlayable, ViewableUniformNdMapping, CompositeOverlay):
     """
     An NdOverlay allows a group of NdOverlay to be overlaid together. NdOverlay can
     be indexed out of an overlay and an overlay is an iterable that iterates

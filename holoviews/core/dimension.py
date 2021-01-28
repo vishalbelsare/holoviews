@@ -444,6 +444,40 @@ class Dimension(param.Parameterized):
         return title_format.format(name=bytes_to_unicode(self.label), val=value, unit=unit)
 
 
+# class PlotIdMixin(object):
+#     def __init__(self, id=None, plot_id=None):
+#         self._id = None
+#         self.id = id
+#         self._plot_id = plot_id or util.builtins.id(self)
+#
+#     @property
+#     def id(self):
+#         return self._id
+#
+#     @id.setter
+#     def id(self, opts_id):
+#         """Handles tracking and cleanup of custom ids."""
+#         old_id = self._id
+#         self._id = opts_id
+#         if old_id is not None:
+#             cleanup_custom_options(old_id)
+#         if opts_id is not None and opts_id != old_id:
+#             if opts_id not in Store._weakrefs:
+#                 Store._weakrefs[opts_id] = []
+#             ref = weakref.ref(self, partial(cleanup_custom_options, opts_id))
+#             Store._weakrefs[opts_id].append(ref)
+#
+#     def update_plot_id_settings(self, settings, shared_data=True, link=True):
+#         if 'id' not in settings:
+#             settings['id'] = self.id
+#
+#         if shared_data:
+#             if link:
+#                 settings['plot_id'] = self._plot_id
+#
+#         return settings
+
+
 class LabelledData(param.Parameterized):
     """
     LabelledData is a mix-in class designed to introduce the group and
@@ -487,7 +521,7 @@ class LabelledData(param.Parameterized):
 
     _deep_indexable = False
 
-    def __init__(self, data, id=None, plot_id=None, **params):
+    def __init__(self, data, **params):
         """
         All LabelledData subclasses must supply data to the
         constructor, which will be held on the .data attribute.
@@ -496,9 +530,6 @@ class LabelledData(param.Parameterized):
         """
         self.data = data
 
-        self._id = None
-        self.id = id
-        self._plot_id = plot_id or util.builtins.id(self)
         if isinstance(params.get('label',None), tuple):
             (alias, long_name) = params['label']
             util.label_sanitizer.add_aliases(**{alias:long_name})
@@ -517,36 +548,13 @@ class LabelledData(param.Parameterized):
             raise ValueError("Supplied label %r contains invalid characters." %
                              self.label)
 
-    @property
-    def id(self):
-        return self._id
-
-    @id.setter
-    def id(self, opts_id):
-        """Handles tracking and cleanup of custom ids."""
-        old_id = self._id
-        self._id = opts_id
-        if old_id is not None:
-            cleanup_custom_options(old_id)
-        if opts_id is not None and opts_id != old_id:
-            if opts_id not in Store._weakrefs:
-                Store._weakrefs[opts_id] = []
-            ref = weakref.ref(self, partial(cleanup_custom_options, opts_id))
-            Store._weakrefs[opts_id].append(ref)
-
-
-    def clone(self, data=None, shared_data=True, new_type=None, link=True,
-              *args, **overrides):
+    def clone(self, data=None, shared_data=True, new_type=None, **overrides):
         """Clones the object, overriding data and parameters.
 
         Args:
             data: New data replacing the existing data
             shared_data (bool, optional): Whether to use existing data
             new_type (optional): Type to cast object to
-            link (bool, optional): Whether clone should be linked
-                Determines whether Streams and Links attached to
-                original object will be inherited.
-            *args: Additional arguments to pass to constructor
             **overrides: New keyword arguments to pass to constructor
 
         Returns:
@@ -562,19 +570,20 @@ class LabelledData(param.Parameterized):
                       if k in new_params}
             if params.get('group') == self.param.objects('existing')['group'].default:
                 params.pop('group')
-        settings = dict(params, **overrides)
-        if 'id' not in settings:
-            settings['id'] = self.id
 
-        if data is None and shared_data:
-            data = self.data
-            if link:
-                settings['plot_id'] = self._plot_id
+        if data is None:
+            if shared_data:
+                data = self.data
+            else:
+                raise NotImplementedError("shared_data=False to clone not implemented")
+
+        settings = dict(params, **overrides)
+
         # Apply name mangling for __ attribute
         pos_args = getattr(self, '_' + type(self).__name__ + '__pos_params', [])
-        return clone_type(data, *args, **{k:v for k,v in settings.items()
-                                          if k not in pos_args})
-
+        return clone_type(
+            data, **{k:v for k,v in settings.items() if k not in pos_args}
+        )
 
     def relabel(self, label=None, group=None, depth=0):
         """Clone object and apply new group and/or label.
@@ -763,18 +772,40 @@ class LabelledData(param.Parameterized):
         super(LabelledData, self).__setstate__({})
 
 
-class StoreReprMimebundleMixin(param.Parameterized):
-    def _repr_mimebundle_(self, include=None, exclude=None):
-        """
-        Resolves the class hierarchy for the class rendering the
-        object using any display hooks registered on Store.display
-        hooks.  The output of all registered display_hooks is then
-        combined and returned.
-        """
-        return Store.render(self)
+class ViewableMixin(object):
+    def __init__(self, id=None, plot_id=None, **params):
+        super(ViewableMixin, self).__init__(**params)
+        self._id = None
+        self.id = id
+        self._plot_id = plot_id or util.builtins.id(self)
 
+    @property
+    def id(self):
+        return self._id
 
-class OptsMixin(param.Parameterized):
+    @id.setter
+    def id(self, opts_id):
+        """Handles tracking and cleanup of custom ids."""
+        old_id = self._id
+        self._id = opts_id
+        if old_id is not None:
+            cleanup_custom_options(old_id)
+        if opts_id is not None and opts_id != old_id:
+            if opts_id not in Store._weakrefs:
+                Store._weakrefs[opts_id] = []
+            ref = weakref.ref(self, partial(cleanup_custom_options, opts_id))
+            Store._weakrefs[opts_id].append(ref)
+
+    def update_plot_id_settings(self, settings, shared_data=True, link=True):
+        if 'id' not in settings:
+            settings['id'] = self.id
+
+        if shared_data:
+            if link:
+                settings['plot_id'] = self._plot_id
+
+        return settings
+
     @property
     def opts(self):
         return Opts(self)
@@ -879,6 +910,133 @@ class OptsMixin(param.Parameterized):
             obj = obj.opts._dispatch_opts(expanded, backend=backend, clone=clone)
         return obj
 
+    def _repr_mimebundle_(self, include=None, exclude=None):
+        """
+        Resolves the class hierarchy for the class rendering the
+        object using any display hooks registered on Store.display
+        hooks.  The output of all registered display_hooks is then
+        combined and returned.
+        """
+        return Store.render(self)
+
+
+
+# class StoreReprMimebundleMixin(param.Parameterized):
+#     def _repr_mimebundle_(self, include=None, exclude=None):
+#         """
+#         Resolves the class hierarchy for the class rendering the
+#         object using any display hooks registered on Store.display
+#         hooks.  The output of all registered display_hooks is then
+#         combined and returned.
+#         """
+#         return Store.render(self)
+
+
+# class OptsMixin(param.Parameterized):
+#     @property
+#     def opts(self):
+#         return Opts(self)
+#
+#     def __repr__(self):
+#         return PrettyPrinter.pprint(self)
+#
+#     def __str__(self):
+#         return repr(self)
+#
+#     def __unicode__(self):
+#         return unicode(PrettyPrinter.pprint(self))
+#
+#     def __call__(self, options=None, **kwargs):
+#         self.param.warning(
+#             'Use of __call__ to set options will be deprecated '
+#             'in the next major release (1.14.0). Use the equivalent .opts '
+#             'method instead.')
+#
+#         if not kwargs and options is None:
+#             return self.opts.clear()
+#
+#         return self.opts(options, **kwargs)
+#
+#     def options(self, *args, **kwargs):
+#         """Applies simplified option definition returning a new object.
+#
+#         Applies options on an object or nested group of objects in a
+#         flat format returning a new object with the options
+#         applied. If the options are to be set directly on the object a
+#         simple format may be used, e.g.:
+#
+#             obj.options(cmap='viridis', show_title=False)
+#
+#         If the object is nested the options must be qualified using
+#         a type[.group][.label] specification, e.g.:
+#
+#             obj.options('Image', cmap='viridis', show_title=False)
+#
+#         or using:
+#
+#             obj.options({'Image': dict(cmap='viridis', show_title=False)})
+#
+#         Identical to the .opts method but returns a clone of the object
+#         by default.
+#
+#         Args:
+#             *args: Sets of options to apply to object
+#                 Supports a number of formats including lists of Options
+#                 objects, a type[.group][.label] followed by a set of
+#                 keyword options to apply and a dictionary indexed by
+#                 type[.group][.label] specs.
+#             backend (optional): Backend to apply options to
+#                 Defaults to current selected backend
+#             clone (bool, optional): Whether to clone object
+#                 Options can be applied inplace with clone=False
+#             **kwargs: Keywords of options
+#                 Set of options to apply to the object
+#
+#         Returns:
+#             Returns the cloned object with the options applied
+#         """
+#         backend = kwargs.get('backend', None)
+#         clone = kwargs.pop('clone', True)
+#
+#         if len(args) == 0 and len(kwargs)==0:
+#             options = None
+#         elif args and isinstance(args[0], basestring):
+#             options = {args[0]: kwargs}
+#         elif args and isinstance(args[0], list):
+#             if kwargs:
+#                 raise ValueError('Please specify a list of option objects, or kwargs, but not both')
+#             options = args[0]
+#         elif args and [k for k in kwargs.keys() if k != 'backend']:
+#             raise ValueError("Options must be defined in one of two formats. "
+#                              "Either supply keywords defining the options for "
+#                              "the current object, e.g. obj.options(cmap='viridis'), "
+#                              "or explicitly define the type, e.g. "
+#                              "obj.options({'Image': {'cmap': 'viridis'}}). "
+#                              "Supplying both formats is not supported.")
+#         elif args and all(isinstance(el, dict) for el in args):
+#             if len(args) > 1:
+#                 self.param.warning('Only a single dictionary can be passed '
+#                                    'as a positional argument. Only processing '
+#                                    'the first dictionary')
+#             options = [Options(spec, **kws) for spec,kws in args[0].items()]
+#         elif args:
+#             options = list(args)
+#         elif kwargs:
+#             options = {type(self).__name__: kwargs}
+#
+#         from ..util import opts
+#         if options is None:
+#             expanded_backends = [(backend, {})]
+#         elif isinstance(options, list): # assuming a flat list of Options objects
+#             expanded_backends = opts._expand_by_backend(options, backend)
+#         else:
+#             expanded_backends = [(backend, opts._expand_options(options, backend))]
+#
+#         obj = self
+#         for backend, expanded in expanded_backends:
+#             obj = obj.opts._dispatch_opts(expanded, backend=backend, clone=clone)
+#         return obj
+
 
 class Dimensioned(LabelledData):
     """
@@ -961,6 +1119,18 @@ class Dimensioned(LabelledData):
     _dim_groups = ['kdims', 'vdims', 'cdims', 'ddims']
     _dim_aliases = dict(key_dimensions='kdims', value_dimensions='vdims',
                         constant_dimensions='cdims', deep_dimensions='ddims')
+
+    @classmethod
+    def kdims_spec(cls, kdims):
+        return dict(
+            value=kdims, bounds=cls.param.kdims.bounds, default=cls.param.kdims.default
+        )
+
+    @classmethod
+    def vdims_spec(cls, vdims):
+        return dict(
+            value=vdims, bounds=cls.param.vdims.bounds, default=cls.param.vdims.default
+        )
 
     def __init__(self, data, kdims=None, vdims=None, **params):
         params.update(process_dimensions(kdims, vdims))
@@ -1319,7 +1489,7 @@ class Dimensioned(LabelledData):
         return util.dimension_range(lower, upper, dimension.range, dimension.soft_range)
 
 
-class ViewableElement(Dimensioned, OptsMixin, StoreReprMimebundleMixin):
+class ViewableElement(Dimensioned, ViewableMixin):
     """
     A ViewableElement is a dimensioned datastructure that may be
     associated with a corresponding atomic visualization. An atomic
@@ -1334,9 +1504,57 @@ class ViewableElement(Dimensioned, OptsMixin, StoreReprMimebundleMixin):
 
     group = param.String(default='ViewableElement', constant=True)
 
+    def __init__(self, data, kdims=None, vdims=None, id=None, plot_id=None, **params):
+        super(ViewableElement, self).__init__(data, kdims, vdims, **params)
+        ViewableMixin.__init__(self, id=id, plot_id=plot_id)
+
+    def clone(self, data=None, shared_data=True, new_type=None, link=True,
+              *args, **overrides):
+        """Clones the object, overriding data and parameters.
+
+        Args:
+            data: New data replacing the existing data
+            shared_data (bool, optional): Whether to use existing data
+            new_type (optional): Type to cast object to
+            link (bool, optional): Whether clone should be linked
+                Determines whether Streams and Links attached to
+                original object will be inherited.
+            *args: Additional arguments to pass to constructor
+            **overrides: New keyword arguments to pass to constructor
+
+        Returns:
+            Cloned object
+        """
+        params = dict(self.param.get_param_values())
+        if new_type is None:
+            clone_type = self.__class__
+        else:
+            clone_type = new_type
+            new_params = new_type.param.objects('existing')
+            params = {k: v for k, v in params.items()
+                      if k in new_params}
+            if params.get('group') == self.param.objects('existing')['group'].default:
+                params.pop('group')
+
+        if data is not None:
+            shared_data = False
+        else:
+            if shared_data:
+                data = self.data
+            else:
+                raise NotImplementedError("clone data not implemented")
+
+        settings = dict(params, **overrides)
+
+        self.update_plot_id_settings(settings, shared_data=shared_data, link=link)
+
+        # Apply name mangling for __ attribute
+        pos_args = getattr(self, '_' + type(self).__name__ + '__pos_params', [])
+        return clone_type(data, *args, **{k:v for k,v in settings.items()
+                                          if k not in pos_args})
 
 
-class ViewableTree(AttrTree, Dimensioned, OptsMixin, StoreReprMimebundleMixin):
+class ViewableTree(AttrTree, ViewableElement):
     """
     A ViewableTree is an AttrTree with Viewable objects as its leaf
     nodes. It combines the tree like data structure of a tree while
@@ -1348,14 +1566,16 @@ class ViewableTree(AttrTree, Dimensioned, OptsMixin, StoreReprMimebundleMixin):
 
     _deep_indexable = True
 
-    def __init__(self, items=None, identifier=None, parent=None, **kwargs):
+    def __init__(
+            self, items=None, identifier=None, parent=None,
+            id=None, plot_id=None, **kwargs
+    ):
         if items and all(isinstance(item, Dimensioned) for item in items):
             items = self._process_items(items)
         params = {p: kwargs.pop(p) for p in list(self.param)+['id', 'plot_id'] if p in kwargs}
 
         AttrTree.__init__(self, items, identifier, parent, **kwargs)
-        Dimensioned.__init__(self, self.data, **params)
-
+        ViewableElement.__init__(self, self.data, **params)
 
     @classmethod
     def from_values(cls, vals):

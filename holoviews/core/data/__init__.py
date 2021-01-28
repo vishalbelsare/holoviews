@@ -540,12 +540,8 @@ class Dataset(Element):
         if datatype is None:
             datatype = eltype.datatype
 
-        kdims_spec = dict(
-            value=kdims, bounds=cls.param.kdims.bounds, default=cls.param.kdims.default
-        )
-        vdims_spec = dict(
-            value=vdims, bounds=cls.param.vdims.bounds, default=cls.param.vdims.default
-        )
+        kdims_spec = cls.kdims_spec(kdims)
+        vdims_spec = cls.vdims_spec(vdims)
 
         return data, datatype, kdims_spec, vdims_spec
 
