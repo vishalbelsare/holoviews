@@ -1,10 +1,7 @@
 """
 Unit test of the streams system
 """
-from collections import defaultdict
 from unittest import SkipTest
-
-import param
 
 from holoviews.core.spaces import DynamicMap
 from holoviews.core.util import LooseVersion, pd
@@ -12,7 +9,7 @@ from holoviews.element import Points, Scatter, Curve, Histogram, Polygons
 from holoviews.element.comparison import ComparisonTestCase
 from holoviews.streams import * # noqa (Test all available streams)
 from holoviews.util import Dynamic, extension
-from holoviews.util.transform import dim
+from holodata.transform import dim
 
 from .utils import LoggingComparisonTestCase
 

@@ -20,7 +20,7 @@ from ...core import (NdOverlay, DynamicMap, Dataset,
 from ...core.options import abbreviated_exception
 from ...element import Graph, Path
 from ...streams import Stream
-from ...util.transform import dim
+from holodata.transform import dim
 from ..plot import GenericElementPlot, GenericOverlayPlot
 from ..util import process_cmap, color_intervals, dim_range_key
 from .plot import MPLPlot, mpl_rc_context

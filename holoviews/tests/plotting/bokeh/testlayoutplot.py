@@ -9,7 +9,7 @@ from holodata.dimension import Dimension
 from holoviews.element import Curve, Image, Points, Histogram, Scatter
 from holoviews.streams import Stream
 from holoviews.util import render, opts
-from holoviews.util.transform import dim
+from holodata.transform import dim
 
 try:
     from bokeh.layouts import Column, Row

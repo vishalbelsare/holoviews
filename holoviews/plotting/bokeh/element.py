@@ -37,7 +37,7 @@ from ...element import (
     Annotation, Contours, Graph, Path, Tiles, VectorField
 )
 from ...streams import Buffer, RangeXY, PlotSize
-from ...util.transform import dim
+from holodata.transform import dim
 from ..plot import GenericElementPlot, GenericOverlayPlot
 from ..util import process_cmap, color_intervals, dim_range_key
 from .callbacks import PlotSizeCallback

@@ -16,7 +16,7 @@ from holodata.dimension import dimension_name
 from ...core.util import basestring
 from holodata.util import isfinite, dimension_sanitizer
 from ...operation import interpolate_curve
-from ...util.transform import dim
+from holodata.transform import dim
 from ..mixins import AreaMixin, BarsMixin, SpikesMixin
 from ..util import compute_sizes, get_min_distance
 from .element import ElementPlot, ColorbarPlot, LegendPlot, OverlayPlot

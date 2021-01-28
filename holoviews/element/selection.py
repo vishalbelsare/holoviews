@@ -6,9 +6,9 @@ elements.
 import numpy as np
 
 import holodata.util
-from ..core import util, NdOverlay
+from ..core import NdOverlay
 from ..streams import SelectionXY, Selection1D, Lasso
-from ..util.transform import dim
+from holodata.transform import dim
 from .annotation import HSpan, VSpan
 
 

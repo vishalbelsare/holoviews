@@ -21,7 +21,7 @@ from ..core.util import (basestring, get_overlay_spec,
 from holodata.util import wrap_tuple, unique_iterator, match_spec, python2sort, \
     is_number, isfinite
 from ..streams import LinkedStream
-from ..util.transform import dim
+from holodata.transform import dim
 
 
 def displayable(obj):

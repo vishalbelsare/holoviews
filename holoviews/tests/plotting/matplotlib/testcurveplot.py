@@ -6,7 +6,7 @@ import numpy as np
 from holoviews.core.overlay import NdOverlay
 from holoviews.core.util import pd
 from holoviews.element import Curve
-from holoviews.util.transform import dim
+from holodata.transform import dim
 
 from .testplot import TestMPLPlot, mpl_renderer
 

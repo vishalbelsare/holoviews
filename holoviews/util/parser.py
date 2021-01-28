@@ -17,7 +17,7 @@ import pyparsing as pp
 from ..core.options import Options, Cycle, Palette
 from ..core.util import merge_option_dicts
 from ..operation import Compositor
-from .transform import dim
+from holodata.transform import dim
 
 ascii_uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 allowed = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!#$%&\()*+,-./:;<=>?@\\^_`{|}~'

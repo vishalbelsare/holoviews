@@ -9,7 +9,7 @@ from holoviews.core.data import Dataset
 from holoviews.core.util import pd
 from holodata.util import date_range
 from holoviews.element import Image, Curve, RGB, HSV
-from holoviews.util.transform import dim
+from holodata.transform import dim
 
 try:
     import dask.array as da

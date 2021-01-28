@@ -7,14 +7,13 @@ from unittest import SkipTest, skipIf
 
 import numpy as np
 
-import holodata.dimension
 from holoviews import Dataset, HoloMap
 from holodata.dimension import Dimension
 from holodata.drivers import concat
 from holodata.interface import DataError
-from holoviews.element import Scatter, Curve, Redim
+from holoviews.element import Scatter, Curve
 from holoviews.element.comparison import ComparisonTestCase
-from holoviews.util.transform import dim
+from holodata.transform import dim
 
 from collections import OrderedDict
 

@@ -6,7 +6,7 @@ import numpy as np
 
 from holoviews.element import Violin
 from holoviews.operation.stats import univariate_kde
-from holoviews.util.transform import dim
+from holodata.transform import dim
 
 from .testplot import TestBokehPlot, bokeh_renderer
 

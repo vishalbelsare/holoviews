@@ -9,7 +9,7 @@ except:
     raise SkipTest("Could not import dask, skipping DaskInterface tests.")
 
 from holoviews.core.data import Dataset
-from holoviews.util.transform import dim
+from holodata.transform import dim
 
 from .testpandasinterface import BasePandasInterfaceTests
 

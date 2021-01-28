@@ -3,7 +3,7 @@ from __future__ import absolute_import
 import numpy as np
 from holoviews.core.data import Dataset
 from holoviews.element import Graph, Nodes, TriMesh, Chord, circular_layout
-from holoviews.util.transform import dim
+from holodata.transform import dim
 
 try:
     from bokeh.models import (NodesAndLinkedEdges, EdgesAndLinkedNodes, Patches)
@@ -351,7 +351,7 @@ class TestBokehTriMeshPlot(TestBokehPlot):
         self.assertEqual(glyph.fill_color, {'field': 'node_color'})
         self.assertEqual(glyph.line_color, 'black')
         self.assertEqual(cds.data['node_color'], np.array(['red', 'green', 'blue', 'black']))
-    
+
     def test_trimesh_op_node_color_linear(self):
         edges = [(0, 1, 2), (1, 2, 3)]
         nodes = [(-1, -1, 0, 2), (0, 0, 1, 1), (0, 1, 2, 3), (1, 0, 3, 4)]
@@ -363,7 +363,7 @@ class TestBokehTriMeshPlot(TestBokehPlot):
         self.assertEqual(glyph.fill_color, {'field': 'node_color', 'transform': cmapper})
         self.assertEqual(glyph.line_color, 'black')
         self.assertEqual(cds.data['node_color'], np.array([2, 1, 3, 4]))
-        self.assertEqual(cmapper.low, 1) 
+        self.assertEqual(cmapper.low, 1)
         self.assertEqual(cmapper.high, 4)
 
     def test_trimesh_op_node_color_categorical(self):

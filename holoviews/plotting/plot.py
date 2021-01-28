@@ -36,7 +36,7 @@ from ..core.util import stream_parameters
 from holodata.util import isfinite
 from ..element import Table, Graph, Contours
 from ..streams import Stream, RangeXY, RangeX, RangeY
-from ..util.transform import dim
+from holodata.transform import dim
 from .util import (
     get_dynamic_mode, initialize_unbounded, dim_axis_label,
     attach_streams, traverse_setter, get_nested_streams,

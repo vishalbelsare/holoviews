@@ -451,7 +451,7 @@ class SelectionDisplay(object):
     @staticmethod
     def _select(element, selection_expr, cache={}):
         from .element import Curve, Spread
-        from .util.transform import dim
+        from holodata.transform import dim
         if isinstance(selection_expr, dim):
             dataset = element.dataset
             mask = None

@@ -1182,7 +1182,7 @@ class CrossFilterSet(Derived):
 
     @classmethod
     def transform_function(cls, stream_values, constants):
-        from .util.transform import dim
+        from holodata.transform import dim
 
         index_cols = constants["index_cols"]
 

@@ -8,7 +8,7 @@ import numpy as np
 from ..core import util
 from holodata.dimension import Dimension
 from ..core.element import Element2D
-from ..util.transform import lon_lat_to_easting_northing, easting_northing_to_lon_lat
+from holodata.transform import lon_lat_to_easting_northing, easting_northing_to_lon_lat
 
 
 class Tiles(Element2D):

@@ -16,7 +16,7 @@ except ImportError:
 
 from ...core.options import abbreviated_exception
 from ...core.util import basestring, arraylike_types
-from ...util.transform import dim
+from holodata.transform import dim
 from ..util import COLOR_ALIASES, RGB_HEX_REGEX, rgb2hex
 
 # Define shared style properties for bokeh plots
@@ -122,7 +122,7 @@ def validate(style, value, scalar=False):
     ---------
     style: str
        The style to validate (e.g. 'color', 'size' or 'marker')
-    value: 
+    value:
        The style value to validate
     scalar: bool
 

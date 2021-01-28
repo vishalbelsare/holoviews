@@ -30,7 +30,7 @@ xr_skip = skipIf(xr is None, "xarray not available")
 
 from holoviews.core.data import Dataset
 from holoviews.element.comparison import ComparisonTestCase
-from holoviews.util.transform import dim
+from holodata.transform import dim
 
 
 class Params(param.Parameterized):

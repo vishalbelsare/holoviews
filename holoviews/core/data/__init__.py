@@ -774,7 +774,7 @@ class Dataset(Element):
             Returns an Dimensioned object containing the selected data
             or a scalar if a single value was selected
         """
-        from ...util.transform import dim
+        from holodata.transform import dim
         if selection_expr is not None and not isinstance(selection_expr, dim):
             raise ValueError("""\
 The first positional argument to the Dataset.select method is expected to be a
@@ -1061,7 +1061,7 @@ argument to specify a selection specification""")
         Returns:
             Returns the aggregated Dataset
         """
-        from ...util.transform import dim
+        from holodata.transform import dim
         if dimensions is None: dimensions = self.kdims
         elif not isinstance(dimensions, list): dimensions = [dimensions]
         if isinstance(function, tuple) or any(isinstance(v, dim) for v in kwargs.values()):

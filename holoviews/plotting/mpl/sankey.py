@@ -7,7 +7,7 @@ from matplotlib.collections import PatchCollection
 
 from ...core.util import basestring
 from holodata.util import max_range
-from ...util.transform import dim
+from holodata.transform import dim
 from .graphs import GraphPlot
 from .util import filter_styles
 

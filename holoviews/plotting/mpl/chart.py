@@ -17,7 +17,7 @@ from holodata.util import unique_array, match_spec, isdatetime, dt_to_int, issca
     isfinite, dt64_to_dt
 from ...element import Raster, HeatMap
 from ...operation import interpolate_curve
-from ...util.transform import dim
+from holodata.transform import dim
 from ..plot import PlotSelector
 from ..mixins import AreaMixin, BarsMixin, SpikesMixin
 from ..util import compute_sizes, get_sideplot_ranges, get_min_distance

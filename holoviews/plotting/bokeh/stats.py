@@ -19,7 +19,7 @@ from ...core.util import (
 from holodata.util import is_dask_array, is_cupy_array, wrap_tuple, unique_iterator, \
     isfinite, dimension_sanitizer
 from ...operation.stats import univariate_kde
-from ...util.transform import dim
+from holodata.transform import dim
 from .chart import AreaPlot
 from .element import CompositeElementPlot, ColorbarPlot, LegendPlot
 from .path import PolygonPlot

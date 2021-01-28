@@ -8,9 +8,9 @@ from types import BuiltinFunctionType, BuiltinMethodType, FunctionType, MethodTy
 import numpy as np
 import param
 
-from ..core.data import PandasDriver
+from holoviews.core.data import PandasDriver
 from holodata.dimension import Dimension
-from ..core.util import basestring, pd, resolve_dependent_value
+from holoviews.core.util import basestring, pd, resolve_dependent_value
 from holodata.util import unique_iterator
 
 

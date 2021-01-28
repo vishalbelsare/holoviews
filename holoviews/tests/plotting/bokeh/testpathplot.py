@@ -6,7 +6,7 @@ from holoviews.core import NdOverlay, HoloMap
 from holoviews.core.options import Cycle
 from holoviews.element import Path, Polygons, Contours
 from holoviews.streams import PolyDraw
-from holoviews.util.transform import dim
+from holodata.transform import dim
 
 from .testplot import TestBokehPlot, bokeh_renderer
 
@@ -131,7 +131,7 @@ class TestPathPlot(TestBokehPlot):
         self.assertEqual(cmapper.low, 994)
         self.assertEqual(cmapper.high, 999)
         self.assertEqual(cmapper.palette, colors[-1:])
-        
+
     def test_path_continuously_varying_alpha_op(self):
         xs = [1, 2, 3, 4]
         ys = xs[::-1]
@@ -173,7 +173,7 @@ class TestPathPlot(TestBokehPlot):
         self.assertEqual(item.label, legend)
         self.assertEqual(item.renderers, [plot.handles['glyph_renderer']])
 
-        
+
 
 class TestPolygonPlot(TestBokehPlot):
 

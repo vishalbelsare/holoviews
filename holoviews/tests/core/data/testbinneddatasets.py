@@ -13,7 +13,7 @@ from holoviews.core.data import Dataset
 from holodata.interface import DataError
 from holoviews.element import Histogram, QuadMesh
 from holoviews.element.comparison import ComparisonTestCase
-from holoviews.util.transform import dim
+from holodata.transform import dim
 
 
 class Binned1DTest(ComparisonTestCase):

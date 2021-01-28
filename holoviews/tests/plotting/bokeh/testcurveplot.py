@@ -9,7 +9,7 @@ from holoviews.core.util import pd, basestring
 from holoviews.element import Curve
 from holoviews.plotting.util import rgb2hex
 from holoviews.streams import PointerX
-from holoviews.util.transform import dim
+from holodata.transform import dim
 
 from .testplot import TestBokehPlot, bokeh_renderer
 

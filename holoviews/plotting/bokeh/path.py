@@ -8,7 +8,7 @@ import numpy as np
 import holodata.util
 from ...core import util
 from ...element import Contours, Polygons
-from ...util.transform import dim
+from holodata.transform import dim
 from .callbacks import PolyDrawCallback, PolyEditCallback
 from .element import ColorbarPlot, LegendPlot, OverlayPlot
 from .selection import BokehOverlaySelectionDisplay

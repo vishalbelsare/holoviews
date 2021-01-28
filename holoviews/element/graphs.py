@@ -273,7 +273,7 @@ class Graph(Dataset, Element2D):
         connected to the selected nodes. To select only edges between the
         selected nodes set the selection_mode to 'nodes'.
         """
-        from ..util.transform import dim
+        from holodata.transform import dim
         if selection_expr is not None and not isinstance(selection_expr, dim):
             raise ValueError("""\
 The first positional argument to the Dataset.select method is expected to be a
