@@ -11,10 +11,12 @@ import numpy as np
 import param
 
 from . import util
+from .pprint import PrettyPrinter
 from .dimension import OrderedDict, Dimension, Dimensioned, ViewableElement, asdim, \
     ViewableMixin
-from .util import (unique_iterator, sanitize_identifier, dimension_sort,
+from .util import (unique_iterator, sanitize_identifier, dimension_sort, unicode,
                    basestring, wrap_tuple, process_ellipses, get_ndmapping_label)
+
 
 class item_check(object):
     """
@@ -1060,6 +1062,15 @@ class ViewableUniformNdMapping(UniformNdMapping, ViewableMixin):
     ):
         super(ViewableUniformNdMapping, self).__init__(initial_items, kdims, group, label, **params)
         ViewableMixin.__init__(self, id=id, plot_id=plot_id)
+
+    def __repr__(self):
+        return PrettyPrinter.pprint(self)
+
+    def __str__(self):
+        return repr(self)
+
+    def __unicode__(self):
+        return unicode(PrettyPrinter.pprint(self))
 
     def clone(self, data=None, shared_data=True, new_type=None, link=True,
               *args, **overrides):

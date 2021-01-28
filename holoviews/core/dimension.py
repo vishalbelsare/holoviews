@@ -20,7 +20,7 @@ import numpy as np
 from . import util
 from .accessors import Opts, Apply, Redim
 from .options import Store, Options, cleanup_custom_options
-from .pprint import PrettyPrinter
+from .pprint import PrettyPrinter, SimplePrettyPrinter
 from .tree import AttrTree
 from .util import basestring, OrderedDict, bytes_to_unicode, unicode
 
@@ -810,15 +810,6 @@ class ViewableMixin(object):
     def opts(self):
         return Opts(self)
 
-    def __repr__(self):
-        return PrettyPrinter.pprint(self)
-
-    def __str__(self):
-        return repr(self)
-
-    def __unicode__(self):
-        return unicode(PrettyPrinter.pprint(self))
-
     def __call__(self, options=None, **kwargs):
         self.param.warning(
             'Use of __call__ to set options will be deprecated '	
@@ -1144,6 +1135,15 @@ class Dimensioned(LabelledData):
         self._settings = None
 
         # Instantiate accessors
+
+    def __repr__(self):
+        return SimplePrettyPrinter.pprint(self)
+
+    def __str__(self):
+        return repr(self)
+
+    def __unicode__(self):
+        return unicode(SimplePrettyPrinter.pprint(self))
 
     @property
     def apply(self):
@@ -1505,8 +1505,25 @@ class ViewableElement(Dimensioned, ViewableMixin):
     group = param.String(default='ViewableElement', constant=True)
 
     def __init__(self, data, kdims=None, vdims=None, id=None, plot_id=None, **params):
-        super(ViewableElement, self).__init__(data, kdims, vdims, **params)
+        Dimensioned.__init__(self, data, kdims, vdims, **params)
         ViewableMixin.__init__(self, id=id, plot_id=plot_id)
+
+    def __repr__(self):
+        return PrettyPrinter.pprint(self)
+
+    def __str__(self):
+        return repr(self)
+
+    def __unicode__(self):
+        return unicode(PrettyPrinter.pprint(self))
+    def __repr__(self):
+        return PrettyPrinter.pprint(self)
+
+    def __str__(self):
+        return repr(self)
+
+    def __unicode__(self):
+        return unicode(PrettyPrinter.pprint(self))
 
     def clone(self, data=None, shared_data=True, new_type=None, link=True,
               *args, **overrides):
