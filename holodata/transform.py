@@ -501,7 +501,7 @@ class dim(object):
         Dataset, i.e. whether all referenced dimensions can be
         resolved.
         """
-        from ..element import Graph
+        from holoviews.element import Graph
 
         if isinstance(self.dimension, dim):
             applies = self.dimension.applies(dataset)
@@ -635,7 +635,7 @@ class dim(object):
         Returns:
             values: NumPy array computed by evaluating the expression
         """
-        from ..element import Graph
+        from holoviews.element import Graph
 
         dimension = self.dimension
         if expanded is None:

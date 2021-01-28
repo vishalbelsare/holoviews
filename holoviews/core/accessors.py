@@ -306,6 +306,9 @@ class Redim(_Redim):
         # Can be 'dataset', 'dynamic' or None
         self.mode = mode
 
+    def __str__(self):
+        return "<holoviews.core.dimension.redim method>"
+
     @classmethod
     def replace_dimensions(cls, dimensions, overrides):
         """Replaces dimensions in list with dictionary of overrides.
@@ -326,25 +329,44 @@ class Redim(_Redim):
         between the old dimension name and a dictionary of the new
         attributes, a completely new dimension or a new string name.
         """
-        if self.mode == "dataset":
-            return super(Redim, self).__call__(specs, **dimensions)
-
         obj = self._obj
         redimmed = obj
         if obj._deep_indexable and self.mode != 'dataset':
-            deep_mapped = [(k, holodata.dimension.redim(specs, **dimensions))
+            deep_mapped = [(k, v.redim(specs, **dimensions))
                            for k, v in obj.items()]
             redimmed = obj.clone(deep_mapped)
 
+        if specs is not None:
+            if not isinstance(specs, list):
+                specs = [specs]
+            matches = any(obj.matches(spec) for spec in specs)
+            if self.mode != 'dynamic' and not matches:
+                return redimmed
+
         kdims = self.replace_dimensions(obj.kdims, dimensions)
         vdims = self.replace_dimensions(obj.vdims, dimensions)
+        zipped_dims = zip(obj.kdims+obj.vdims, kdims+vdims)
+        renames = {pk.name: nk for pk, nk in zipped_dims if pk.name != nk.name}
+
+        if self.mode == 'dataset':
+            data = obj.data
+            if renames:
+                data = obj.interface.redim(obj, renames)
+            transform = self._create_expression_transform(kdims, vdims, list(renames.values()))
+            transforms = obj._transforms + [transform]
+            clone = obj.clone(data, kdims=kdims, vdims=vdims, transforms=transforms)
+            if self._obj.dimensions(label='name') == clone.dimensions(label='name'):
+                # Ensure that plot_id is inherited as long as dimension
+                # name does not change
+                clone._plot_id = self._obj._plot_id
+            return clone
 
         if self.mode != 'dynamic':
             return redimmed.clone(kdims=kdims, vdims=vdims)
 
         from ..util import Dynamic
         def dynamic_redim(obj, **dynkwargs):
-            return holodata.dimension.redim(specs, **dimensions)
+            return obj.redim(specs, **dimensions)
         dmap = Dynamic(obj, streams=obj.streams, operation=dynamic_redim)
         dmap.data = OrderedDict(self._filter_cache(redimmed, kdims))
         with util.disable_constant(dmap):

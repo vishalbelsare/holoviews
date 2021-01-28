@@ -212,7 +212,7 @@ class Redim(object):
         self._obj = obj
 
     def __str__(self):
-        return "<holoviews.core.dimension.redim method>"
+        return "<holodata.accessor.redim method>"
 
     @classmethod
     def replace_dimensions(cls, dimensions, overrides):
@@ -330,13 +330,8 @@ class Redim(object):
         data = obj.data
         if renames:
             data = obj.interface.redim(obj, renames)
-        transform = self._create_expression_transform(kdims, vdims, list(renames.values()))
-        transforms = obj._transforms + [transform]
-        clone = obj.clone(data, kdims=kdims, vdims=vdims, transforms=transforms)
-        if self._obj.dimensions(label='name') == clone.dimensions(label='name'):
-            # Ensure that plot_id is inherited as long as dimension
-            # name does not change
-            clone._plot_id = self._obj._plot_id
+
+        clone = obj.clone(data, kdims=kdims, vdims=vdims)
         return clone
 
     def _redim(self, name, specs, **dims):

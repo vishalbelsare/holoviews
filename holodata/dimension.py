@@ -536,7 +536,7 @@ class Dimensioned(LabelledData):
 
     @property
     def redim(self):
-        from holoviews.core import Redim
+        from holodata.accessor import Redim
         return Redim(self)
 
     def _valid_dimensions(self, dimensions):
