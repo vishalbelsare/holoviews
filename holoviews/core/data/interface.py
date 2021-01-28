@@ -619,6 +619,9 @@ class Interface(param.Parameterized):
     def values(self, *args, **kwargs):
         return self.driver.values(*args, **kwargs)
 
+    def dimension_type(self, dataset, dim):
+        return self.driver.dimension_type(dataset, dim)
+
 
 # Interface should get a reference to a driver class
 class TabularInterface(Interface):
@@ -666,7 +669,6 @@ class TabularInterface(Interface):
     def geom_dims(self, *args, **kwargs):
         # TODO: Remove after separating dictionary fro geodictionary
         return self.driver.geom_dims(*args, **kwargs)
-
 
 class GriddedInterface(Interface):
     kind = "gridded"
