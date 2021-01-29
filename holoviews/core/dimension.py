@@ -290,8 +290,6 @@ class ViewableElement(Dimensioned, ViewableMixin):
         else:
             if shared_data:
                 data = self.data
-            else:
-                raise NotImplementedError("clone data not implemented")
 
         settings = dict(params, **overrides)
 

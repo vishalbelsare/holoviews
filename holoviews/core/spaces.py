@@ -1848,7 +1848,7 @@ class DynamicMap(HoloMap):
 
 
 
-class GridSpace(ViewableUniformNdMapping):
+class GridSpace(ViewableUniformNdMapping, Overlayable):
     """
     Grids are distinct from Layouts as they ensure all contained
     elements to be of the same type. Unlike Layouts, which have

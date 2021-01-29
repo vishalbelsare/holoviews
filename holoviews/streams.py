@@ -385,7 +385,7 @@ class Stream(param.Parameterized):
 
     @property
     def contents(self):
-        filtered = {k: v for k, v in holodata.util.get_param_values() if k != 'name'}
+        filtered = {k: v for k, v in self.param.get_param_values() if k != 'name'}
         return {self._rename.get(k, k): v for (k, v) in filtered.items()
                 if self._rename.get(k, True) is not None}
 
