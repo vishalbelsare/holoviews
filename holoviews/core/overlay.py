@@ -47,7 +47,7 @@ class Overlayable(object):
 
 
 
-class CompositeOverlay(ViewableElement, Composable):
+class CompositeOverlay(ViewableElement, Composable, Overlayable):
     """
     CompositeOverlay provides a common baseclass for Overlay classes.
     """
@@ -191,7 +191,7 @@ class Overlay(ViewableTree, CompositeOverlay):
             callback._is_overlay = True
             return other.clone(shared_data=False, callback=callback,
                                streams=dimensioned_streams(other))
-        elif not isinstance(other, ViewableElement):
+        elif not isinstance(other, (ViewableElement, ViewableUniformNdMapping)):
             return NotImplemented
         return Overlay([self, other])
 
@@ -299,7 +299,7 @@ class Overlay(ViewableTree, CompositeOverlay):
 
 
 
-class NdOverlay(Overlayable, ViewableUniformNdMapping, CompositeOverlay):
+class NdOverlay(ViewableUniformNdMapping, CompositeOverlay):
     """
     An NdOverlay allows a group of NdOverlay to be overlaid together. NdOverlay can
     be indexed out of an overlay and an overlay is an iterable that iterates
