@@ -301,7 +301,7 @@ class ViewableElement(Dimensioned, ViewableMixin):
                                           if k not in pos_args})
 
 
-class ViewableTree(AttrTree, ViewableElement):
+class ViewableTree(AttrTree, Dimensioned, ViewableMixin):
     """
     A ViewableTree is an AttrTree with Viewable objects as its leaf
     nodes. It combines the tree like data structure of a tree while
@@ -322,7 +322,8 @@ class ViewableTree(AttrTree, ViewableElement):
         params = {p: kwargs.pop(p) for p in list(self.param)+['id', 'plot_id'] if p in kwargs}
 
         AttrTree.__init__(self, items, identifier, parent, **kwargs)
-        ViewableElement.__init__(self, self.data, **params)
+        Dimensioned.__init__(self, self.data, **params)
+        ViewableMixin.__init__(self, id=id, plot_id=plot_id)
 
     @classmethod
     def from_values(cls, vals):

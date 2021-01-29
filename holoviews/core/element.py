@@ -4,6 +4,7 @@ import numpy as np
 
 import param
 
+from holoviews.core.ndmapping import ViewableUniformNdMapping
 from .dimension import ViewableElement
 from holodata.dimension import asdim, Dimensioned
 from .layout import Composable, Layout, NdLayout
@@ -427,9 +428,9 @@ class Collator(NdMapping):
     _deep_indexable = False
     _auxiliary_component = False
 
-    _nest_order = {HoloMap: ViewableElement,
-                   GridSpace: (HoloMap, CompositeOverlay, ViewableElement),
-                   NdLayout: (GridSpace, HoloMap, ViewableElement),
+    _nest_order = {HoloMap: (Element, ViewableUniformNdMapping),
+                   GridSpace: (HoloMap, CompositeOverlay, Element, ViewableUniformNdMapping),
+                   NdLayout: (GridSpace, HoloMap, Element, ViewableUniformNdMapping),
                    NdOverlay: Element}
 
     def __init__(self, data=None, **params):

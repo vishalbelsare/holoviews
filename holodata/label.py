@@ -102,8 +102,6 @@ class LabelledData(param.Parameterized):
         if data is None:
             if shared_data:
                 data = self.data
-            else:
-                raise NotImplementedError("shared_data=False to clone not implemented")
 
         settings = dict(params, **overrides)
 
