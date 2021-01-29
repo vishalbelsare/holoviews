@@ -191,7 +191,7 @@ class Overlay(ViewableTree, CompositeOverlay):
             callback._is_overlay = True
             return other.clone(shared_data=False, callback=callback,
                                streams=dimensioned_streams(other))
-        elif not isinstance(other, (ViewableElement, ViewableUniformNdMapping)):
+        elif not isinstance(other, ViewableElement):
             return NotImplemented
         return Overlay([self, other])
 
