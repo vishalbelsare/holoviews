@@ -422,9 +422,10 @@ class Interface(param.Parameterized):
         )
         self.driver = driver
 
-    @property
-    def interface_opts(self):
-        return {p: getattr(self, p) for p in self.param.objects()}
+    def interface_opts(self, **overrides):
+        return {
+            p: overrides.get(p, getattr(self, p)) for p in self.param.objects()
+        }
 
     @classmethod
     def get_datatypes_for_kinds(cls, kinds):
@@ -637,8 +638,10 @@ class TabularInterface(Interface):
     def add_dimension(self, *args, **kwargs):
         return self.driver.add_dimension(*args, **kwargs)
 
-    def select(self, *args, **kwargs):
-        return self.driver.select(*args, **kwargs)
+    def select(self, dataset, selection_mask=None, **selection):
+        return self.driver.select(
+            dataset, selection_mask=selection_mask, **selection
+        )
 
     def groupby(self, dataset, dimensions, kdims=None):
         grouped_list = self.driver.groupby(dataset, dimensions, kdims=kdims)
@@ -650,8 +653,8 @@ class TabularInterface(Interface):
     def sample(self, *args, **kwargs):
         return self.driver.sample(*args, **kwargs)
 
-    def sort(self, *args, **kwargs):
-        return self.driver.sort(*args, **kwargs)
+    def sort(self, dataset, by=None, reverse=False):
+        return self.driver.sort(dataset, by=by, reverse=reverse)
 
     def assign(self, *args, **kwargs):
         return self.driver.assign(*args, **kwargs)
@@ -713,8 +716,8 @@ class GriddedInterface(Interface):
     def sample(self, *args, **kwargs):
         return self.driver.sample(*args, **kwargs)
 
-    def sort(self, *args, **kwargs):
-        return self.driver.sort(*args, **kwargs)
+    def sort(self, dataset, by=None, reverse=False):
+        return self.driver.sort(dataset, by=by, reverse=reverse)
 
     def assign(self, *args, **kwargs):
         return self.driver.assign(*args, **kwargs)

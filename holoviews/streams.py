@@ -198,7 +198,7 @@ class Stream(param.Parameterized):
                 s = Params(s.owner, [s.name])
             elif isinstance(s, param.Parameterized):
                 s = Params(s)
-            elif util.is_param_method(s):
+            elif holodata.util.is_param_method(s):
                 if not hasattr(s, "_dinfo"):
                     continue
                 s = ParamMethod(s)
@@ -780,12 +780,12 @@ class ParamMethod(Params):
     """
 
     def __init__(self, parameterized, parameters=None, watch=True, **params):
-        if not util.is_param_method(parameterized):
+        if not holodata.util.is_param_method(parameterized):
             raise ValueError('ParamMethod stream expects a method on a '
                              'parameterized class, found %s.'
                              % type(parameterized).__name__)
         method = parameterized
-        parameterized = util.get_method_owner(parameterized)
+        parameterized = holodata.util.get_method_owner(parameterized)
         if not parameters:
             parameters = [p.pobj for p in parameterized.param.params_depended_on(method.__name__)]
 

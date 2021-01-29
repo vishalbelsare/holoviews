@@ -936,7 +936,7 @@ class Dynamic(param.ParameterizedFunction):
         for stream in self.p.streams:
             if inspect.isclass(stream) and issubclass(stream, Stream):
                 stream = stream()
-            elif not (isinstance(stream, Stream) or util.is_param_method(stream)):
+            elif not (isinstance(stream, Stream) or holodata.util.is_param_method(stream)):
                 raise ValueError('Streams must be Stream classes or instances, found %s type' %
                                  type(stream).__name__)
             if isinstance(op, Operation):
@@ -963,7 +963,7 @@ class Dynamic(param.ParameterizedFunction):
             streams = list(holodata.util.unique_iterator(streams + dim_streams))
 
         # If callback is a parameterized method and watch is disabled add as stream
-        has_dependencies = (util.is_param_method(op, has_deps=True) or
+        has_dependencies = (holodata.util.is_param_method(op, has_deps=True) or
                             isinstance(op, FunctionType) and hasattr(op, '_dinfo'))
         if has_dependencies and watch:
             streams.append(op)
@@ -971,7 +971,7 @@ class Dynamic(param.ParameterizedFunction):
         # Add any keyword arguments which are parameterized methods
         # with dependencies as streams
         for value in self.p.kwargs.values():
-            if util.is_param_method(value, has_deps=True):
+            if holodata.util.is_param_method(value, has_deps=True):
                 streams.append(value)
             elif isinstance(value, FunctionType) and hasattr(value, '_dinfo'):
                 dependencies = list(value._dinfo.get('dependencies', []))
@@ -988,7 +988,7 @@ class Dynamic(param.ParameterizedFunction):
         return valid
 
     def _process(self, element, key=None, kwargs={}):
-        if util.is_param_method(self.p.operation) and util.get_method_owner(self.p.operation) is element:
+        if holodata.util.is_param_method(self.p.operation) and holodata.util.get_method_owner(self.p.operation) is element:
             return self.p.operation(**kwargs)
         elif isinstance(self.p.operation, Operation):
             kwargs = {k: v for k, v in kwargs.items() if k in self.p.operation.param}
@@ -1009,7 +1009,7 @@ class Dynamic(param.ParameterizedFunction):
             return key, map_obj[key]
 
         def apply(element, *key, **kwargs):
-            kwargs = dict(util.resolve_dependent_kwargs(self.p.kwargs), **kwargs)
+            kwargs = dict(holodata.util.resolve_dependent_kwargs(self.p.kwargs), **kwargs)
             processed = self._process(element, key, kwargs)
             if (self.p.link_dataset and isinstance(element, Dataset) and
                 isinstance(processed, Dataset) and processed._dataset is None):

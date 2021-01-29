@@ -14,6 +14,7 @@ import param
 from param.parameterized import add_metaclass
 
 import holodata.dimension
+import holodata.util
 from . import util
 from .pprint import PrettyPrinter
 from holodata.accessor import Redim as _Redim
@@ -187,12 +188,12 @@ class Apply(object):
 
         dependent_kws = any(
             (isinstance(val, FunctionType) and hasattr(val, '_dinfo')) or
-            util.is_param_method(val, has_deps=True) for val in kwargs.values()
+            holodata.util.is_param_method(val, has_deps=True) for val in kwargs.values()
         )
 
         if dynamic is None:
             is_dynamic = (bool(streams) or isinstance(self._obj, DynamicMap) or
-                          util.is_param_method(apply_function, has_deps=True) or
+                          holodata.util.is_param_method(apply_function, has_deps=True) or
                           params or dependent_kws)
         else:
             is_dynamic = dynamic
@@ -202,7 +203,7 @@ class Apply(object):
                            kwargs=kwargs, link_inputs=link_inputs,
                            link_dataset=link_dataset)
         elif applies:
-            inner_kwargs = util.resolve_dependent_kwargs(kwargs)
+            inner_kwargs = holodata.util.resolve_dependent_kwargs(kwargs)
             if hasattr(apply_function, 'dynamic'):
                 inner_kwargs['dynamic'] = False
             new_obj = apply_function(self._obj, **inner_kwargs)

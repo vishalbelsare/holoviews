@@ -197,8 +197,8 @@ class Plot(param.Parameterized):
             for stream in set(plot.streams):
                 stream._subscribers = [
                     (p, subscriber) for p, subscriber in stream._subscribers
-                    if not util.is_param_method(subscriber) or
-                    util.get_method_owner(subscriber) not in plots
+                    if not holodata.util.is_param_method(subscriber) or
+                       holodata.util.get_method_owner(subscriber) not in plots
                 ]
 
 

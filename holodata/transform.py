@@ -8,11 +8,9 @@ from types import BuiltinFunctionType, BuiltinMethodType, FunctionType, MethodTy
 import numpy as np
 import param
 
-from holoviews.core.data import PandasDriver
+from holodata.drivers.pandas import PandasDriver
 from holodata.dimension import Dimension
-from holoviews.core.util import basestring, pd, resolve_dependent_value
-from holodata.util import unique_iterator
-
+from holodata.util import unique_iterator, basestring, pd, resolve_dependent_value
 
 def _maybe_map(numpy_fn):
     def fn(values, *args, **kwargs):

@@ -14,7 +14,6 @@ from contextlib import contextmanager
 from distutils.version import LooseVersion as _LooseVersion
 from functools import partial
 from threading import Thread, Event
-from types import FunctionType
 
 import numpy as np
 import param
@@ -514,15 +513,6 @@ def callable_name(callable_obj):
         return str(callable_obj)
 
 
-def get_method_owner(method):
-    """
-    Gets the instance that owns the supplied method
-    """
-    if isinstance(method, partial):
-        method = method.func
-    return method.__self__ if sys.version_info.major >= 3 else method.im_self
-
-
 def find_minmax(lims, olims):
     """
     Takes (a1, a2) and (b1, b2) as input and returns
@@ -758,81 +748,6 @@ def get_spec(obj):
    """
    return (obj.__class__.__name__,
            obj.group, obj.label)
-
-
-def is_param_method(obj, has_deps=False):
-    """Whether the object is a method on a parameterized object.
-
-    Args:
-       obj: Object to check
-       has_deps (boolean, optional): Check for dependencies
-          Whether to also check whether the method has been annotated
-          with param.depends
-
-    Returns:
-       A boolean value indicating whether the object is a method
-       on a Parameterized object and if enabled whether it has any
-       dependencies
-    """
-    parameterized = (inspect.ismethod(obj) and
-                     isinstance(get_method_owner(obj), param.Parameterized))
-    if parameterized and has_deps:
-        return getattr(obj, "_dinfo", {}).get('dependencies')
-    return parameterized
-
-
-def resolve_dependent_value(value):
-    """Resolves parameter dependencies on the supplied value
-
-    Resolves parameter values, Parameterized instance methods and
-    parameterized functions with dependencies on the supplied value.
-
-    Args:
-       value: A value which will be resolved
-
-    Returns:
-       A new dictionary where any parameter dependencies have been
-       resolved.
-    """
-    range_widget = False
-    if 'panel' in sys.modules:
-        from panel.widgets import RangeSlider, Widget
-        range_widget = isinstance(value, RangeSlider)
-        try:
-            from panel.depends import param_value_if_widget
-            value = param_value_if_widget(value)
-        except Exception:
-            if isinstance(value, Widget):
-                value = value.param.value
-    if is_param_method(value, has_deps=True):
-        value = value()
-    elif isinstance(value, param.Parameter) and isinstance(value.owner, param.Parameterized):
-        value = getattr(value.owner, value.name)
-    elif isinstance(value, FunctionType) and hasattr(value, '_dinfo'):
-        deps = value._dinfo
-        args = (getattr(p.owner, p.name) for p in deps.get('dependencies', []))
-        kwargs = {k: getattr(p.owner, p.name) for k, p in deps.get('kw', {}).items()}
-        value = value(*args, **kwargs)
-    if isinstance(value, tuple) and range_widget:
-        value = slice(*value)
-    return value
-
-
-def resolve_dependent_kwargs(kwargs):
-    """Resolves parameter dependencies in the supplied dictionary
-
-    Resolves parameter values, Parameterized instance methods and
-    parameterized functions with dependencies in the supplied
-    dictionary.
-
-    Args:
-       kwargs (dict): A dictionary of keyword arguments
-
-    Returns:
-       A new dictionary with where any parameter dependencies have been
-       resolved.
-    """
-    return {k: resolve_dependent_value(v) for k, v in kwargs.items()}
 
 
 @contextmanager

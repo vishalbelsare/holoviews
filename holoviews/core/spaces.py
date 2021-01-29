@@ -12,6 +12,7 @@ from types import FunctionType
 import numpy as np
 import param
 
+import holodata.util
 from . import traversal, util
 from .accessors import Opts, Redim
 from .dimension import OrderedDict, Dimension, ViewableElement
@@ -904,8 +905,9 @@ class DynamicMap(HoloMap):
         streams = (streams or [])
 
         # If callback is a parameterized method and watch is disabled add as stream
-        if (params.get('watch', True) and (util.is_param_method(callback, has_deps=True) or
-            (isinstance(callback, FunctionType) and hasattr(callback, '_dinfo')))):
+        if (params.get('watch', True) and (
+                holodata.util.is_param_method(callback, has_deps=True) or
+                (isinstance(callback, FunctionType) and hasattr(callback, '_dinfo')))):
             streams.append(callback)
 
         if isinstance(callback, types.GeneratorType):

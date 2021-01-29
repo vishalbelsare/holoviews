@@ -1,4 +1,15 @@
 from holodata.interface import Interface, Driver
+import holodata.drivers.array
+import holodata.drivers.cudf
+import holodata.drivers.dask
+import holodata.drivers.dictionary
+import holodata.drivers.grid
+import holodata.drivers.ibis
+import holodata.drivers.image
+import holodata.drivers.multipath
+import holodata.drivers.pandas
+import holodata.drivers.spatialpandas
+import holodata.drivers.xarray
 
 default_datatype = "dataframe"
 

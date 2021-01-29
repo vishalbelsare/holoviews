@@ -19,11 +19,11 @@ from ...core import (
 )
 from ...core.options import SkipRendering
 from ...core.util import (
-    basestring, cftime_types, get_method_owner,
-    is_param_method, wrap_tuple_streams,
+    basestring, cftime_types, wrap_tuple_streams,
     _STANDARD_CALENDARS
 )
-from holodata.util import wrap_tuple, unique_iterator, cftime_to_timestamp
+from holodata.util import wrap_tuple, unique_iterator, cftime_to_timestamp, \
+    is_param_method, get_method_owner
 from ..links import Link
 from ..plot import (
     DimensionedPlot, GenericCompositePlot, GenericLayoutPlot,

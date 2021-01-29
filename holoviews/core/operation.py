@@ -4,6 +4,7 @@ the purposes of analysis or visualization.
 """
 import param
 
+import holodata.util
 from .dimension import ViewableElement
 from .element import Element
 from .layout import Layout
@@ -197,7 +198,7 @@ class Operation(param.ParameterizedFunction):
     def __call__(self, element, **kwargs):
         params = dict(kwargs)
         for k, v in kwargs.items():
-            if util.is_param_method(v, has_deps=True):
+            if holodata.util.is_param_method(v, has_deps=True):
                 params[k] = v()
             elif isinstance(v, param.Parameter) and isinstance(v.owner, param.Parameterized):
                 params[k] = getattr(v.owner, v.name)
