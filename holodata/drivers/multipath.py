@@ -119,7 +119,7 @@ class MultiDriver(Driver):
         for d in dataset.data:
             ds.data = d
             ds.interface.validate(ds, vdims)
-            if geom_type == "Polygon" and ds.interface is DictDriver:
+            if geom_type == "Polygon" and ds.interface.driver is DictDriver:
                 holes = ds.interface.holes(ds)
                 if not isinstance(holes, list):
                     raise DataError('Polygons holes must be declared as a list-of-lists.', cls)
@@ -146,9 +146,9 @@ class MultiDriver(Driver):
         Returns a Dataset template used as a wrapper around the data
         contained within the multi-interface dataset.
         """
-        from .. import Dataset
+        from ..dataset import TabularDataset
         vdims = dataset.vdims if getattr(dataset, 'level', None) is None else []
-        return Dataset(dataset.data[0], datatype=cls.subtypes,
+        return TabularDataset(dataset.data[0], datatype=cls.subtypes,
                        kdims=dataset.kdims, vdims=vdims,
                        _validate_vdims=validate_vdims)
 
@@ -381,8 +381,7 @@ class MultiDriver(Driver):
         ds = cls._inner_dataset_template(dataset)
         for d in dataset.data:
             ds.data = d
-            # TODO: what is redim here? an interface/driver function?
-            new_data.append(holodata.dimension.redim(ds, dimensions))
+            new_data.append(ds.interface.redim(ds, dimensions))
         return new_data
 
     @classmethod

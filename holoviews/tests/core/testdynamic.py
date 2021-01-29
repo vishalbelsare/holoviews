@@ -165,7 +165,7 @@ class DynamicMapMethods(ComparisonTestCase):
         fn = lambda i: Curve([i,i])
         dmap = DynamicMap(fn, kdims=['i'])[{0,1,2,3,4,5}]
         self.assertEqual(dmap.keys(), [0,1,2,3,4,5])
-        redimmed = holodata.dimension.redim.values(i=[2, 3, 5, 6, 8])
+        redimmed = dmap.redim.values(i=[2,3,5,6,8])
         self.assertEqual(redimmed.keys(), [2,3,5])
 
     def test_redim_dimension_values_cache_reset_2D_single(self):
@@ -174,7 +174,7 @@ class DynamicMapMethods(ComparisonTestCase):
         keys = [(0,1),(1,0),(2,2),(2,5), (3,3)]
         dmap = DynamicMap(fn, kdims=['i','j'])[keys]
         self.assertEqual(dmap.keys(), keys)
-        redimmed = holodata.dimension.redim.values(i=[2, 10, 50])
+        redimmed = dmap.redim.values(i=[2,10,50])
         self.assertEqual(redimmed.keys(), [(2,2),(2,5)])
 
     def test_redim_dimension_values_cache_reset_2D_multi(self):
@@ -183,7 +183,7 @@ class DynamicMapMethods(ComparisonTestCase):
         keys = [(0,1),(1,0),(2,2),(2,5), (3,3)]
         dmap = DynamicMap(fn, kdims=['i','j'])[keys]
         self.assertEqual(dmap.keys(), keys)
-        redimmed = holodata.dimension.redim.values(i=[2, 10, 50], j=[5, 50, 100])
+        redimmed = dmap.redim.values(i=[2,10,50], j=[5,50,100])
         self.assertEqual(redimmed.keys(), [(2,5)])
 
 

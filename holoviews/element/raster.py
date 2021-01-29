@@ -130,7 +130,7 @@ class Raster(Element2D):
             X, Y = samples
             samples = zip(X, Y)
 
-        params = dict(holodata.util.get_param_values(onlychanged=True),
+        params = dict(self.param.get_param_values(onlychanged=True),
                       vdims=self.vdims)
         if len(sample_values) == self.ndims or len(samples):
             if not len(samples):
@@ -797,6 +797,8 @@ class QuadMesh(Selection2DExpr, Dataset, Element2D):
 
     vdims = param.List(default=[Dimension('z')], bounds=(1, None))
 
+    datatype = param.List(Interface.get_datatypes_for_kinds(["gridded"]))
+
     _binned = True
 
     def __init__(self, data, kdims=None, vdims=None, **params):
@@ -808,7 +810,7 @@ class QuadMesh(Selection2DExpr, Dataset, Element2D):
                             "To display columnar data as gridded use the HeatMap "
                             "element or aggregate the data (e.g. using "
                             "np.histogram2d)." %
-                            (type(self).__name__, self.interface.__name__))
+                            (type(self).__name__, self.interface.driver.__name__))
 
 
     def __setstate__(self, state):

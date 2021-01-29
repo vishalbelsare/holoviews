@@ -659,9 +659,16 @@ class TabularInterface(Interface):
     def iloc(self, *args, **kwargs):
         return self.driver.iloc(*args, **kwargs)
 
+    def concat(self, *args, **kwargs):
+        return self.driver.concat(*args, **kwargs)
+
     def holes(self, *args, **kwargs):
         # TODO: Remove after separating dictionary fro geodictionary
         return self.driver.holes(*args, **kwargs)
+
+    def has_holes(self, dataset):
+        # TODO: Remove after separating dictionary fro geodictionary
+        return self.driver.has_holes(dataset)
 
     def split(self, *args, **kwargs):
         # TODO: Remove after separating dictionary fro geodictionary
@@ -749,8 +756,11 @@ class GeometryInterface(Interface):
 
     kind = "geometry"
 
-    def validate(self, dataset, vdims=True, geom_type=None):
-        return self.driver.validate(dataset, vdims, geom_type=geom_type)
+    def validate(self, dataset, vdims=True):
+        return self.driver.validate(dataset, vdims, geom_type=self.geom_type)
+
+    def geo_column(self, dataset):
+        return self.driver.geo_column(dataset)
 
     def has_holes(self, dataset):
         return self.driver.has_holes(dataset)
@@ -801,3 +811,6 @@ class GeometryInterface(Interface):
 
     def geom_dims(self, *args, **kwargs):
         return self.driver.geom_dims(*args, **kwargs)
+
+    def select_paths(self, *args, **kwargs):
+        return self.driver.select_paths(*args, **kwargs)

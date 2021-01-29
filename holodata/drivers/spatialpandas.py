@@ -801,13 +801,13 @@ def to_geom_dict(data, kdims, vdims, interface=None):
     Returns:
         A list of dictionaries containing geometry coordinates and values.
     """
-    from .. import Dataset
+    from ..dataset import TabularDataset
 
     xname, yname = (kd.name for kd in kdims[:2])
     if isinstance(data, dict):
         data = {k: v if isscalar(v) else np.asarray(v) for k, v in data.items()}
         return data
-    new_el = Dataset(data, kdims, vdims)
+    new_el = TabularDataset(data, kdims, vdims)
     if new_el.interface is interface:
         return new_el.data
     new_dict = {}

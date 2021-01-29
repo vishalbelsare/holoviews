@@ -46,7 +46,7 @@ class AnnotationTests(ComparisonTestCase):
     def test_deep_clone_map_select_redim(self):
         annotations = (Text(0, 0, 'A') + Arrow(0, 0) + HLine(0) + VLine(0))
         selected = annotations.select(x=(0, 5))
-        redimmed = holodata.dimension.redim(x='z')
+        redimmed = selected.redim(x='z')
         relabelled = redimmed.relabel(label='foo', depth=5)
         mapped = relabelled.map(lambda x: x.clone(group='bar'), Annotation)
         kwargs = dict(label='foo', group='bar', extents=(0, None, 5, None), kdims=['z', 'y'])

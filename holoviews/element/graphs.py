@@ -27,9 +27,9 @@ class RedimGraph(Redim):
         redimmed = super(RedimGraph, self).__call__(specs, **dimensions)
         new_data = (redimmed.data,)
         if self._obj.nodes:
-            new_data = new_data + (holodata.dimension.redim(specs, **dimensions),)
+            new_data = new_data + (self._obj.nodes.redim(specs, **dimensions),)
         if self._obj._edgepaths:
-            new_data = new_data + (holodata.dimension.redim(specs, **dimensions),)
+            new_data = new_data + (self._obj.edgepaths.redim(specs, **dimensions),)
         return redimmed.clone(new_data)
 
 redim_graph = RedimGraph # pickle compatibility - remove in 2.0

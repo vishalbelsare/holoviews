@@ -393,7 +393,7 @@ class BaseShape(Path):
         containing the specified args and kwargs.
         """
         link = overrides.pop('link', True)
-        settings = dict(holodata.util.get_param_values(), **overrides)
+        settings = dict(self.param.get_param_values(), **overrides)
         if 'id' not in settings:
             settings['id'] = self.id
         if not args and link:

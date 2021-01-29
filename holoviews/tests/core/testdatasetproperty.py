@@ -806,11 +806,11 @@ class AccessorTestCase(DatasetPropertyTestCase):
         )
 
     def test_redim_curve(self):
-        curve = holodata.dimension.redim.unit(
+        curve = self.ds.to.curve('a', 'b', groupby=[]).redim.unit(
             a='kg', b='m'
         )
 
-        curve2 = holodata.dimension.redim.unit(
+        curve2 = self.ds2.to.curve('a', 'b', groupby=[]).redim.unit(
             a='kg', b='m'
         )
         self.assertNotEqual(curve, curve2)

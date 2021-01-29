@@ -592,7 +592,7 @@ class MultiDimensionalMapping(Dimensioned):
                            "longer be used. If using a HoloMap use "
                            "HoloMap.collapse() instead to return a Dataset.")
 
-        from .data.interface import Interface
+        from holodata.interface import Interface
         from ..element.tabular import Table
         new_data = [(key, value.table(datatype=datatype, **kwargs))
                     for key, value in self.data.items()]
@@ -873,7 +873,7 @@ class UniformNdMapping(NdMapping):
             Returns the collapsed element or HoloMap of collapsed
             elements
         """
-        from .data import concat
+        from holodata.drivers import concat
         if not dimensions:
             dimensions = self.kdims
         if not isinstance(dimensions, list): dimensions = [dimensions]

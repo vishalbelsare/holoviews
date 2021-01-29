@@ -1231,7 +1231,7 @@ class shade(LinkableOperation):
 
     @classmethod
     def to_xarray(cls, element):
-        if issubclass(element.interface, XArrayDriver):
+        if issubclass(element.interface.driver, XArrayDriver):
             return element
         data = tuple(element.dimension_values(kd, expanded=False)
                      for kd in element.kdims)
@@ -1461,7 +1461,7 @@ class rasterize(AggregationOperation):
         all_allowed_kws = set()
         all_supplied_kws = set()
         for predicate, transform in self._transforms:
-            merged_param_values = dict(holodata.util.get_param_values(), **self.p)
+            merged_param_values = dict(self.param.get_param_values(), **self.p)
 
             # If aggregator or interpolation are 'default', pop parameter so
             # datashader can choose the default aggregator itself
