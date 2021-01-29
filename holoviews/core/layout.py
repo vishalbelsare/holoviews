@@ -4,15 +4,12 @@ to allow multiple Views to be presented side-by-side in a NdLayout. An
 AdjointLayout allows one or two Views to be adjoined to a primary View
 to act as supplementary elements.
 """
-from collections import OrderedDict
 
 import param
 import numpy as np
 
-from .dimension import ViewableElement, ViewableTree
-from holodata.dimension import Dimension, Dimensioned
-from .ndmapping import ViewableUniformNdMapping
-from holodata.ndmapping import NdMapping, UniformNdMapping
+from .dimension import Dimension, Dimensioned, ViewableElement, ViewableTree
+from .ndmapping import OrderedDict, NdMapping, UniformNdMapping
 from . import traversal
 
 
@@ -319,7 +316,7 @@ class AdjointLayout(Dimensioned):
 
 
 
-class NdLayout(ViewableUniformNdMapping):
+class NdLayout(UniformNdMapping):
     """
     NdLayout is a UniformNdMapping providing an n-dimensional
     data structure to display the contained Elements and containers

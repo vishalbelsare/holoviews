@@ -33,7 +33,7 @@ class AccessorPipelineMeta(type):
         def pipelined_call(*args, **kwargs):
             from ..operation.element import method as method_op, factory
             from .data import Dataset
-            from holodata.ndmapping import MultiDimensionalMapping
+            from .ndmapping import MultiDimensionalMapping
             inst = args[0]
 
             if not hasattr(inst._obj, '_pipeline'):

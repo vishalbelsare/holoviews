@@ -23,10 +23,10 @@ from hashlib import sha256
 import param
 from param.parameterized import bothmethod
 
-from holodata.label import LabelledData
+from ..core.dimension import LabelledData
 from .element import Collator, Element
 from .overlay import Overlay, Layout
-from holodata.ndmapping import NdMapping, UniformNdMapping
+from .ndmapping import NdMapping, UniformNdMapping
 from .options import Store
 from holodata.util import unique_iterator, group_sanitizer, label_sanitizer
 

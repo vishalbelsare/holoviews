@@ -11,7 +11,7 @@ from bokeh.models import FactorRange, Circle, VBar, HBar
 import holodata.util
 from .selection import BokehOverlaySelectionDisplay
 from ...core import NdOverlay
-from holodata.dimension import Dimension, Dimensioned
+from holoviews.core.dimension import Dimensioned, Dimension
 from holodata.ndmapping import sorted_context
 from ...core.util import (
     basestring

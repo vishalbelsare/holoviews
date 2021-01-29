@@ -27,7 +27,7 @@ import holodata.util
 from . import *    # noqa (All Elements need to support comparison)
 from ..core import (Element, Empty, AdjointLayout, Overlay, HoloMap, Layout, NdLayout, NdOverlay,
                     GridSpace, DynamicMap, GridMatrix, OrderedDict)
-from holodata.dimension import Dimension, Dimensioned
+from holoviews.core.dimension import Dimension, Dimensioned
 from ..core.options import Options, Cycle
 from ..core.util import pd, datetime_types
 from holodata.util import dt_to_int

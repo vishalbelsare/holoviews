@@ -156,6 +156,7 @@ class GridDriver(DictDriver):
     def concat(cls, datasets, dimensions, vdims):
         with sorted_context(False):
             datasets = NdMapping(datasets, kdims=dimensions)
+            # TODO: problem for holoviews version of Dimensioned
             datasets = datasets.clone([(k, v.data if isinstance(v, Dimensioned) else v)
                                        for k, v in datasets.data.items()])
         if len(datasets.kdims) > 1:

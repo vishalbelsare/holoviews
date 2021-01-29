@@ -2,7 +2,8 @@
 Test cases for Dimension and Dimensioned object behaviour.
 """
 from unittest import SkipTest
-from holodata.dimension import Dimension, Dimensioned
+from holodata.dimension import Dimension
+from holoviews.core.dimension import Dimensioned
 from holoviews.element.comparison import ComparisonTestCase
 from ..utils import LoggingComparisonTestCase
 

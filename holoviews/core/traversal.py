@@ -46,8 +46,7 @@ def unique_dimkeys(obj, default_dim='Frame'):
     Returns the list of dimensions followed by the list of unique
     keys.
     """
-    from holodata.ndmapping import NdMapping
-    from holodata.ndmapping import item_check
+    from .ndmapping import item_check, NdMapping
     from .spaces import HoloMap
     key_dims = obj.traverse(lambda x: (tuple(x.kdims),
                                        list(x.data.keys())), (HoloMap,))

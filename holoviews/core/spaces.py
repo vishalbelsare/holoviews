@@ -1,7 +1,6 @@
 import itertools
 import types
 import inspect
-from collections import OrderedDict
 
 from numbers import Number
 from itertools import groupby
@@ -13,21 +12,18 @@ from types import FunctionType
 import numpy as np
 import param
 
-import holodata.util
 from . import traversal, util
 from .accessors import Opts, Redim
-from .dimension import ViewableElement, ViewableMixin
-from holodata.dimension import Dimension
+from .dimension import OrderedDict, Dimension, ViewableElement
 from .layout import Layout, AdjointLayout, NdLayout, Empty
-from .ndmapping import ViewableUniformNdMapping
-from holodata.ndmapping import item_check, NdMapping, UniformNdMapping
+from .ndmapping import UniformNdMapping, NdMapping, item_check
 from .overlay import Overlay, CompositeOverlay, NdOverlay, Overlayable
 from .options import Store, StoreOptions
 from ..streams import Stream
 
 
 
-class HoloMap(ViewableUniformNdMapping, Overlayable):
+class HoloMap(UniformNdMapping, Overlayable):
     """
     A HoloMap is an n-dimensional mapping of viewable elements or
     overlays. Each item in a HoloMap has an tuple key defining the
@@ -203,7 +199,7 @@ class HoloMap(ViewableUniformNdMapping, Overlayable):
         if isinstance(self, DynamicMap) and isinstance(other, DynamicMap):
             self_streams = util.dimensioned_streams(self)
             other_streams = util.dimensioned_streams(other)
-            streams = list(holodata.util.unique_iterator(self_streams + other_streams))
+            streams = list(util.unique_iterator(self_streams+other_streams))
         else:
             streams = map_obj.streams
 
@@ -230,6 +226,8 @@ class HoloMap(ViewableUniformNdMapping, Overlayable):
             return DynamicMap(callback=callback, kdims=dimensions,
                               streams=streams)
 
+
+
     def __mul__(self, other, reverse=False):
         """Overlays items in the object with another object
 
@@ -251,11 +249,11 @@ class HoloMap(ViewableUniformNdMapping, Overlayable):
             self_in_other = self_set.issubset(other_set)
             other_in_self = other_set.issubset(self_set)
             dims = [other.kdims, self.kdims] if self_in_other else [self.kdims, other.kdims]
-            dimensions = holodata.util.merge_dimensions(dims)
+            dimensions = util.merge_dimensions(dims)
 
             if self_in_other and other_in_self: # superset of each other
                 keys = self._dimension_keys() + other._dimension_keys()
-                super_keys = holodata.util.unique_iterator(keys)
+                super_keys = util.unique_iterator(keys)
             elif self_in_other: # self is superset
                 dimensions = other.kdims
                 super_keys = other._dimension_keys()
@@ -434,7 +432,7 @@ class HoloMap(ViewableUniformNdMapping, Overlayable):
                 raise NotImplementedError("Regular sampling not implemented "
                                           "for elements with more than two dimensions.")
 
-            samples = list(holodata.util.unique_iterator(self.last.closest(linsamples)))
+            samples = list(util.unique_iterator(self.last.closest(linsamples)))
 
         sampled = self.clone([(k, view.sample(samples, closest=False,
                                               **sample_values))
@@ -480,7 +478,7 @@ class HoloMap(ViewableUniformNdMapping, Overlayable):
         reduced_items = [(k, v.reduce(dimensions, function, spread_fn, **reduce_map))
                          for k, v in self.items()]
         if not isinstance(reduced_items[0][1], Table):
-            params = dict(holodata.util.get_param_values(self.last),
+            params = dict(util.get_param_values(self.last),
                           kdims=self.kdims, vdims=self.last.vdims)
             return Table(reduced_items, **params)
         return Table(self.clone(reduced_items).collapse())
@@ -992,7 +990,7 @@ class DynamicMap(HoloMap):
             elif kdim.default is not None:
                 key.append(kdim.default)
             elif kdim.values:
-                if all(holodata.util.isnumeric(v) for v in kdim.values):
+                if all(util.isnumeric(v) for v in kdim.values):
                     key.append(sorted(kdim.values)[0])
                 else:
                     key.append(kdim.values[0])
@@ -1015,16 +1013,16 @@ class DynamicMap(HoloMap):
         specified by the corresponding dimension range and soft_range.
         """
         if key == () and len(self.kdims) == 0: return ()
-        key = holodata.util.wrap_tuple(key)
+        key = util.wrap_tuple(key)
         assert len(key) == len(self.kdims)
         for ind, val in enumerate(key):
             kdim = self.kdims[ind]
-            low, high = holodata.util.max_range([kdim.range, kdim.soft_range])
-            if holodata.util.is_number(low) and holodata.util.isfinite(low):
+            low, high = util.max_range([kdim.range, kdim.soft_range])
+            if util.is_number(low) and util.isfinite(low):
                 if val < low:
                     raise KeyError("Key value %s below lower bound %s"
                                    % (val, low))
-            if holodata.util.is_number(high) and holodata.util.isfinite(high):
+            if util.is_number(high) and util.isfinite(high):
                 if val > high:
                     raise KeyError("Key value %s above upper bound %s"
                                    % (val, high))
@@ -1165,7 +1163,7 @@ class DynamicMap(HoloMap):
             data = self.data
             if link and callback is self.callback:
                 overrides['plot_id'] = self._plot_id
-        clone = super(DynamicMap, self).clone(
+        clone = super(UniformNdMapping, self).clone(
             callback, shared_data, new_type, link,
             *(data,) + args, **overrides)
 
@@ -1213,7 +1211,7 @@ class DynamicMap(HoloMap):
 
         data = []
         for inner_key in product:
-            key = holodata.util.wrap_tuple(inner_key)
+            key = util.wrap_tuple(inner_key)
             if key in cache:
                 val = cache[key]
             else:
@@ -1604,7 +1602,7 @@ class DynamicMap(HoloMap):
                                         selection_index=type_counter[type(v)],
                                         selection_type=type(v)),
                                 inputs=[self])
-            vstreams = list(holodata.util.unique_iterator(self_dstreams + vstreams))
+            vstreams = list(util.unique_iterator(self_dstreams + vstreams))
             vdmap = self.clone(callback=callback, shared_data=False,
                                streams=vstreams)
             type_counter[type(v)] += 1
@@ -1670,8 +1668,8 @@ class DynamicMap(HoloMap):
             def outer_fn(*outer_key, **dynkwargs):
                 if inner_dynamic:
                     def inner_fn(*inner_key, **dynkwargs):
-                        outer_vals = zip(outer_kdims, holodata.util.wrap_tuple(outer_key))
-                        inner_vals = zip(inner_kdims, holodata.util.wrap_tuple(inner_key))
+                        outer_vals = zip(outer_kdims, util.wrap_tuple(outer_key))
+                        inner_vals = zip(inner_kdims, util.wrap_tuple(inner_key))
                         inner_sel = [(k.name, v) for k, v in inner_vals]
                         outer_sel = [(k.name, v) for k, v in outer_vals]
                         return self.select(**dict(inner_sel+outer_sel))
@@ -1679,7 +1677,7 @@ class DynamicMap(HoloMap):
                 else:
                     dim_vals = [(d.name, d.values) for d in inner_kdims]
                     dim_vals += [(d.name, [v]) for d, v in
-                                 zip(outer_kdims, holodata.util.wrap_tuple(outer_key))]
+                                   zip(outer_kdims, util.wrap_tuple(outer_key))]
                     with item_check(False):
                         selected = HoloMap(self.select(**dict(dim_vals)))
                         return group_type(selected.reindex(inner_kdims))
@@ -1695,7 +1693,7 @@ class DynamicMap(HoloMap):
                 outer_vals = [(d.name, [o]) for d, o in zip(outer_kdims, outer)]
                 if inner_dynamic or not inner_kdims:
                     def inner_fn(outer_vals, *key, **dynkwargs):
-                        inner_dims = zip(inner_kdims, holodata.util.wrap_tuple(key))
+                        inner_dims = zip(inner_kdims, util.wrap_tuple(key))
                         inner_vals = [(d.name, k) for d, k in inner_dims]
                         return self.select(**dict(outer_vals+inner_vals)).last
                     if inner_kdims or self.streams:
@@ -1848,7 +1846,7 @@ class DynamicMap(HoloMap):
 
 
 
-class GridSpace(ViewableUniformNdMapping, Overlayable):
+class GridSpace(UniformNdMapping):
     """
     Grids are distinct from Layouts as they ensure all contained
     elements to be of the same type. Unlike Layouts, which have

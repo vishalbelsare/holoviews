@@ -17,7 +17,7 @@ import numpy as np
 
 import holodata.util
 from .core import util
-from holodata.ndmapping import UniformNdMapping
+from holoviews.core.ndmapping import UniformNdMapping
 
 # Types supported by Pointer derived streams
 pointer_types = (Number, util.basestring, tuple)+util.datetime_types

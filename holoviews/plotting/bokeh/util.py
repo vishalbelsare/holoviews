@@ -39,7 +39,7 @@ try:
 except:
     Chart = type(None) # Create stub for isinstance check
 
-from holodata.ndmapping import NdMapping
+from holoviews.core.ndmapping import NdMapping
 from ...core.overlay import Overlay
 from ...core.util import (
     LooseVersion, _getargspec, basestring, callable_name, cftime_types,

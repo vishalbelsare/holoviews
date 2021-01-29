@@ -17,7 +17,7 @@ from ..core import (
     Dataset, DynamicMap, HoloMap, ViewableElement,
     StoreOptions, Store
 )
-from holodata.dimension import Dimensioned
+from ..core.dimension import Dimensioned
 from ..core.options import options_policy, Keywords, Options
 from ..core.operation import Operation
 from ..core.overlay import Overlay

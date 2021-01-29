@@ -11,13 +11,10 @@ from functools import reduce
 import numpy as np
 
 import param
-from .dimension import ViewableElement, ViewableTree
-from holodata.dimension import Dimension, Dimensioned
-from .ndmapping import ViewableUniformNdMapping
-from holodata.ndmapping import UniformNdMapping
+from .dimension import Dimension, Dimensioned, ViewableElement, ViewableTree
+from .ndmapping import UniformNdMapping
 from .layout import Composable, Layout, AdjointLayout
-from .util import dimensioned_streams
-from holodata.util import unique_array, sanitize_identifier
+from .util import sanitize_identifier, unique_array, dimensioned_streams
 
 
 class Overlayable(object):
@@ -47,7 +44,7 @@ class Overlayable(object):
 
 
 
-class CompositeOverlay(ViewableElement, Composable, Overlayable):
+class CompositeOverlay(ViewableElement, Composable):
     """
     CompositeOverlay provides a common baseclass for Overlay classes.
     """
@@ -299,7 +296,7 @@ class Overlay(ViewableTree, CompositeOverlay):
 
 
 
-class NdOverlay(ViewableUniformNdMapping, CompositeOverlay):
+class NdOverlay(Overlayable, UniformNdMapping, CompositeOverlay):
     """
     An NdOverlay allows a group of NdOverlay to be overlaid together. NdOverlay can
     be indexed out of an overlay and an overlay is an iterable that iterates

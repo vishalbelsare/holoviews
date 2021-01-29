@@ -25,10 +25,12 @@ from ..accessors import Redim
 from ..dimension import (
     ViewableElement
 )
-from holodata.dimension import dimension_name, process_dimensions, Dimension
-from holodata.label import LabelledData
+
+from holoviews.core.dimension import (
+    LabelledData, dimension_name, process_dimensions, Dimension
+)
 from ..element import Element
-from holodata.ndmapping import item_check, sorted_context, MultiDimensionalMapping, \
+from holoviews.core.ndmapping import item_check, sorted_context, MultiDimensionalMapping, \
     NdMapping
 from ..spaces import HoloMap, DynamicMap
 

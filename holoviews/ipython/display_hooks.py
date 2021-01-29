@@ -17,7 +17,7 @@ from ..core import (
     ViewableElement, HoloMap, AdjointLayout, NdLayout, GridSpace,
     Layout, CompositeOverlay, DynamicMap
 )
-from holodata.dimension import Dimensioned
+from ..core.dimension import Dimensioned
 from ..core.traversal import unique_dimkeys
 from ..core.io import FileArchive
 from ..core.util import mimebundle_to_html

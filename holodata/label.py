@@ -2,7 +2,6 @@ from operator import itemgetter
 
 import param
 
-import holodata.util
 from holodata import util
 
 
