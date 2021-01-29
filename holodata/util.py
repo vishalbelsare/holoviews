@@ -54,6 +54,72 @@ except:
 _STANDARD_CALENDARS = set(['standard', 'gregorian', 'proleptic_gregorian'])
 
 
+def is_labelled_data(data):
+    from .label import LabelledData
+    if isinstance(data, LabelledData):
+        return True
+    try:
+        from holoviews.core import LabelledData as _LabelledData
+        return isinstance(data, _LabelledData)
+    except:
+        pass
+    return False
+
+
+def is_dimensioned(data):
+    from .dimension import Dimensioned
+    if isinstance(data, Dimensioned):
+        return True
+    try:
+        from holoviews.core import Dimensioned as _Dimensioned
+        return isinstance(data, _Dimensioned)
+    except:
+        pass
+    return False
+
+
+def is_multi_dimensional_mapping(data):
+    from .ndmapping import MultiDimensionalMapping
+    if isinstance(data, MultiDimensionalMapping):
+        return True
+
+    try:
+        from holoviews.core.ndmapping import \
+            MultiDimensionalMapping as _MultiDimensionalMapping
+        return isinstance(data, _MultiDimensionalMapping)
+    except:
+        pass
+    return False
+
+
+def is_nd_mapping(data):
+    from .ndmapping import NdMapping
+    if isinstance(data, NdMapping):
+        return True
+
+    try:
+        from holoviews.core.ndmapping import \
+            NdMapping as _NdMapping
+        return isinstance(data, _NdMapping)
+    except:
+        pass
+    return False
+
+
+def is_uniform_nd_mapping(data):
+    from .ndmapping import UniformNdMapping
+    if isinstance(data, UniformNdMapping):
+        return True
+
+    try:
+        from holoviews.core.ndmapping import \
+            UniformNdMapping as _UniformNdMapping
+        return isinstance(data, _UniformNdMapping)
+    except:
+        pass
+    return False
+
+
 def is_dataframe(data):
     """
     Checks whether the supplied data is of DataFrame type.

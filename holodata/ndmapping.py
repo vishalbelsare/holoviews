@@ -6,6 +6,7 @@ import numpy as np
 import param
 
 import holodata.util
+from holodata import util
 from holodata.util import basestring, get_ndmapping_label
 from holodata.dimension import asdim, Dimension, Dimensioned
 
@@ -93,7 +94,7 @@ class MultiDimensionalMapping(Dimensioned):
     _check_items = True
 
     def __init__(self, initial_items=None, kdims=None, **params):
-        if isinstance(initial_items, MultiDimensionalMapping):
+        if util.is_multi_dimensional_mapping(initial_items):
             params = dict(holodata.util.get_param_values(initial_items), **dict(params))
         if kdims is not None:
             params['kdims'] = kdims
@@ -112,7 +113,7 @@ class MultiDimensionalMapping(Dimensioned):
         elif not self._check_items:
             if isinstance(initial_items, dict):
                 initial_items = initial_items.items()
-            elif isinstance(initial_items, MultiDimensionalMapping):
+            elif util.is_multi_dimensional_mapping(initial_items):
                 initial_items = initial_items.data.items()
             self.data = OrderedDict((k if isinstance(k, tuple) else (k,), v)
                                     for k, v in initial_items)
