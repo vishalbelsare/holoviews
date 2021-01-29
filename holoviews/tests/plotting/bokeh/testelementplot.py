@@ -968,6 +968,6 @@ class TestOverlayPlot(TestBokehPlot):
     def test_categorical_overlay_dimension_values_skip_factor(self):
         curve = Curve([('C', 1), ('B', 3)])
         scatter = Scatter([('A', 2)])
-        plot = bokeh_renderer.get_plot(holodata.dimension.redim.values(x=['A', 'C']))
+        plot = bokeh_renderer.get_plot((curve*scatter).redim.values(x=['A', 'C']))
         x_range = plot.handles['x_range']
         self.assertEqual(x_range.factors, ['A', 'C'])

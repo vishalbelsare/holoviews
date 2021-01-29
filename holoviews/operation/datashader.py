@@ -443,7 +443,7 @@ class aggregate(AggregationOperation):
 
         if overlay_aggregate.applies(element, agg_fn):
             params = dict(
-                {p: v for p, v in holodata.util.get_param_values() if p != 'name'},
+                {p: v for p, v in self.param.get_param_values() if p != 'name'},
                 dynamic=False, **{p: v for p, v in self.p.items()
                                   if p not in ('name', 'dynamic')})
             return overlay_aggregate(element, **params)
@@ -532,7 +532,7 @@ class overlay_aggregate(aggregate):
         info = self._get_sampling(element, x, y, ndims)
         (x_range, y_range), (xs, ys), (width, height), (xtype, ytype) = info
         ((x0, x1), (y0, y1)), _ = self._dt_transform(x_range, y_range, xs, ys, xtype, ytype)
-        agg_params = dict({k: v for k, v in dict(holodata.util.get_param_values(),
+        agg_params = dict({k: v for k, v in dict(self.param.get_param_values(),
                                                  **self.p).items()
                            if k in aggregate.param},
                           x_range=(x0, x1), y_range=(y0, y1))
@@ -1702,8 +1702,8 @@ class _connect_edges(Operation):
         index = element.nodes.kdims[2].name
         rename_edges = {d.name: v for d, v in zip(element.kdims[:2], ['source', 'target'])}
         rename_nodes = {d.name: v for d, v in zip(element.nodes.kdims[:2], ['x', 'y'])}
-        position_df = holodata.dimension.redim(**rename_nodes).dframe([0, 1, 2]).set_index(index)
-        edges_df = holodata.dimension.redim(**rename_edges).dframe([0, 1])
+        position_df = element.nodes.redim(**rename_nodes).dframe([0, 1, 2]).set_index(index)
+        edges_df = element.redim(**rename_edges).dframe([0, 1])
         paths = self._bundle(position_df, edges_df)
         paths = paths.rename(columns={v: k for k, v in rename_nodes.items()})
         paths = split_dataframe(paths) if self.p.split else [paths]

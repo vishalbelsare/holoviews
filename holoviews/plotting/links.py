@@ -72,10 +72,10 @@ class Link(param.Parameterized):
         if self.source in self.registry:
             links = self.registry[self.source]
             params = {
-                k: v for k, v in holodata.util.get_param_values() if k != 'name'}
+                k: v for k, v in self.param.get_param_values() if k != 'name'}
             for link in links:
                 link_params = {
-                    k: v for k, v in holodata.util.get_param_values() if k != 'name'}
+                    k: v for k, v in link.param.get_param_values() if k != 'name'}
                 if (type(link) is type(self) and link.source is self.source
                     and link.target is self.target and params == link_params):
                     return

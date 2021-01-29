@@ -131,7 +131,7 @@ class TestOverlayableZorders(ComparisonTestCase):
         curve_redim = curve.redim(x='x2')
         curve2_redim = curve2.redim(x='x3')
         combined = area_redim*curve_redim
-        combined1 = holodata.dimension.redim(y='y2')
+        combined1 = (combined*curve2_redim).redim(y='y2')
         combined1[()]
         sources = compute_overlayable_zorders(combined1)
 
