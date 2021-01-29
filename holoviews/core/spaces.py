@@ -659,7 +659,7 @@ class Callable(param.Parameterized):
         Returns:
             Cloned Callable object
         """
-        old = {k: v for k, v in holodata.util.get_param_values()
+        old = {k: v for k, v in self.param.get_param_values()
                if k not in ['callable', 'name']}
         params = dict(old, **overrides)
         callable = self.callable if callable is None else callable
@@ -1165,7 +1165,7 @@ class DynamicMap(HoloMap):
             data = self.data
             if link and callback is self.callback:
                 overrides['plot_id'] = self._plot_id
-        clone = super(UniformNdMapping, self).clone(
+        clone = super(DynamicMap, self).clone(
             callback, shared_data, new_type, link,
             *(data,) + args, **overrides)
 

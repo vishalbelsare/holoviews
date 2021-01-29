@@ -44,7 +44,7 @@ class ViewableUniformNdMapping(UniformNdMapping, ViewableMixin):
         Returns:
             Cloned object
         """
-        settings = dict(self.get_param_values())
+        settings = dict(self.param.get_param_values())
         if settings.get('group', None) != self._group:
             settings.pop('group')
         if settings.get('label', None) != self._label:
