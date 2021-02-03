@@ -517,6 +517,11 @@ argument to specify a selection specification""")
 
         # Get group
         group_kwargs = {}
+        if group_type != 'raw' and issubclass(group_type, Dataset):
+            group_kdims = [kdim for kdim in self.kdims if kdim not in dimensions]
+            group_kwargs.update(util.get_param_values(self))
+            group_kwargs['kdims'] = group_kdims
+
         group_kwargs.update(kwargs)
 
         # Replace raw group data with group_type objects
