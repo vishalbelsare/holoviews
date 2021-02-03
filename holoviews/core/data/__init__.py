@@ -1141,14 +1141,13 @@ argument to specify a selection specification""")
             Returns object of supplied container_type containing the
             groups. If dynamic=True returns a DynamicMap instead.
         """
-        if not isinstance(dimensions, list): dimensions = [dimensions]
-        if not len(dimensions): dimensions = self.dimensions('key', True)
-        if group_type is None: group_type = type(self)
-
-        dimensions = [self.get_dimension(d, strict=True) for d in dimensions]
-        dim_names = [d.name for d in dimensions]
 
         if dynamic:
+            if not isinstance(dimensions, list): dimensions = [dimensions]
+            if not len(dimensions): dimensions = self.dimensions('key', True)
+            dimensions = [self.get_dimension(d, strict=True) for d in dimensions]
+            dim_names = [d.name for d in dimensions]
+
             # TODO: Handle Dynamic case when interface returns dict
             group_dims = [kd for kd in self.kdims if kd not in dimensions]
             kdims = [self.get_dimension(d) for d in kwargs.pop('kdims', group_dims)]
@@ -1169,43 +1168,19 @@ argument to specify a selection specification""")
                             for d in dimensions]
             return DynamicMap(load_subset, kdims=dynamic_dims)
 
-        grouped_data = self.interface.groupby(
-            self, dim_names, kdims=kwargs.get("kdims", None)
-        )
-
-        kdims = [kdim for kdim in self.kdims if kdim not in dimensions]
-        vdims = self.vdims
-
-        # Get group
-        group_kwargs = {}
-        if group_type != 'raw' and issubclass(group_type, Element):
-            group_kwargs.update(holodata.util.get_param_values(self))
-            group_kwargs['kdims'] = kdims
-        group_kwargs.update(kwargs)
-
-        # Propagate dataset
-        group_kwargs['dataset'] = self.dataset
-
-        # Replace raw group data with group_type objects
-        if not group_type == 'raw':
-            for group in grouped_data:
-                group_data = grouped_data[group]
-                if issubclass(group_type, dict):
-                    group_data = {
-                        d.name: group_data[:, i]
-                        for i, d in enumerate(self.kdims+vdims)
-                    }
-                else:
-                    group_data = group_type(group_data, **group_kwargs)
-
-                grouped_data[group] = group_data
-
-        # Wrap in container type
         if issubclass(container_type, NdMapping):
             with item_check(False), sorted_context(False):
-                return container_type(grouped_data, kdims=dimensions)
+                continer_kwargs = dict(kdims=dimensions)
+                return self.interface.groupby(
+                    self, dimensions, container_type=container_type,
+                    group_type=group_type, group_kwargs=kwargs,
+                    container_kwargs=continer_kwargs
+                )
         else:
-            return container_type(grouped_data)
+            return self.interface.groupby(
+                self, dimensions, container_type=container_type,
+                group_type=group_type, group_kwargs=kwargs,
+            )
 
 
     def transform(self, *args, **kwargs):

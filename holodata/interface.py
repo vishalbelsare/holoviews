@@ -627,6 +627,14 @@ class Interface(param.Parameterized):
         return self.driver.dimension_type(dataset, dim)
 
 
+def is_dimensioned_like(d):
+    is_param = (
+            isinstance(d, param.Parameterized) or
+            (isinstance(d, type) and issubclass(d, param.Parameterized))
+    )
+    return is_param and all(p in d.param for p in ["kdims", "vdims"])
+
+
 class TabularInterface(Interface):
     kind = "tabular"
 
@@ -644,9 +652,51 @@ class TabularInterface(Interface):
             dataset, selection_mask=selection_mask, **selection
         )
 
-    def groupby(self, dataset, dimensions, kdims=None):
-        grouped_list = self.driver.groupby(dataset, dimensions, kdims=kdims)
-        return OrderedDict(grouped_list)
+    def groupby(self, dataset, dimensions, container_type, group_type, container_kwargs=None, group_kwargs=None):
+
+        if container_kwargs is None:
+            container_kwargs = {}
+        if group_kwargs is None:
+            group_kwargs = {}
+
+        if not isinstance(dimensions, list): dimensions = [dimensions]
+        if not len(dimensions): dimensions = dataset.dimensions('key', True)
+        if group_type is None: group_type = type(dataset)
+
+        dimensions = [dataset.get_dimension(d, strict=True) for d in dimensions]
+        dim_names = [d.name for d in dimensions]
+
+        grouped_list = self.driver.groupby(dataset, dim_names)
+        grouped_data = OrderedDict(grouped_list)
+
+        kdims = [kdim for kdim in dataset.kdims if kdim not in dimensions]
+        vdims = dataset.vdims
+
+        # Get group
+        default_group_kwargs = {}
+        if group_type != 'raw' and is_dimensioned_like(group_type):
+            default_group_kwargs.update(util.get_param_values(dataset))
+            default_group_kwargs['kdims'] = kdims
+        group_kwargs = dict(default_group_kwargs, **group_kwargs)
+
+        # Replace raw group data with group_type objects
+        if not group_type == 'raw':
+            for group in grouped_data:
+                group_data = grouped_data[group]
+                if issubclass(group_type, dict):
+                    group_data = {
+                        d.name: group_data[:, i]
+                        for i, d in enumerate(dataset.kdims+vdims)
+                    }
+                else:
+                    group_data = group_type(group_data, **group_kwargs)
+
+                grouped_data[group] = group_data
+
+        # Wrap in container type
+        if not isinstance(grouped_data, container_type):
+            grouped_data = container_type(grouped_data, **container_kwargs)
+        return grouped_data
 
     def reindex(self, *args, **kwargs):
         return self.driver.reindex(*args, **kwargs)

@@ -501,47 +501,52 @@ argument to specify a selection specification""")
             Returns object of supplied container_type containing the
             groups. If dynamic=True returns a DynamicMap instead.
         """
-        if not isinstance(dimensions, list):
-            dimensions = [dimensions]
-        if not len(dimensions):
-            dimensions = self.dimensions('key', True)
-        if group_type is None:
-            group_type = type(self)
-
-        dimensions = [self.get_dimension(d, strict=True) for d in dimensions]
-        dim_names = [d.name for d in dimensions]
-
-        grouped_data = self.interface.groupby(
-            self, dim_names, kdims=kwargs.get("kdims", None)
+        return self.interface.groupby(
+            self, dimensions, container_type=container_type,
+            group_type=group_type, group_kwargs=kwargs
         )
 
-        # Get group
-        group_kwargs = {}
-        if group_type != 'raw' and issubclass(group_type, Dataset):
-            group_kdims = [kdim for kdim in self.kdims if kdim not in dimensions]
-            group_kwargs.update(util.get_param_values(self))
-            group_kwargs['kdims'] = group_kdims
-
-        group_kwargs.update(kwargs)
-
-        # Replace raw group data with group_type objects
-        if group_type != 'raw':
-            for group in grouped_data:
-                group_data = grouped_data[group]
-                if issubclass(group_type, dict):
-                    group_data = {
-                        d.name: group_data[:, i]
-                        for i, d in enumerate(self.kdims+self.vdims)
-                    }
-                else:
-                    group_data = group_type(group_data, **group_kwargs)
-
-                grouped_data[group] = group_data
-
-        # Wrap in container type
-        if not isinstance(grouped_data, container_type):
-            grouped_data = container_type(grouped_data)
-        return grouped_data
+        # if not isinstance(dimensions, list):
+        #     dimensions = [dimensions]
+        # if not len(dimensions):
+        #     dimensions = self.dimensions('key', True)
+        # if group_type is None:
+        #     group_type = type(self)
+        #
+        # dimensions = [self.get_dimension(d, strict=True) for d in dimensions]
+        # dim_names = [d.name for d in dimensions]
+        #
+        # grouped_data = self.interface.groupby(
+        #     self, dim_names, kdims=kwargs.get("kdims", None)
+        # )
+        #
+        # # Get group
+        # group_kwargs = {}
+        # if group_type != 'raw' and issubclass(group_type, Dataset):
+        #     group_kdims = [kdim for kdim in self.kdims if kdim not in dimensions]
+        #     group_kwargs.update(util.get_param_values(self))
+        #     group_kwargs['kdims'] = group_kdims
+        #
+        # group_kwargs.update(kwargs)
+        #
+        # # Replace raw group data with group_type objects
+        # if group_type != 'raw':
+        #     for group in grouped_data:
+        #         group_data = grouped_data[group]
+        #         if issubclass(group_type, dict):
+        #             group_data = {
+        #                 d.name: group_data[:, i]
+        #                 for i, d in enumerate(self.kdims+self.vdims)
+        #             }
+        #         else:
+        #             group_data = group_type(group_data, **group_kwargs)
+        #
+        #         grouped_data[group] = group_data
+        #
+        # # Wrap in container type
+        # if not isinstance(grouped_data, container_type):
+        #     grouped_data = container_type(grouped_data)
+        # return grouped_data
 
     def transform(self, *args, **kwargs):
         """Transforms the Dataset according to a dimension transform.
