@@ -9,8 +9,8 @@ from ..core import util, config, Element2D, Overlay, Dataset
 from ..core.data import ImageDriver, GridDriver
 from holodata.interface import DataError, Interface
 from holodata.dimension import dimension_name, Dimension
-from holodata.boundingregion import BoundingRegion, BoundingBox
-from holodata.sheetcoords import SheetCoordinateSystem, Slice
+from holoviews.core.boundingregion import BoundingRegion, BoundingBox
+from holoviews.core.sheetcoords import SheetCoordinateSystem, Slice
 from .chart import Curve
 from .geom import Selection2DExpr
 from .graphs import TriMesh

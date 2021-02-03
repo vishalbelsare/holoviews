@@ -4,9 +4,9 @@ import param
 import numpy as np
 
 from ..core import Dataset, OrderedDict
-from holodata.boundingregion import BoundingBox
+from holoviews.core.boundingregion import BoundingBox
 from ..core.operation import Operation
-from holodata.sheetcoords import Slice
+from holoviews.core.sheetcoords import Slice
 from ..core.util import (
     datetime_types, is_cyclic, one_to_one, sort_topologically
 )

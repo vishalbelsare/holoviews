@@ -44,7 +44,7 @@ from holodata.drivers.grid import GridDriver               # noqa (API import)
 from holodata.drivers.ibis import IbisDriver               # noqa (API import)
 from holodata.interface import Driver, Interface
 from holodata.drivers.multipath import MultiDriver         # noqa (API import)
-from holodata.drivers.image import ImageDriver             # noqa (API import)
+from holoviews.core.data.drivers.image import ImageDriver             # noqa (API import)
 from holodata.drivers.spatialpandas import SpatialPandasDriver # noqa (API import)
 from holodata.drivers.xarray import XArrayDriver           # noqa (API import)
 

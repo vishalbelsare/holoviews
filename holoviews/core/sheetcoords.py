@@ -76,7 +76,7 @@ outside of the actual matrix.
 """
 
 import numpy as np
-from holodata.boundingregion import BoundingBox
+from holoviews.core.boundingregion import BoundingBox
 from holodata.util import datetime_types
 
 

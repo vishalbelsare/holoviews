@@ -3,9 +3,9 @@ import numpy as np
 from holodata import util
 from holodata.dimension import dimension_name
 from holodata.interface import DataError, Driver, ImageInterface as ImageInterface2
-from holodata.boundingregion import BoundingBox
-from holodata.sheetcoords import Slice
-from .grid import GridDriver
+from holoviews.core.boundingregion import BoundingBox
+from holoviews.core.sheetcoords import Slice
+from holodata.drivers.grid import GridDriver
 
 
 class ImageDriver(GridDriver):

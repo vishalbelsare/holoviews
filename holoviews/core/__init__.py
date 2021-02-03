@@ -1,13 +1,13 @@
 from datetime import date, datetime
 
-from holodata.boundingregion import *  # noqa (API import)
+from holoviews.core.boundingregion import *  # noqa (API import)
 from .data import *            # noqa (API import)
 from .dimension import *       # noqa (API import)
 from .element import *         # noqa (API import)
 from .layout import *          # noqa (API import)
 from .operation import *       # noqa (API import)
 from .overlay import *         # noqa (API import)
-from holodata.sheetcoords import *     # noqa (API import)
+from holoviews.core.sheetcoords import *     # noqa (API import)
 from .spaces import *          # noqa (API import)
 from .tree import *            # noqa (API import)
 from .util import config       # noqa (API import)
