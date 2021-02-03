@@ -12,7 +12,7 @@ import holodata.util
 from .selection import BokehOverlaySelectionDisplay
 from ...core import NdOverlay
 from holoviews.core.dimension import Dimensioned, Dimension
-from holodata.ndmapping import sorted_context
+from holoviews.core.ndmapping import sorted_context
 from ...core.util import (
     basestring
 )

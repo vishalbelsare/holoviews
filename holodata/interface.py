@@ -275,10 +275,11 @@ class Driver(param.Parameterized):
         from holoviews.core import Dataset
         from holodata.drivers import default_datatype
         new_type = new_type or Dataset
-        if util.is_nd_mapping(datasets):
-            dimensions = datasets.kdims
-            keys, datasets = zip(*datasets.data.items())
-        elif isinstance(datasets, list) and all(not isinstance(v, tuple) for v in datasets):
+        # TODO: make caller unwrap ndmapping
+        # if util.is_nd_mapping(datasets):
+        #     dimensions = datasets.kdims
+        #     keys, datasets = zip(*datasets.data.items())
+        if isinstance(datasets, list) and all(not isinstance(v, tuple) for v in datasets):
             # Allow concatenating list of datasets (by declaring no dimensions and keys)
             dimensions, keys = [], [()]*len(datasets)
         else:

@@ -14,7 +14,6 @@ import numpy as np
 
 from .dictionary import DictDriver
 from holodata.dimension import dimension_name, Dimensioned
-from holodata.ndmapping import sorted_context, NdMapping
 from holodata.interface import (
     get_array_types, dask_array_module, is_dask, DataError, Driver, GriddedInterface
 )
@@ -154,16 +153,19 @@ class GridDriver(DictDriver):
 
     @classmethod
     def concat(cls, datasets, dimensions, vdims):
-        with sorted_context(False):
-            datasets = NdMapping(datasets, kdims=dimensions)
-            # TODO: problem for holoviews version of Dimensioned
-            datasets = datasets.clone([(k, v.data if util.is_dimensioned(v) else v)
-                                       for k, v in datasets.data.items()])
-        if len(datasets.kdims) > 1:
-            items = datasets.groupby(datasets.kdims[:-1]).data.items()
-            return cls.concat([(k, cls.concat(v, v.kdims, vdims=vdims)) for k, v in items],
-                              datasets.kdims[:-1], vdims)
-        return cls.concat_dim(datasets, datasets.kdims[0], vdims)
+        raise NotImplementedError
+
+        # TODO: Rewrite without NdMapping dependency
+        # with sorted_context(False):
+        #     datasets = NdMapping(datasets, kdims=dimensions)
+        #     # TODO: problem for holoviews version of Dimensioned
+        #     datasets = datasets.clone([(k, v.data if util.is_dimensioned(v) else v)
+        #                                for k, v in datasets.data.items()])
+        # if len(datasets.kdims) > 1:
+        #     items = datasets.groupby(datasets.kdims[:-1]).data.items()
+        #     return cls.concat([(k, cls.concat(v, v.kdims, vdims=vdims)) for k, v in items],
+        #                       datasets.kdims[:-1], vdims)
+        # return cls.concat_dim(datasets, datasets.kdims[0], vdims)
 
 
     @classmethod

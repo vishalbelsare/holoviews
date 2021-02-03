@@ -7,7 +7,6 @@ import param
 from holodata.dimension import Dimensioned, Dimension, dimension_name
 from holodata.interface import Interface
 from holodata import util
-from holodata.ndmapping import UniformNdMapping, NdMapping, item_check, sorted_context
 
 
 class Dataset(Dimensioned):
@@ -484,7 +483,7 @@ argument to specify a selection specification""")
                                   new_type=Dataset if generic_type else None,
                                   datatype=datatype)
 
-    def groupby(self, dimensions=[], container_type=UniformNdMapping, group_type=None,
+    def groupby(self, dimensions=[], container_type=OrderedDict, group_type=None,
                 **kwargs):
         """Groups object by one or more dimensions
 
@@ -535,11 +534,9 @@ argument to specify a selection specification""")
                 grouped_data[group] = group_data
 
         # Wrap in container type
-        if issubclass(container_type, NdMapping):
-            with item_check(False), sorted_context(False):
-                return container_type(grouped_data, kdims=dimensions)
-        else:
-            return container_type(grouped_data)
+        if not isinstance(grouped_data, container_type):
+            grouped_data = container_type(grouped_data)
+        return grouped_data
 
     def transform(self, *args, **kwargs):
         """Transforms the Dataset according to a dimension transform.

@@ -14,7 +14,7 @@ from ..core import (HoloMap, DynamicMap, CompositeOverlay, Layout,
                     Overlay, GridSpace, NdLayout, NdOverlay, AdjointLayout)
 from ..core.options import CallbackError, Cycle
 from ..core.operation import Operation
-from holodata.ndmapping import item_check
+from ..core.ndmapping import item_check
 from ..core.spaces import get_nested_streams
 from ..core.util import (basestring, get_overlay_spec,
                          closest_match, disable_constant, arraylike_types)

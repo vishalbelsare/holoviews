@@ -7,7 +7,6 @@ import param
 
 import holodata.util
 from holodata.label import LabelledData
-from holodata.pprint import SimplePrettyPrinter
 from holodata.util import unicode, basestring, dimension_sanitizer
 from holodata import util
 
@@ -520,13 +519,15 @@ class Dimensioned(LabelledData):
         # Instantiate accessors
 
     def __repr__(self):
-        return SimplePrettyPrinter.pprint(self)
+        res = self.group
+        if len(self.kdims) >= 1:
+            res += '\t[%s]' % ','.join(d.name for d in self.kdims)
+        if len(self.vdims) >= 1:
+            res += '\t(%s)' % ','.join(d.name for d in self.vdims)
+        return res
 
     def __str__(self):
         return repr(self)
-
-    def __unicode__(self):
-        return unicode(SimplePrettyPrinter.pprint(self))
 
     # TODO: need versions without pipeline metaclass
     @property
