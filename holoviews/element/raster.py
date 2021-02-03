@@ -5,6 +5,7 @@ import colorsys
 import param
 
 import holodata.util
+import holoviews.core.util
 from ..core import util, config, Element2D, Overlay, Dataset
 from ..core.data import ImageDriver, GridDriver
 from holodata.interface import DataError, Interface
@@ -370,8 +371,8 @@ class Image(Selection2DExpr, Dataset, Raster, SheetCoordinateSystem):
                              'curvilinear coordinates.'.format(
                                  clsname=clsname, dims=dims))
 
-        xvalid = holodata.util.validate_regular_sampling(xvals, self.rtol)
-        yvalid = holodata.util.validate_regular_sampling(yvals, self.rtol)
+        xvalid = holoviews.core.util.validate_regular_sampling(xvals, self.rtol)
+        yvalid = holoviews.core.util.validate_regular_sampling(yvals, self.rtol)
         msg = ("{clsname} dimension{dims} not evenly sampled to relative "
                "tolerance of {rtol}. Please use the QuadMesh element for "
                "irregularly sampled data or set a higher tolerance on "

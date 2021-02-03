@@ -1,8 +1,10 @@
 import numpy as np
 
+import holoviews.core.util
 from holodata import util
 from holodata.dimension import dimension_name
-from holodata.interface import DataError, Driver, ImageInterface as ImageInterface2
+from holodata.interface import DataError, Driver
+from holoviews.core.data.interface import ImageInterface
 from holoviews.core.boundingregion import BoundingBox
 from holoviews.core.sheetcoords import Slice
 from holodata.drivers.grid import GridDriver
@@ -46,8 +48,8 @@ class ImageDriver(GridDriver):
             data = dict(zip(dimensions, data))
         if isinstance(data, dict):
             xs, ys = np.asarray(data[kdims[0].name]), np.asarray(data[kdims[1].name])
-            xvalid = util.validate_regular_sampling(xs, rtol)
-            yvalid = util.validate_regular_sampling(ys, rtol)
+            xvalid = holoviews.core.util.validate_regular_sampling(xs, rtol)
+            yvalid = holoviews.core.util.validate_regular_sampling(ys, rtol)
             if not xvalid or not yvalid:
                 raise ValueError('ImageInterface only supports regularly sampled coordinates')
             l, r, xdensity, invertx = util.bound_range(xs, None, time_unit)
@@ -314,4 +316,4 @@ class ImageDriver(GridDriver):
 
 
 Driver.register(ImageDriver)
-ImageInterface2.register_driver(ImageDriver)
+ImageInterface.register_driver(ImageDriver)

@@ -1029,3 +1029,13 @@ def closest_match(match, specs, depth=0):
             return None
         else:
             return sorted(match_lengths, key=lambda x: -x[1])[0][0]
+
+
+def validate_regular_sampling(values, rtol=10e-6):
+    """
+    Validates regular sampling of a 1D array ensuring that the difference
+    in sampling steps is at most rtol times the smallest sampling step.
+    Returns a boolean indicating whether the sampling is regular.
+    """
+    diffs = np.diff(values)
+    return (len(diffs) < 1) or abs(diffs.min()-diffs.max()) < abs(diffs.min()*rtol)
