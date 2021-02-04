@@ -939,7 +939,7 @@ class regrid(AggregationOperation):
         # Apply regridding to each value dimension
         regridded = {}
         arrays = self._get_xarrays(element, coords, xtype, ytype)
-        agg_fn = self._get_aggregator(element, add_field=False)
+        agg_fn = self._get_aggregator(element, self.p.aggregator, add_field=False)
         for vd, xarr in arrays.items():
             rarray = cvs.raster(xarr, upsample_method=interp,
                                 downsample_method=agg_fn)
