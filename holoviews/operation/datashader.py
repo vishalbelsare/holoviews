@@ -245,21 +245,26 @@ class AggregationOperation(ResamplingOperation):
         'var':   rd.var,
         'std':   rd.std,
         'min':   rd.min,
-        'max':   rd.max
+        'max':   rd.max,
+        'count_cat': rd.count_cat
     }
 
     @classmethod
     def _get_aggregator(cls, element, agg, add_field=True):
         if isinstance(agg, basestring):
             if agg not in cls._agg_methods:
-                agg_methods = sorted(self._agg_methods)
+                agg_methods = sorted(cls._agg_methods)
                 raise ValueError("Aggregation method '%r' is not known; "
                                  "aggregator must be one of: %r" %
                                  (agg, agg_methods))
-            agg = cls._agg_methods[agg]()
+            if agg == 'count_cat':
+                agg = cls._agg_methods[agg]('__temp__')
+            else:
+                agg = cls._agg_methods[agg]()
 
         elements = element.traverse(lambda x: x, [Element])
-        if add_field and getattr(agg, 'column', False) is None and not isinstance(agg, (rd.count, rd.any)):
+        if (add_field and getattr(agg, 'column', False) in ('__temp__', None) and
+            not isinstance(agg, (rd.count, rd.any))):
             if not elements:
                 raise ValueError('Could not find any elements to apply '
                                  '%s operation to.' % cls.__name__)
@@ -1936,39 +1941,3 @@ class inspect_poly(inspect_base):
         dx, dy = np.array(xs) - x, np.array(ys) - y
         distances = pd.Series(dx*dx + dy*dy)
         return df.iloc[distances.argsort().values]
-
-
-class categorical_legend(Operation):
-
-    def _process(self, element, key=None):
-        from ..plotting.util import rgb2hex
-        rasterize_op = element.pipeline.find(rasterize)
-        if isinstance(rasterize_op, datashade):
-            shade_op = rasterize_op
-        else:
-            shade_op = element.pipeline.find(shade)
-        if None in (shade_op, rasterize_op):
-            return None
-        hvds = element.dataset
-        input_el = element.pipeline.operations[0](hvds)
-        agg = rasterize_op._get_aggregator(input_el, rasterize_op.aggregator)
-        if not isinstance(agg, (ds.count_cat, ds.by)):
-            return
-        column = agg.column
-        if hasattr(hvds.data, 'dtypes'):
-            cats = list(hvds.data.dtypes[column].categories)
-            if cats == ['__UNKNOWN_CATEGORIES__']:
-                cats = list(hvds.data[column].cat.as_known().categories)
-        else:
-            cats = list(hvds.dimension_values(column, expanded=False))
-        colors = shade_op.color_key
-        color_data = [(0, 0, cat) for cat in cats]
-        if isinstance(colors, list):
-            cat_colors = {cat: colors[i] for i, cat in enumerate(cats)}
-        else:
-            cat_colors = {cat: colors[cat] for cat in cats}
-        cat_colors = {
-            cat: rgb2hex([v/256 for v in color[:3]]) if isinstance(color, tuple) else color
-            for cat, color in cat_colors.items()}
-        return Points(color_data, vdims=['category']).opts(
-             apply_ranges=False, cmap=cat_colors, color='category', show_legend=True)
