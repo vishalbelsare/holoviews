@@ -1073,6 +1073,7 @@ class OverlayPlot(LegendPlot, GenericOverlayPlot):
         and set up the legend
         """
         legend_data = []
+        legend_plot = True
         dimensions = overlay.kdims
         title = ', '.join([d.label for d in dimensions])
         for key, subplot in self.subplots.items():
@@ -1081,7 +1082,9 @@ class OverlayPlot(LegendPlot, GenericOverlayPlot):
             title = ', '.join([d.name for d in dimensions])
             handle = subplot.traverse(lambda p: p.handles['artist'],
                                       [lambda p: 'artist' in p.handles])
-            if isinstance(overlay, NdOverlay):
+            if getattr(subplot, '_legend_plot', None) is not None:
+                legend_plot = True
+            elif isinstance(overlay, NdOverlay):
                 label = ','.join([dim.pprint_value(k, print_unit=True)
                                   for k, dim in zip(key, dimensions)])
                 if handle:
@@ -1105,7 +1108,7 @@ class OverlayPlot(LegendPlot, GenericOverlayPlot):
                 used_labels.append(label)
         if (not len(set(data.values())) > 0) or not self.show_legend:
             legend = axis.get_legend()
-            if legend:
+            if legend and not (legend_plot or self.show_legend):
                 legend.set_visible(False)
         else:
             leg = axis.legend(list(data.keys()), list(data.values()),
