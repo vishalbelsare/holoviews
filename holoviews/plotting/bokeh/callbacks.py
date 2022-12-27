@@ -1,11 +1,9 @@
-from __future__ import absolute_import, division, unicode_literals
-
+import asyncio
 import time
 
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 
 import numpy as np
-import panel as pn
 
 from bokeh.models import (
     CustomJS, FactorRange, DatetimeAxis, Range1d, DataRange1d,
@@ -13,10 +11,7 @@ from bokeh.models import (
     PointDrawTool
 )
 from panel.io.state import state
-from panel.io.model import hold
-from tornado import gen
 
-from ...core import OrderedDict
 from ...core.options import CallbackError
 from ...core.util import (
     datetime_types, dimension_sanitizer, dt64_to_dt
@@ -29,15 +24,10 @@ from ...streams import (
     BoxEdit, PointDraw, PolyDraw, PolyEdit, CDSStream, FreehandDraw,
     CurveEdit, SelectionXY, Lasso, SelectMode
 )
-from .util import bokeh_version, convert_timestamp
-
-if bokeh_version >= '2.3.0':
-    CUSTOM_TOOLTIP = 'description'
-else:
-    CUSTOM_TOOLTIP = 'custom_tooltip'
+from .util import convert_timestamp
 
 
-class Callback(object):
+class Callback:
     """
     Provides a baseclass to define callbacks, which return data from
     bokeh model callbacks, events and attribute changes. The callback
@@ -90,11 +80,6 @@ class Callback(object):
       received within the `throttle_timeout` duration.
     """
 
-    # Throttling configuration
-    adaptive_window = 3
-    throttle_timeout = 100
-    throttling_scheme = 'adaptive'
-
     # Attributes to sync
     attributes = {}
 
@@ -123,8 +108,6 @@ class Callback(object):
         self.reset()
         self._active = False
         self._prev_msg = None
-        self._last_event = time.time()
-        self._history = []
 
     def _transform(self, msg):
         for transform in self._transforms:
@@ -247,7 +230,7 @@ class Callback(object):
         be the same as the model.
         """
         if not cb_obj:
-            raise Exception('Bokeh plot attribute %s could not be found' % spec)
+            raise Exception(f'Bokeh plot attribute {spec} could not be found')
         if model is None:
             model = cb_obj
         spec = spec.split('.')
@@ -278,22 +261,7 @@ class Callback(object):
         with edit_readonly(state):
             state.busy = busy
 
-    def _schedule_callback(self, cb, timeout=None, offset=True):
-        if timeout is None:
-            if self._history and self.throttling_scheme == 'adaptive':
-                timeout = int(np.array(self._history).mean()*1000)
-            else:
-                timeout = self.throttle_timeout
-            if self.throttling_scheme != 'debounce' and offset:
-                # Subtract the time taken since event started
-                diff = time.time()-self._last_event
-                timeout = max(timeout-(diff*1000), 50)
-        if not pn.state.curdoc:
-            cb()
-        else:
-            pn.state.curdoc.add_timeout_callback(cb, int(timeout))
-
-    def on_change(self, attr, old, new):
+    async def on_change(self, attr, old, new):
         """
         Process change events adding timeout to process multiple concerted
         value change at once rather than firing off multiple plot updates.
@@ -302,13 +270,9 @@ class Callback(object):
         if not self._active and self.plot.document:
             self._active = True
             self._set_busy(True)
-            if self.plot.renderer.mode == 'server':
-                self._schedule_callback(self.process_on_change, offset=False)
-            else:
-                with hold(self.plot.document):
-                    self.process_on_change()
+            asyncio.create_task(self.process_on_change())
 
-    def on_event(self, event):
+    async def on_event(self, event):
         """
         Process bokeh UIEvents adding timeout to process multiple concerted
         value change at once rather than firing off multiple plot updates.
@@ -317,45 +281,18 @@ class Callback(object):
         if not self._active and self.plot.document:
             self._active = True
             self._set_busy(True)
-            if self.plot.renderer.mode == 'server':
-                self._schedule_callback(self.process_on_event, offset=False)
-            else:
-                with hold(self.plot.document):
-                    self.process_on_event()
+            asyncio.create_task(self.process_on_event())
 
-    def throttled(self):
-        now = time.time()
-        timeout = self.throttle_timeout/1000.
-        if self.throttling_scheme in ('throttle', 'adaptive'):
-            diff = (now-self._last_event)
-            if self._history and self.throttling_scheme == 'adaptive':
-                timeout = np.array(self._history).mean()
-            if diff < timeout:
-                return int((timeout-diff)*1000)
-        else:
-            prev_event = self._queue[-1][-1]
-            diff = (now-prev_event)
-            if diff < timeout:
-                return self.throttle_timeout
-        self._last_event = time.time()
-        return False
-
-    @gen.coroutine
-    def process_on_event_coroutine(self):
-        self.process_on_event()
-
-    def process_on_event(self):
+    async def process_on_event(self, timeout=None):
         """
         Trigger callback change event and triggering corresponding streams.
         """
+        await asyncio.sleep(0.01)
         if not self._queue:
             self._active = False
             self._set_busy(False)
             return
-        throttled = self.throttled()
-        if throttled and pn.state.curdoc:
-            self._schedule_callback(self.process_on_event, throttled)
-            return
+
         # Get unique event types in the queue
         events = list(OrderedDict([(event.event_name, event)
                                    for event, dt in self._queue]).values())
@@ -370,26 +307,14 @@ class Callback(object):
                 model_obj = self.plot_handles.get(self.models[0])
                 msg[attr] = self.resolve_attr_spec(path, event, model_obj)
             self.on_msg(msg)
-        w = self.adaptive_window-1
-        diff = time.time()-self._last_event
-        self._history = self._history[-w:] + [diff]
-        if self.plot.renderer.mode == 'server':
-            self._schedule_callback(self.process_on_event)
-        else:
-            self._active = False
+        asyncio.create_task(self.process_on_event())
 
-    @gen.coroutine
-    def process_on_change_coroutine(self):
-        self.process_on_change()
-
-    def process_on_change(self):
+    async def process_on_change(self):
+        # Give on_change time to process new events
+        await asyncio.sleep(0.01)
         if not self._queue:
             self._active = False
             self._set_busy(False)
-            return
-        throttled = self.throttled()
-        if throttled and pn.state.curdoc:
-            self._schedule_callback(self.process_on_change, throttled)
             return
         self._queue = []
 
@@ -414,29 +339,28 @@ class Callback(object):
 
         if not equal or any(s.transient for s in self.streams):
             self.on_msg(msg)
-            w = self.adaptive_window-1
-            diff = time.time()-self._last_event
-            self._history = self._history[-w:] + [diff]
             self._prev_msg = msg
-
-        if self.plot.renderer.mode == 'server':
-            self._schedule_callback(self.process_on_change)
-        else:
-            self._active = False
+        asyncio.create_task(self.process_on_change())
 
     def set_callback(self, handle):
         """
         Set up on_change events for bokeh server interactions.
         """
         if self.on_events:
+            event_handler = lambda event: (
+                asyncio.create_task(self.on_event(event))
+            )
             for event in self.on_events:
-                handle.on_event(event, self.on_event)
+                handle.on_event(event, event_handler)
         if self.on_changes:
+            change_handler = lambda attr, old, new: (
+                asyncio.create_task(self.on_change(attr, old, new))
+            )
             for change in self.on_changes:
                 if change in ['patching', 'streaming']:
                     # Patch and stream events do not need handling on server
                     continue
-                handle.on_change(change, self.on_change)
+                handle.on_change(change, change_handler)
 
     def initialize(self, plot_id=None):
         handles = self._init_plot_handles()
@@ -466,7 +390,6 @@ class Callback(object):
         for handle in cb_handles:
             self.set_callback(handle)
         self._callbacks[cb_hash] = self
-
 
 
 class PointerXYCallback(Callback):
@@ -657,12 +580,32 @@ class RangeXYCallback(Callback):
     Returns the x/y-axis ranges of a plot.
     """
 
-    attributes = {'x0': 'x_range.attributes.start',
-                  'x1': 'x_range.attributes.end',
-                  'y0': 'y_range.attributes.start',
-                  'y1': 'y_range.attributes.end'}
-    models = ['x_range', 'y_range']
-    on_changes = ['start', 'end']
+    on_events = ['rangesupdate']
+
+    models = ['plot']
+
+    attributes = {
+        'x0': 'cb_obj.x0',
+        'y0': 'cb_obj.y0',
+        'x1': 'cb_obj.x1',
+        'y1': 'cb_obj.y1'
+    }
+
+    _js_on_event = """
+    if (this._updating)
+        return
+    const plot = this.origin
+    const plots = plot.x_range.plots.concat(plot.y_range.plots)
+    for (const p of plots) {
+      const event = new this.constructor(p.x_range.start, p.x_range.end, p.y_range.start, p.y_range.end)
+      event._updating = true
+      p.trigger_event(event)
+    }
+    """
+
+    def set_callback(self, handle):
+        super().set_callback(handle)
+        handle.js_on_event('rangesupdate', CustomJS(code=self._js_on_event))
 
     def _process_msg(self, msg):
         data = {}
@@ -694,9 +637,14 @@ class RangeXCallback(RangeXYCallback):
     Returns the x-axis range of a plot.
     """
 
-    attributes = {'x0': 'x_range.attributes.start',
-                  'x1': 'x_range.attributes.end'}
-    models = ['x_range']
+    on_events = ['rangesupdate']
+
+    models = ['plot']
+
+    attributes = {
+        'x0': 'cb_obj.x0',
+        'x1': 'cb_obj.x1',
+    }
 
 
 class RangeYCallback(RangeXYCallback):
@@ -704,10 +652,14 @@ class RangeYCallback(RangeXYCallback):
     Returns the y-axis range of a plot.
     """
 
-    attributes = {'y0': 'y_range.attributes.start',
-                  'y1': 'y_range.attributes.end'}
-    models = ['y_range']
+    on_events = ['rangesupdate']
 
+    models = ['plot']
+
+    attributes = {
+        'y0': 'cb_obj.y0',
+        'y1': 'cb_obj.y1'
+    }
 
 
 class PlotSizeCallback(Callback):
@@ -798,7 +750,7 @@ class SelectionXYCallback(BoundsCallback):
                     dtype = el.interface.dtype(el, xdim)
                     try:
                         xfactors = list(np.array(xfactors).astype(dtype))
-                    except:
+                    except Exception:
                         pass
             msg['x_selection'] = xfactors
         else:
@@ -813,7 +765,7 @@ class SelectionXYCallback(BoundsCallback):
                     dtype = el.interface.dtype(el, ydim)
                     try:
                         yfactors = list(np.array(yfactors).astype(dtype))
-                    except:
+                    except Exception:
                         pass
             msg['y_selection'] = yfactors
         else:
@@ -1038,7 +990,7 @@ class PointDrawCallback(GlyphDrawCallback):
         if stream.num_objects:
             kwargs['num_objects'] = stream.num_objects
         if stream.tooltip:
-            kwargs[CUSTOM_TOOLTIP] = stream.tooltip
+            kwargs['description'] = stream.tooltip
         if stream.styles:
             self._create_style_callback(cds, glyph)
         if stream.empty_value is not None:
@@ -1070,7 +1022,7 @@ class CurveEditCallback(GlyphDrawCallback):
         renderers = [renderer]
         kwargs = {}
         if stream.tooltip:
-            kwargs[CUSTOM_TOOLTIP] = stream.tooltip
+            kwargs['description'] = stream.tooltip
         point_tool = PointDrawTool(
             add=False, drag=True, renderers=renderers, **kwargs
         )
@@ -1117,7 +1069,7 @@ class PolyDrawCallback(GlyphDrawCallback):
         if stream.styles:
             self._create_style_callback(cds, glyph)
         if stream.tooltip:
-            kwargs[CUSTOM_TOOLTIP] = stream.tooltip
+            kwargs['description'] = stream.tooltip
         if stream.empty_value is not None:
             kwargs['empty_value'] = stream.empty_value
         poly_tool = PolyDrawTool(
@@ -1165,7 +1117,7 @@ class FreehandDrawCallback(PolyDrawCallback):
             self._create_style_callback(cds, glyph)
         kwargs = {}
         if stream.tooltip:
-            kwargs[CUSTOM_TOOLTIP] = stream.tooltip
+            kwargs['description'] = stream.tooltip
         if stream.empty_value is not None:
             kwargs['empty_value'] = stream.empty_value
         poly_tool = FreehandDrawTool(
@@ -1220,7 +1172,7 @@ class BoxEditCallback(GlyphDrawCallback):
         if stream.num_objects:
             kwargs['num_objects'] = stream.num_objects
         if stream.tooltip:
-            kwargs[CUSTOM_TOOLTIP] = stream.tooltip
+            kwargs['description'] = stream.tooltip
 
         renderer = self.plot.handles['glyph_renderer']
         if isinstance(self.plot, PathPlot):
@@ -1266,7 +1218,7 @@ class PolyEditCallback(PolyDrawCallback):
         stream = self.streams[0]
         kwargs = {}
         if stream.tooltip:
-            kwargs[CUSTOM_TOOLTIP] = stream.tooltip
+            kwargs['description'] = stream.tooltip
         if vertex_tool is None:
             vertex_style = dict({'size': 10}, **stream.vertex_style)
             r1 = plot.state.scatter([], [], **vertex_style)

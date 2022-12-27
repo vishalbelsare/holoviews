@@ -69,9 +69,9 @@ If you have any `issues <https://github.com/holoviz/holoviews/issues>`_ or wish 
 
 
 Installation
-____________
+------------
 
-|CondaPkg|_ |PyPI|_ |License|_ |Coveralls|_
+|CondaPkg|_ |PyPI|_ |License|_ |Coverage|_
 
 
 HoloViews works with `Python 2.7 and Python 3 <https://github.com/holoviz/holoviews/actions?query=workflow%3Apytest>`_ on Linux, Windows, or Mac, and works seamlessly with `Jupyter Notebook and JupyterLab <https://jupyter.org>`_.
@@ -122,8 +122,8 @@ After you have successfully installed and configured HoloViews, please see `Gett
 .. |License| image:: https://img.shields.io/pypi/l/holoviews.svg
 .. _License: https://github.com/holoviz/holoviews/blob/master/LICENSE.txt
 
-.. |Coveralls| image:: https://img.shields.io/coveralls/holoviz/holoviews.svg
-.. _Coveralls: https://coveralls.io/r/holoviz/holoviews
+.. |Coverage| image:: https://codecov.io/gh/holoviz/holoviews/branch/master/graph/badge.svg
+.. _Coveralls: https://codecov.io/gh/holoviz/holoviews
 
 .. toctree::
    :titlesonly:
@@ -133,10 +133,10 @@ After you have successfully installed and configured HoloViews, please see `Gett
    Home <self>
    Getting Started <getting_started/index>
    User Guide <user_guide/index>
+   Gallery <gallery/index>
    Reference Gallery <reference/index>
    Releases <releases>
    API <reference_manual/index>
    FAQ
    Roadmap <roadmap>
-   Github source <https://github.com/holoviz/holoviews>
    About <about>

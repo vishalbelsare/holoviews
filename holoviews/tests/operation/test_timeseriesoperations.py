@@ -1,13 +1,10 @@
-from unittest import SkipTest, skipIf
+from unittest import skipIf
 
-try:
-    import pandas as pd
-except:
-    raise SkipTest('Pandas not available')
+import pandas as pd
 
 try:
     import scipy # noqa
-except:
+except ImportError:
     scipy = None
 scipy_skip = skipIf(scipy is None, "SciPy is not available.")
 

@@ -1,6 +1,7 @@
 import param
 import numpy as np
 import matplotlib as mpl
+from packaging.version import Version
 
 from matplotlib import cm
 from matplotlib.collections import LineCollection
@@ -123,7 +124,7 @@ class ErrorPlot(ColorbarPlot):
     def init_artists(self, ax, plot_data, plot_kwargs):
         handles = ax.errorbar(*plot_data, **plot_kwargs)
         bottoms, tops = None, None
-        if mpl_version >= str('2.0'):
+        if mpl_version >= Version('2.0'):
             _, caps, verts = handles
             if caps:
                 bottoms, tops = caps
@@ -147,11 +148,9 @@ class ErrorPlot(ColorbarPlot):
             with abbreviated_exception():
                 raise ValueError('Mapping a continuous or categorical '
                                  'dimension to a color on a ErrorBarPlot '
-                                 'is not supported by the {backend} backend. '
+                                 f'is not supported by the {self.renderer.backend} backend. '
                                  'To map a dimension to a color supply '
-                                 'an explicit list of rgba colors.'.format(
-                                     backend=self.renderer.backend
-                                 )
+                                 'an explicit list of rgba colors.'
                 )
 
         style['fmt'] = 'none'
@@ -209,7 +208,7 @@ class AreaPlot(AreaMixin, ChartPlot):
 
     style_opts = ['color', 'facecolor', 'alpha', 'edgecolor', 'linewidth',
                   'hatch', 'linestyle', 'joinstyle',
-                  'fill', 'capstyle', 'interpolate']
+                  'fill', 'capstyle', 'interpolate', 'step']
 
     _nonvectorized_styles = style_opts
 
@@ -384,7 +383,7 @@ class HistogramPlot(ColorbarPlot):
         if self.cyclic:
             x0, x1, _, _ = lims
             xvals = np.linspace(x0, x1, self.xticks)
-            labels = ["%.0f" % np.rad2deg(x) + '\N{DEGREE SIGN}' for x in xvals]
+            labels = [f"{np.rad2deg(x):.0f}\N{DEGREE SIGN}" for x in xvals]
         elif self.xticks:
             dim = element.get_dimension(0)
             inds = np.linspace(0, len(edges), self.xticks, dtype=np.int)
@@ -545,7 +544,7 @@ class SideHistogramPlot(AdjoinedPlot, HistogramPlot):
                 offset_line.set_ydata(offset)
 
 
-class PointPlot(ChartPlot, ColorbarPlot):
+class PointPlot(ChartPlot, ColorbarPlot, LegendPlot):
     """
     Note that the 'cmap', 'vmin' and 'vmax' style arguments control
     how point magnitudes are rendered to different colors.

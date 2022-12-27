@@ -3,6 +3,8 @@ import datetime as dt
 from unittest import SkipTest, skipIf
 
 import numpy as np
+import pandas as pd
+import pytest
 
 from holoviews import (
     Dimension, Curve, Points, Image, Dataset, RGB, Path, Graph, TriMesh,
@@ -12,29 +14,29 @@ from holoviews import (
 from holoviews.streams import Tap
 from holoviews.element.comparison import ComparisonTestCase
 from numpy import nan
+from packaging.version import Version
 
 try:
     import datashader as ds
     import dask.dataframe as dd
     import xarray as xr
-    from holoviews.core.util import pd
     from holoviews.operation.datashader import (
         aggregate, regrid, ds_version, stack, directly_connect_edges,
         shade, spread, rasterize, datashade, AggregationOperation,
         inspect, inspect_points, inspect_polygons
     )
-except:
+except ImportError:
     raise SkipTest('Datashader not available')
 
 try:
     import cudf
     import cupy
-except:
+except ImportError:
     cudf = None
 
 try:
     import spatialpandas
-except:
+except ImportError:
     spatialpandas = None
 
 spatialpandas_skip = skipIf(spatialpandas is None, "SpatialPandas not available")
@@ -720,7 +722,7 @@ class DatashaderAggregateTests(ComparisonTestCase):
 class DatashaderCatAggregateTests(ComparisonTestCase):
 
     def setUp(self):
-        if ds_version < '0.11.0':
+        if ds_version < Version('0.11.0'):
             raise SkipTest('Regridding operations require datashader>=0.11.0')
 
     def test_aggregate_points_categorical(self):
@@ -759,7 +761,7 @@ class DatashaderShadeTests(ComparisonTestCase):
                           'C': Image((xs, ys, np.array([[0, 0], [1, 0]], dtype='u4')),
                                      datatype=['xarray'], vdims=Dimension('z Count', nodata=0))},
                          kdims=['z'])
-        shaded = shade(data)
+        shaded = shade(data, rescale_discrete_levels=False)
         r = [[228, 120], [66, 120]]
         g = [[26, 109], [150, 109]]
         b = [[28, 95], [129, 95]]
@@ -777,7 +779,7 @@ class DatashaderShadeTests(ComparisonTestCase):
                           'C': Image((xs, ys, np.array([[0, 0], [1, 0]], dtype='u4')),
                                      datatype=['grid'], vdims=Dimension('z Count', nodata=0))},
                          kdims=['z'])
-        shaded = shade(data)
+        shaded = shade(data, rescale_discrete_levels=False)
         r = [[228, 120], [66, 120]]
         g = [[26, 109], [150, 109]]
         b = [[28, 95], [129, 95]]
@@ -806,7 +808,7 @@ class DatashaderRegridTests(ComparisonTestCase):
     """
 
     def setUp(self):
-        if ds_version <= '0.5.0':
+        if ds_version <= Version('0.5.0'):
             raise SkipTest('Regridding operations require datashader>=0.6.0')
 
     def test_regrid_mean(self):
@@ -848,8 +850,6 @@ class DatashaderRegridTests(ComparisonTestCase):
         self.assertEqual(regridded, expected)
 
     def test_regrid_upsampling_linear(self):
-        ### This test causes a numba error using 0.35.0 - temporarily disabled ###
-        return
         img = Image(([0.5, 1.5], [0.5, 1.5], [[0, 1], [2, 3]]))
         regridded = regrid(img, width=4, height=4, upsample=True, interpolation='linear', dynamic=False)
         expected = Image(([0.25, 0.75, 1.25, 1.75], [0.25, 0.75, 1.25, 1.75],
@@ -886,7 +886,7 @@ class DatashaderRasterizeTests(ComparisonTestCase):
     """
 
     def setUp(self):
-        if ds_version <= '0.6.4':
+        if ds_version <= Version('0.6.4'):
             raise SkipTest('Regridding operations require datashader>=0.7.0')
 
         self.simplexes = [(0, 1, 2), (3, 2, 1)]
@@ -923,9 +923,9 @@ class DatashaderRasterizeTests(ComparisonTestCase):
         trimesh = TriMesh((self.simplexes_vdim, self.vertices), vdims=['z'])
         img = rasterize(trimesh, width=3, height=3, dynamic=False)
         array = np.array([
-            [   1.5,    1.5, np.NaN],
-            [   0.5,    1.5, np.NaN],
-            [np.NaN, np.NaN, np.NaN]
+            [0.5, 1.5, 1.5],
+            [0.5, 0.5, 1.5],
+            [0.5, 0.5, 0.5]
         ])
         image = Image(array, bounds=(0, 0, 1, 1))
         self.assertEqual(img, image)
@@ -938,9 +938,9 @@ class DatashaderRasterizeTests(ComparisonTestCase):
         img = rasterize(trimesh, width=3, height=3, dynamic=False)
 
         array = np.array([
-            [    2.,     3., np.NaN],
-            [   1.5,    2.5, np.NaN],
-            [np.NaN, np.NaN, np.NaN]
+            [2.166667, 2.833333, 3.5     ],
+            [1.833333, 2.5,      3.166667],
+            [1.5,      2.166667, 2.833333]
         ])
         image = Image(array, bounds=(0, 0, 1, 1))
         self.assertEqual(img, image)
@@ -963,9 +963,9 @@ class DatashaderRasterizeTests(ComparisonTestCase):
         self.assertIsInstance(cache[trimesh._plot_id]['mesh'], dd.DataFrame)
 
         array = np.array([
-            [    2.,     3., np.NaN],
-            [   1.5,    2.5, np.NaN],
-            [np.NaN, np.NaN, np.NaN]
+            [2.166667, 2.833333, 3.5     ],
+            [1.833333, 2.5,      3.166667],
+            [1.5,      2.166667, 2.833333]
         ])
         image = Image(array, bounds=(0, 0, 1, 1))
         self.assertEqual(img, image)
@@ -989,9 +989,9 @@ class DatashaderRasterizeTests(ComparisonTestCase):
         self.assertIsInstance(cache[trimesh._plot_id]['mesh'], dd.DataFrame)
 
         array = np.array([
-            [   1.5,    1.5, np.NaN],
-            [   0.5,    1.5, np.NaN],
-            [np.NaN, np.NaN, np.NaN]
+            [0.5, 1.5, 1.5],
+            [0.5, 0.5, 1.5],
+            [0.5, 0.5, 0.5]
         ])
         image = Image(array, bounds=(0, 0, 1, 1))
         self.assertEqual(img, image)
@@ -1015,9 +1015,9 @@ class DatashaderRasterizeTests(ComparisonTestCase):
         self.assertIsInstance(cache[trimesh._plot_id]['mesh'], dd.DataFrame)
 
         array = np.array([
-            [    2.,     3., np.NaN],
-            [   1.5,    2.5, np.NaN],
-            [np.NaN, np.NaN, np.NaN]
+            [2.166667, 2.833333, 3.5     ],
+            [1.833333, 2.5,      3.166667],
+            [1.5,      2.166667, 2.833333]
         ])
         image = Image(array, bounds=(0, 0, 1, 1))
         self.assertEqual(img, image)
@@ -1028,9 +1028,9 @@ class DatashaderRasterizeTests(ComparisonTestCase):
         img = rasterize(trimesh, width=3, height=3, dynamic=False)
 
         array = np.array([
-            [    2.,     3., np.NaN],
-            [   1.5,    2.5, np.NaN],
-            [np.NaN, np.NaN, np.NaN]
+            [2.166667, 2.833333, 3.5     ],
+            [1.833333, 2.5,      3.166667],
+            [1.5,      2.166667, 2.833333]
         ])
         image = Image(array, bounds=(0, 0, 1, 1), vdims='node_z')
         self.assertEqual(img, image)
@@ -1041,9 +1041,9 @@ class DatashaderRasterizeTests(ComparisonTestCase):
         img = rasterize(trimesh, width=3, height=3, dynamic=False, aggregator=ds.mean('z'))
 
         array = np.array([
-            [   1.5,    1.5, np.NaN],
-            [   0.5,    1.5, np.NaN],
-            [np.NaN, np.NaN, np.NaN]
+            [0.5, 1.5, 1.5],
+            [0.5, 0.5, 1.5],
+            [0.5, 0.5, 0.5]
         ])
         image = Image(array, bounds=(0, 0, 1, 1))
         self.assertEqual(img, image)
@@ -1060,17 +1060,22 @@ class DatashaderRasterizeTests(ComparisonTestCase):
         vertices = [(0., 0., 1), (0., 1., 2), (1., 0., 3), (1., 1., 4)]
         trimesh = TriMesh((simplices, Points(vertices, vdims='z')))
         img = rasterize(trimesh, width=3, height=3, dynamic=False)
-        image = Image(np.array([[2., 3., np.NaN], [1.5, 2.5, np.NaN], [np.NaN, np.NaN, np.NaN]]),
-                      bounds=(0, 0, 1, 1), vdims='z')
+
+        array = np.array([
+            [2.166667, 2.833333, 3.5     ],
+            [1.833333, 2.5,      3.166667],
+            [1.5,      2.166667, 2.833333]
+        ])
+        image = Image(array, bounds=(0, 0, 1, 1), vdims='z')
         self.assertEqual(img, image)
 
     def test_rasterize_trimesh_ds_aggregator(self):
         trimesh = TriMesh((self.simplexes_vdim, self.vertices), vdims=['z'])
         img = rasterize(trimesh, width=3, height=3, dynamic=False, aggregator=ds.mean('z'))
         array = np.array([
-            [   1.5,    1.5, np.NaN],
-            [   0.5,    1.5, np.NaN],
-            [np.NaN, np.NaN, np.NaN]
+            [0.5, 1.5, 1.5],
+            [0.5, 0.5, 1.5],
+            [0.5, 0.5, 0.5]
         ])
         image = Image(array, bounds=(0, 0, 1, 1))
         self.assertEqual(img, image)
@@ -1079,9 +1084,9 @@ class DatashaderRasterizeTests(ComparisonTestCase):
         trimesh = TriMesh((self.simplexes_vdim, self.vertices), vdims=['z'])
         img = rasterize(trimesh, width=3, height=3, dynamic=False, aggregator='mean')
         array = np.array([
-            [   1.5,    1.5, np.NaN],
-            [   0.5,    1.5, np.NaN],
-            [np.NaN, np.NaN, np.NaN]
+            [0.5, 1.5, 1.5],
+            [0.5, 0.5, 1.5],
+            [0.5, 0.5, 0.5]
         ])
         image = Image(array, bounds=(0, 0, 1, 1))
         self.assertEqual(img, image)
@@ -1160,7 +1165,7 @@ class DatashaderSpreadTests(ComparisonTestCase):
         self.assertEqual(spreaded, RGB(arr))
 
     def test_spread_img_1px(self):
-        if ds_version < '0.12.0':
+        if ds_version < Version('0.12.0'):
             raise SkipTest('Datashader does not support DataArray yet')
         arr = np.array([[0, 0, 0], [0, 0, 0], [1, 1, 1]]).T
         spreaded = spread(Image(arr))
@@ -1207,7 +1212,7 @@ class DatashaderStackTests(ComparisonTestCase):
 class GraphBundlingTests(ComparisonTestCase):
 
     def setUp(self):
-        if ds_version <= '0.7.0':
+        if ds_version <= Version('0.7.0'):
             raise SkipTest('Regridding operations require datashader>=0.7.0')
         self.source = np.arange(8)
         self.target = np.zeros(8)
@@ -1322,3 +1327,18 @@ class InspectorTests(ComparisonTestCase):
         polys = inspect_polygons(self.polysrgb,
                                  max_indicators=3, dynamic=False, pixels=1, x=0, y=0)
         self.assertEqual(polys, Polygons([], vdims='z'))
+
+
+@pytest.mark.parametrize("dtype", [np.uint8, np.uint16, np.uint32])
+def test_uint_dtype(dtype):
+    df = pd.DataFrame(np.arange(2, dtype=dtype), columns=["A"])
+    curve = Curve(df)
+    img = rasterize(curve, dynamic=False, height=10, width=10)
+    assert (np.asarray(img.data["Count"]) == np.eye(10)).all()
+
+
+def test_uint64_dtype():
+    df = pd.DataFrame(np.arange(2, dtype=np.uint64), columns=["A"])
+    curve = Curve(df)
+    with pytest.raises(TypeError, match="Dtype of uint64 for column A is not supported."):
+        rasterize(curve, dynamic=False, height=10, width=10)

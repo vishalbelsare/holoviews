@@ -118,7 +118,7 @@ STYLE_ALIASES = {'alpha': 'opacity',
 
 # Regular expression to extract any trailing digits from a subplot-style
 # string.
-_subplot_re = re.compile('\D*(\d+)')
+_subplot_re = re.compile(r'\D*(\d+)')
 
 
 def _get_subplot_number(subplot_val):
@@ -749,8 +749,8 @@ def figure_grid(figures_grid,
                 if responsive:
                     scale_x = 1./ncols
                     scale_y = 1./nrows
-                    px = ((0.2/(ncols) if ncols > 1 else 0))
-                    py = ((0.2/(nrows) if nrows > 1 else 0))
+                    px = (0.2/(ncols) if ncols > 1 else 0)
+                    py = (0.2/(nrows) if nrows > 1 else 0)
                     sx = scale_x-px
                     sy = scale_y-py
                     _scale_translate(fig, sx, sy, scale_x*c+px/2., scale_y*r+py/2.)

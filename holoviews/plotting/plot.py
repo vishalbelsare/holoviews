@@ -3,11 +3,10 @@ Public API for all plots supported by HoloViews, regardless of
 plotting package or backend. Every plotting classes must be a subclass
 of this Plot baseclass.
 """
-import threading
 import uuid
 import warnings
 
-from collections import Counter, defaultdict
+from collections import Counter, defaultdict, OrderedDict
 from functools import partial
 from itertools import groupby, product
 
@@ -15,13 +14,11 @@ import numpy as np
 import param
 
 from panel.config import config
+from panel.io.document import unlocked
 from panel.io.notebook import push
 from panel.io.state import state
-from panel.io.server import unlocked
 from pyviz_comms import JupyterComm
-
 from ..selection import NoOpSelectionDisplay
-from ..core import OrderedDict
 from ..core import util, traversal
 from ..core.data import Dataset, disable_pipeline
 from ..core.element import Element, Element3D
@@ -111,18 +108,11 @@ class Plot(param.Parameterized):
             self.root is self.handles.get('plot') and
             not isinstance(self, GenericAdjointLayoutPlot)):
             doc.on_session_destroyed(self._session_destroy)
-            from .bokeh.util import bokeh_version
-            if self._document and bokeh_version >= '2.4.0':
+            if self._document:
                 if isinstance(self._document.callbacks._session_destroyed_callbacks, set):
                     self._document.callbacks._session_destroyed_callbacks.discard(self._session_destroy)
                 else:
                     self._document.callbacks._session_destroyed_callbacks.pop(self._session_destroy, None)
-
-            elif self._document:
-                if isinstance(self._document._session_destroyed_callbacks, set):
-                    self._document._session_destroyed_callbacks.discard(self._session_destroy)
-                else:
-                    self._document._session_destroyed_callbacks.pop(self._session_destroy, None)
 
         self._document = doc
         if self.subplots:
@@ -212,18 +202,13 @@ class Plot(param.Parameterized):
         Refreshes the plot by rerendering it and then pushing
         the updated data if the plot has an associated Comm.
         """
-        if self.renderer.mode == 'server':
-            from bokeh.io import curdoc
-            thread = threading.current_thread()
-            thread_id = thread.ident if thread else None
-            if (curdoc() is not self.document or (state._thread_id is not None and
-                thread_id != state._thread_id)):
-                # If we do not have the Document lock, schedule refresh as callback
-                self._triggering += [s for p in self.traverse(lambda x: x, [Plot])
-                                     for s in getattr(p, 'streams', []) if s._triggering]
-                if self.document and self.document.session_context:
-                    self.document.add_next_tick_callback(self.refresh)
-                    return
+        if self.renderer.mode == 'server' and not state._unblocked(self.document):
+            # If we do not have the Document lock, schedule refresh as callback
+            self._triggering += [s for p in self.traverse(lambda x: x, [Plot])
+                                 for s in getattr(p, 'streams', []) if s._triggering]
+            if self.document and self.document.session_context:
+                self.document.add_next_tick_callback(self.refresh)
+                return
 
         # Ensure that server based tick callbacks maintain stream triggering state
         for s in self._triggering:
@@ -291,7 +276,7 @@ class Plot(param.Parameterized):
 
 
 
-class PlotSelector(object):
+class PlotSelector:
     """
     Proxy that allows dynamic selection of a plotting class based on a
     function of the plotted object. Behaves like a Plot class and
@@ -343,7 +328,7 @@ class PlotSelector(object):
     def __setattr__(self, label, value):
         try:
             return super().__setattr__(label, value)
-        except:
+        except Exception:
             raise Exception("Please set class parameters directly on classes %s"
                             % ', '.join(str(cls) for cls in self.__dict__['plot_classes'].values()))
 
@@ -393,8 +378,6 @@ class DimensionedPlot(Plot):
         The formatting string for the title of this plot, allows defining
         a label group separator and dimension labels.""")
 
-    title_format = param.String(default=None, doc="Alias for title.")
-
     normalize = param.Boolean(default=True, doc="""
         Whether to compute ranges across all Elements at this level
         of plotting. Allows selecting normalization at different levels
@@ -433,7 +416,7 @@ class DimensionedPlot(Plot):
         Get the state of the Plot for a given frame number.
         """
         if isinstance(frame, int) and frame > len(self):
-            self.param.warning("Showing last frame available: %d" % len(self))
+            self.param.warning(f"Showing last frame available: {len(self)}")
         if not self.drawn: self.handles['fig'] = self.initialize_plot()
         if not isinstance(frame, tuple):
             frame = self.keys[frame]
@@ -501,22 +484,10 @@ class DimensionedPlot(Plot):
         return util.bytes_to_unicode(separator.join(g for g in groups if g))
 
     def _format_title(self, key, dimensions=True, separator='\n'):
-        if self.title_format:
-            self.param.warning('title_format is deprecated. Please use title instead')
-
         label, group, type_name, dim_title = self._format_title_components(
             key, dimensions=True, separator='\n'
         )
-
-        custom_title = (self.title != self.param['title'].default)
-        if custom_title and self.title_format:
-            self.param.warning('Both title and title_format set. Using title')
-        title_str = (
-            self.title if custom_title or self.title_format is None
-            else self.title_format
-        )
-
-        title = util.bytes_to_unicode(title_str).format(
+        title = util.bytes_to_unicode(self.title).format(
             label=util.bytes_to_unicode(label),
             group=util.bytes_to_unicode(group),
             type=type_name,
@@ -780,7 +751,7 @@ class DimensionedPlot(Plot):
                             with warnings.catch_warnings():
                                 warnings.filterwarnings('ignore', r'All-NaN (slice|axis) encountered')
                                 drange = (np.nanmin(values), np.nanmax(values))
-                        except:
+                        except Exception:
                             factors = util.unique_array(values)
                     if dim_name not in group_ranges:
                         group_ranges[dim_name] = {
@@ -974,7 +945,7 @@ class DimensionedPlot(Plot):
         return len(self.keys)
 
 
-class CallbackPlot(object):
+class CallbackPlot:
 
     backend = None
 
@@ -1062,9 +1033,6 @@ class GenericElementPlot(DimensionedPlot):
 
     invert_yaxis = param.Boolean(default=False, doc="""
         Whether to invert the plot y-axis.""")
-
-    finalize_hooks = param.HookList(default=[], doc="""
-        Deprecated; use hooks options instead.""")
 
     logx = param.Boolean(default=False, doc="""
         Whether the x-axis of the plot will be a log axis.""")
@@ -1166,11 +1134,34 @@ class GenericElementPlot(DimensionedPlot):
     _propagate_options = []
     v17_option_propagation = True
 
+    _deprecations = {
+        'color_index': (
+            "The `color_index` parameter is deprecated in favor of color "
+            "style mapping, e.g. `color=dim('color')` or `line_color=dim('color')`"
+        ),
+        'size_index': (
+            "The `size_index` parameter is deprecated in favor of size "
+            "style mapping, e.g. `size=dim('size')**2`."
+        ),
+        'scaling_method': (
+            "The `scaling_method` parameter is deprecated in favor of size "
+            "style mapping, e.g. `size=dim('size')**2` for area scaling."
+        ),
+        'scaling_factor': (
+            "The `scaling_factor` parameter is deprecated in favor of size "
+            "style mapping, e.g. `size=dim('size')*10`."
+        ),
+        'size_fn': (
+            "The `size_fn` parameter is deprecated in favor of size "
+            "style mapping, e.g. `size=abs(dim('size'))`."
+        ),
+    }
+
     _selection_display = NoOpSelectionDisplay()
 
     def __init__(self, element, keys=None, ranges=None, dimensions=None,
                  batched=False, overlaid=0, cyclic_index=0, zorder=0, style=None,
-                 overlay_dims={}, stream_sources=[], streams=None, **params):
+                 overlay_dims={}, stream_sources={}, streams=None, **params):
         self.zorder = zorder
         self.cyclic_index = cyclic_index
         self.overlaid = overlaid
@@ -1207,8 +1198,12 @@ class GenericElementPlot(DimensionedPlot):
             plot_opts.update(**{k: v[0] for k, v in inherited.items()
                                 if k not in plot_opts})
 
+        applied_params = dict(params, **plot_opts)
+        for p, pval in applied_params.items():
+            if p in self.param and p in self._deprecations and pval is not None:
+                self.param.warning(self._deprecations[p])
         super().__init__(keys=keys, dimensions=dimensions,
-                         dynamic=dynamic, **dict(params, **plot_opts))
+                         dynamic=dynamic, **applied_params)
         self.streams = get_nested_streams(self.hmap) if streams is None else streams
 
         # Attach streams if not overlaid and not a batched ElementPlot
@@ -1224,6 +1219,7 @@ class GenericElementPlot(DimensionedPlot):
             self.style = self.lookup_options(plot_element, 'style').max_cycles(len(self.ordering))
         else:
             self.ordering = []
+
 
     def get_zorder(self, overlay, key, el):
         """
@@ -1261,16 +1257,7 @@ class GenericElementPlot(DimensionedPlot):
         """
         Executes finalize hooks
         """
-        if self.hooks and self.finalize_hooks:
-            self.param.warning(
-                "Supply either hooks or finalize_hooks not both, "
-                "using hooks and ignoring finalize_hooks.")
-        elif self.finalize_hooks:
-            self.param.warning(
-                "The finalize_hooks option is deprecated, use the "
-                "hooks option instead.")
-        hooks = self.hooks or self.finalize_hooks
-        for hook in hooks:
+        for hook in self.hooks:
             try:
                 hook(self, element)
             except Exception as e:
@@ -1320,7 +1307,7 @@ class GenericElementPlot(DimensionedPlot):
         ndims = len(dims)
         xdim = xdim or (dims[0] if ndims else None)
         ydim = ydim or (dims[1] if ndims > 1 else None)
-        if self.projection == '3d':
+        if isinstance(self.projection, str) and self.projection == '3d':
             zdim = zdim or (dims[2] if ndims > 2 else None)
         else:
             zdim = None
@@ -1364,7 +1351,7 @@ class GenericElementPlot(DimensionedPlot):
         elif ydim is None:
             y0, y1 = np.NaN, np.NaN
 
-        if self.projection == '3d':
+        if isinstance(self.projection, str) and self.projection == '3d':
             if range_type == 'soft':
                 z0, z1 = zsrange
             elif range_type == 'data':
@@ -1407,14 +1394,17 @@ class GenericElementPlot(DimensionedPlot):
         This allows Overlay plots to obtain each range and combine them
         appropriately for all the objects in the overlay.
         """
-        num = 6 if self.projection == '3d' else 4
+        num = 6 if (isinstance(self.projection, str) and self.projection == '3d') else 4
         if self.apply_extents and range_type in ('combined', 'extents'):
             norm_opts = self.lookup_options(element, 'norm').options
             if norm_opts.get('framewise', False) or self.dynamic:
                 extents = element.extents
             else:
                 extent_list = self.hmap.traverse(lambda x: x.extents, [Element])
-                extents = util.max_extents(extent_list, self.projection == '3d')
+                extents = util.max_extents(
+                    extent_list,
+                    isinstance(self.projection, str) and self.projection == '3d'
+                )
         else:
             extents = (np.NaN,) * num
 
@@ -1427,7 +1417,10 @@ class GenericElementPlot(DimensionedPlot):
             range_extents = (np.NaN,) * num
 
         if getattr(self, 'shared_axes', False) and self.subplot:
-            combined = util.max_extents([range_extents, extents], self.projection == '3d')
+            combined = util.max_extents(
+                [range_extents, extents],
+                isinstance(self.projection, str) and self.projection == '3d'
+            )
         else:
             max_extent = []
             for l1, l2 in zip(range_extents, extents):
@@ -1437,7 +1430,7 @@ class GenericElementPlot(DimensionedPlot):
                     max_extent.append(l1)
             combined = tuple(max_extent)
 
-        if self.projection == '3d':
+        if isinstance(self.projection, str) and self.projection == '3d':
             x0, y0, z0, x1, y1, z1 = combined
         else:
             x0, y0, x1, y1 = combined
@@ -1460,7 +1453,7 @@ class GenericElementPlot(DimensionedPlot):
                 if stream not in self._trigger and (self.xlim or self.ylim):
                     self._trigger.append(stream)
 
-        if self.projection == '3d':
+        if isinstance(self.projection, str) and self.projection == '3d':
             z0, z1 = util.dimension_range(z0, z1, self.zlim, (None, None))
             return (x0, y0, z0, x1, y1, z1)
         return (x0, y0, x1, y1)
@@ -1480,7 +1473,8 @@ class GenericElementPlot(DimensionedPlot):
 
         if getattr(self, 'zlabel', None) is not None:
             zlabel = self.zlabel
-        elif self.projection == '3d' and len(dimensions) >= 3 and zlabel is None:
+        elif (isinstance(self.projection, str) and self.projection == '3d'
+              and len(dimensions) >= 3 and zlabel is None):
             zlabel = dim_axis_label(dimensions[2]) if dimensions[2] else ''
         return xlabel, ylabel, zlabel
 
@@ -1731,6 +1725,9 @@ class GenericOverlayPlot(GenericElementPlot):
             subplot = self._create_subplot(k, vmap, [], ranges)
             if subplot is None:
                 continue
+            subplot.document = self.document
+            if self.comm:
+                subplot.comm = self.comm
             self.subplots[k] = subplot
             subplot.initialize_plot(ranges, **init_kwargs)
             subplot.update_frame(key, ranges, element=obj)
@@ -1800,7 +1797,7 @@ class GenericOverlayPlot(GenericElementPlot):
 
     def get_extents(self, overlay, ranges, range_type='combined'):
         subplot_extents = self._get_subplot_extents(overlay, ranges, range_type)
-        zrange = self.projection == '3d'
+        zrange = isinstance(self.projection, str) and self.projection == '3d'
         extents = {k: util.max_extents(rs, zrange) for k, rs in subplot_extents.items()}
         if range_type != 'combined':
             return extents[range_type]
@@ -1834,7 +1831,7 @@ class GenericOverlayPlot(GenericElementPlot):
 
         # Combine with Element.extents
         combined = util.max_extents([padded, extents['extents']], zrange)
-        if self.projection == '3d':
+        if isinstance(self.projection, str) and self.projection == '3d':
             x0, y0, z0, x1, y1, z1 = combined
         else:
             x0, y0, x1, y1 = combined
@@ -1842,7 +1839,7 @@ class GenericOverlayPlot(GenericElementPlot):
         # Apply xlim, ylim, zlim plot option
         x0, x1 = util.dimension_range(x0, x1, self.xlim, (None, None))
         y0, y1 = util.dimension_range(y0, y1, self.ylim, (None, None))
-        if self.projection == '3d':
+        if isinstance(self.projection, str) and self.projection == '3d':
             z0, z1 = util.dimension_range(z0, z1, getattr(self, 'zlim', (None, None)), (None, None))
             return (x0, y0, z0, x1, y1, z1)
         return (x0, y0, x1, y1)
@@ -1866,7 +1863,7 @@ class GenericCompositePlot(DimensionedPlot):
                          dimensions=dimensions, **params)
         nested_streams = layout.traverse(lambda x: get_nested_streams(x),
                                          [DynamicMap])
-        self.streams = list(set([s for streams in nested_streams for s in streams]))
+        self.streams = list({s for streams in nested_streams for s in streams})
         self._link_dimensioned_streams()
 
     def _link_dimensioned_streams(self):

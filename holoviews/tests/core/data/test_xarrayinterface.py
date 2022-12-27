@@ -4,11 +4,11 @@ from collections import OrderedDict
 from unittest import SkipTest
 
 import numpy as np
+import pandas as pd
 
 try:
-    import pandas as pd
     import xarray as xr
-except:
+except ImportError:
     raise SkipTest("Could not import xarray, skipping XArrayInterface tests.")
 
 from holoviews.core.data import Dataset, concat
@@ -59,6 +59,14 @@ class XArrayInterfaceTests(BaseGridInterfaceTests):
                                 'z': np.arange(4),
                                 'time': pd.date_range('2014-09-06', periods=3),
                                 'reference_time': pd.Timestamp('2014-09-05')})
+
+    def test_ignore_dependent_dimensions_if_not_specified(self):
+        coords = OrderedDict([('time', [0, 1]), ('lat', [0, 1]), ('lon', [0, 1])])
+        da = xr.DataArray(np.arange(8).reshape((2, 2, 2)),
+                          coords, ['time', 'lat', 'lon']).assign_coords(
+                              lat1=xr.DataArray([2,3], dims=['lat']))
+        assert Dataset(da, ['time', 'lat', 'lon'], vdims='value').kdims == ['time', 'lat', 'lon']
+        assert Dataset(da, ['time', 'lat1', 'lon'], vdims='value').kdims == ['time', 'lat1', 'lon']
 
     def test_xarray_dataset_irregular_shape(self):
         ds = Dataset(self.get_multi_dim_irregular_dataset())
@@ -287,7 +295,7 @@ class DaskXArrayInterfaceTest(XArrayInterfaceTests):
     def setUp(self):
         try:
             import dask.array # noqa
-        except:
+        except ImportError:
             raise SkipTest('Dask could not be imported, cannot test '
                            'dask arrays with XArrayInterface')
         super().setUp()

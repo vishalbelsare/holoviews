@@ -14,12 +14,64 @@ install_requires = [
     "param >=1.9.3,<2.0",
     "numpy >=1.0",
     "pyviz_comms >=0.7.4",
-    "panel >=0.9.5",
+    "panel >=0.13.1",
     "colorcet",
+    "packaging",
     "pandas >=0.20.0",
 ]
 
 extras_require = {}
+
+extras_require['flakes'] = [
+    'flake8',
+    'pre-commit',
+]
+
+# Test requirements
+extras_require['tests_core'] = [
+    'pytest',
+    'pytest-cov',
+    'pytest-xdist',
+    'matplotlib >=3',
+    'nbconvert',
+    'bokeh',
+    'pillow',
+    'plotly >=4.0',
+    'dash >=1.16',
+    'codecov',
+    'ipython >=5.4.0',
+    # Issues with comm (see https://github.com/ipython/ipykernel/issues/1026)
+    'ipykernel <6.18.0',
+]
+
+# Optional tests dependencies, i.e. one should be able
+# to run and pass the test suite without installing any
+# of those.
+extras_require['tests'] = extras_require['tests_core'] + [
+    'dask',
+    'ibis-framework',  # Mapped to ibis-sqlite in setup.cfg for conda
+    'xarray >=0.10.4',
+    'networkx',
+    'shapely',
+    'ffmpeg',
+    'cftime',
+    'scipy',
+    'selenium',
+    'numpy <1.24',  # Upper pin because of numba error
+]
+
+# Packages not working on python 3.11 because of numba
+if sys.version_info < (3, 11):
+    extras_require['tests'] += [
+        'spatialpandas',
+        'datashader >=0.11.1',
+    ]
+
+extras_require['tests_gpu'] = extras_require['tests'] + [
+    'cudf',
+]
+
+extras_require['tests_nb'] = ['nbval']
 
 # Notebook dependencies
 extras_require["notebook"] = ["ipython >=5.4.0", "notebook"]
@@ -27,7 +79,7 @@ extras_require["notebook"] = ["ipython >=5.4.0", "notebook"]
 # IPython Notebook + pandas + matplotlib + bokeh
 extras_require["recommended"] = extras_require["notebook"] + [
     "matplotlib >=3",
-    "bokeh >=1.1.0",
+    "bokeh >=2.4.3",
 ]
 
 # Requirements to run all examples
@@ -38,78 +90,52 @@ extras_require["examples"] = extras_require["recommended"] + [
     "plotly >=4.0",
     'dash >=1.16',
     "streamz >=0.5.0",
-    "datashader >=0.11.1",
     "ffmpeg",
     "cftime",
     "netcdf4",
     "dask",
     "scipy",
     "shapely",
-    "scikit-image"
+    "scikit-image",
+    "pyarrow",
+    "pooch",
 ]
 
-if sys.version_info.major > 2:
-    extras_require["examples"].extend(
-        [
-            "pyarrow",
-            "ibis-framework >=1.3",
-        ]  # spatialpandas incompatibility
-    )
+if sys.version_info < (3, 11):
+    extras_require["examples"] += [
+        "datashader >=0.11.1",
+    ]
+
+
+extras_require["examples_tests"] = extras_require["examples"] + extras_require['tests_nb']
 
 # Extra third-party libraries
 extras_require["extras"] = extras_require["examples"] + [
     "pscript ==0.7.1",
 ]
 
-# Test requirements
-extras_require['tests'] = [
-    'pytest',
-    'pytest-cov',
-    'mock',
-    'flake8',
-    'coveralls',
-    'path.py',
-    'matplotlib >=3',
-    'nbsmoke >=0.2.0',
-    'nbconvert <6',
-    'twine',
-    'rfc3986',
-    'keyring'
-]
-
-extras_require["unit_tests"] = extras_require["examples"] + extras_require["tests"]
-
-extras_require["basic_tests"] = (
-    extras_require["tests"]
-    + ["matplotlib >=3", "bokeh >=1.1.0", "pandas"]
-    + extras_require["notebook"]
-)
-
-extras_require["nbtests"] = extras_require["recommended"] + [
-    "nose",
-    "deepdiff",
-]
+# Not used in tox.ini or elsewhere, kept for backwards compatibility.
+extras_require["unit_tests"] = extras_require["examples"] + extras_require["tests"] + extras_require['flakes']
 
 extras_require['doc'] = extras_require['examples'] + [
-    'nbsite >=0.6.8a36',
-    'sphinx',
-    'sphinx_holoviz_theme',
+    'nbsite ==0.8.0rc2',
     'mpl_sample_data >=3.1.3',
     'pscript',
     'graphviz',
-    'bokeh >2.2'
+    'bokeh >2.2',
+    'pydata-sphinx-theme ==0.9.0',
+    'sphinx-copybutton',
+    'pooch',
+    'selenium',
 ]
+
+extras_require['all'] = sorted(set(sum(extras_require.values(), [])))
 
 extras_require["build"] = [
     "param >=1.7.0",
     "setuptools >=30.3.0",
     "pyct >=0.4.4",
 ]
-
-# Everything for examples and nosetests
-extras_require["all"] = list(
-    set(extras_require["unit_tests"]) | set(extras_require["nbtests"])
-)
 
 def get_setup_version(reponame):
     """
@@ -137,7 +163,7 @@ setup_args.update(
     dict(
         name="holoviews",
         version=get_setup_version("holoviews"),
-        python_requires=">=2.7",
+        python_requires=">=3.7",
         install_requires=install_requires,
         extras_require=extras_require,
         description="Stop plotting your data - annotate your data and let it visualize itself.",
@@ -145,20 +171,25 @@ setup_args.update(
         long_description_content_type="text/markdown",
         author="Jean-Luc Stevens and Philipp Rudiger",
         author_email="holoviews@gmail.com",
-        maintainer="PyViz Developers",
+        maintainer="HoloViz Developers",
         maintainer_email="developers@pyviz.org",
         platforms=["Windows", "Mac OS X", "Linux"],
         license="BSD",
         url="https://www.holoviews.org",
+        project_urls={
+            "Source": "https://github.com/holoviz/holoviews",
+        },
         entry_points={"console_scripts": ["holoviews = holoviews.util.command:main"]},
         packages=find_packages(),
         include_package_data=True,
         classifiers=[
             "License :: OSI Approved :: BSD License",
             "Development Status :: 5 - Production/Stable",
-            "Programming Language :: Python :: 3.6",
             "Programming Language :: Python :: 3.7",
             "Programming Language :: Python :: 3.8",
+            "Programming Language :: Python :: 3.9",
+            "Programming Language :: Python :: 3.10",
+            "Programming Language :: Python :: 3.11",
             "Operating System :: OS Independent",
             "Intended Audience :: Science/Research",
             "Intended Audience :: Developers",

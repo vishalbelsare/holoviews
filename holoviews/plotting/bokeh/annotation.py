@@ -1,4 +1,5 @@
 from collections import defaultdict
+from html import escape
 
 import param
 import numpy as np
@@ -11,7 +12,7 @@ try:
     arrow_start = {'<->': NormalHead, '<|-|>': NormalHead}
     arrow_end = {'->': NormalHead, '-[': TeeHead, '-|>': NormalHead,
                  '-': None}
-except:
+except ImportError:
     from bokeh.models.arrow_heads import OpenHead, NormalHead
     arrow_start = {'<->': NormalHead, '<|-|>': NormalHead}
     arrow_end = {'->': NormalHead, '-[': OpenHead, '-|>': NormalHead,
@@ -284,7 +285,7 @@ class SplinePlot(ElementPlot, AnnotationPlot):
 
 class ArrowPlot(CompositeElementPlot, AnnotationPlot):
 
-    style_opts = (['arrow_%s' % p for p in line_properties+fill_properties+['size']] +
+    style_opts = ([f'arrow_{p}' for p in line_properties+fill_properties+['size']] +
                   text_properties)
 
     _style_groups = {'arrow': 'arrow', 'text': 'text'}
@@ -416,9 +417,6 @@ class DivPlot(BokehPlot, GenericElementPlot, AnnotationPlot):
           aspect ratio.
     """)
 
-    finalize_hooks = param.HookList(default=[], doc="""
-        Deprecated; use hooks options instead.""")
-
     hooks = param.HookList(default=[], doc="""
         Optional list of hooks called when finalizing a plot. The
         hook is passed the plot object and the displayed element, and
@@ -448,7 +446,7 @@ class DivPlot(BokehPlot, GenericElementPlot, AnnotationPlot):
         self.current_key = key
 
         data, _, _ = self.get_data(element, ranges, {})
-        div = HTML(text=data, width=self.width, height=self.height,
+        div = HTML(text=escape(data), width=self.width, height=self.height,
                    sizing_mode=self.sizing_mode)
         self.handles['plot'] = div
         self._execute_hooks(element)

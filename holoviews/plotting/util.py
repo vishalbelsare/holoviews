@@ -4,6 +4,7 @@ import warnings
 import bisect
 
 from collections import defaultdict, namedtuple
+from packaging.version import Version
 
 import numpy as np
 import param
@@ -21,6 +22,7 @@ from ..core.util import (
     closest_match, is_number, isfinite, python2sort, disable_constant,
     arraylike_types
 )
+from ..element import Points
 from ..streams import LinkedStream, Params
 from ..util.transform import dim
 
@@ -90,7 +92,7 @@ def collate(obj):
                     collated_layout = Layout(el.collate())
                     expanded.extend(collated_layout.values())
             return Layout(expanded)
-        except:
+        except Exception:
             raise Exception(undisplayable_info(obj))
     else:
         raise Exception(undisplayable_info(obj))
@@ -318,14 +320,14 @@ def undisplayable_info(obj, html=False):
     collate = '<tt>collate</tt>' if html else 'collate'
     info = "For more information, please consult the Composing Data tutorial (http://git.io/vtIQh)"
     if isinstance(obj, HoloMap):
-        error = "HoloMap of %s objects cannot be displayed." % obj.type.__name__
-        remedy = "Please call the %s method to generate a displayable object" % collate
+        error = f"HoloMap of {obj.type.__name__} objects cannot be displayed."
+        remedy = f"Please call the {collate} method to generate a displayable object"
     elif isinstance(obj, Layout):
         error = "Layout containing HoloMaps of Layout or GridSpace objects cannot be displayed."
-        remedy = "Please call the %s method on the appropriate elements." % collate
+        remedy = f"Please call the {collate} method on the appropriate elements."
     elif isinstance(obj, GridSpace):
         error = "GridSpace containing HoloMaps of Layouts cannot be displayed."
-        remedy = "Please call the %s method on the appropriate elements." % collate
+        remedy = f"Please call the {collate} method on the appropriate elements."
 
     if not html:
         return '\n'.join([error, remedy, info])
@@ -348,8 +350,8 @@ def compute_sizes(sizes, size_fn, scaling_factor, scaling_method, base_size):
         scaling_factor = scaling_factor**2
     else:
         raise ValueError(
-            'Invalid value for argument "scaling_method": "{}". '
-            'Valid values are: "width", "area".'.format(scaling_method))
+            f'Invalid value for argument "scaling_method": "{scaling_method}". '
+            'Valid values are: "width", "area".')
     sizes = size_fn(sizes)
     return (base_size*scaling_factor*sizes)
 
@@ -454,7 +456,7 @@ def validate_unbounded_mode(holomaps, dynmaps):
     composite = HoloMap(enumerate(holomaps), kdims=['testing_kdim'])
     holomap_kdims = set(unique_iterator([kd.name for dm in holomaps for kd in dm.kdims]))
     hmranges = {d: composite.range(d) for d in holomap_kdims}
-    if any(not set(d.name for d in dm.kdims) <= holomap_kdims
+    if any(not {d.name for d in dm.kdims} <= holomap_kdims
                         for dm in dynmaps):
         raise Exception('DynamicMap that are unbounded must have key dimensions that are a '
                         'subset of dimensions of the HoloMap(s) defining the keys.')
@@ -546,18 +548,27 @@ def mplcmap_to_palette(cmap, ncolors=None, categorical=False):
     """
     Converts a matplotlib colormap to palette of RGB hex strings."
     """
+    import matplotlib as mpl
     from matplotlib.colors import Colormap, ListedColormap
 
     ncolors = ncolors or 256
     if not isinstance(cmap, Colormap):
-        import matplotlib.cm as cm
         # Alias bokeh Category cmaps with mpl tab cmaps
         if cmap.startswith('Category'):
             cmap = cmap.replace('Category', 'tab')
-        try:
-            cmap = cm.get_cmap(cmap)
-        except:
-            cmap = cm.get_cmap(cmap.lower())
+
+        if Version(mpl.__version__) < Version("3.5"):
+            # This will stop working and can be removed
+            # when we do not support python 3.7
+            import matplotlib.cm as cm
+            try:
+                cmap = cm.get_cmap(cmap)
+            except Exception:
+                cmap = cm.get_cmap(cmap.lower())
+        else:
+            from matplotlib import colormaps
+            cmap = colormaps.get(cmap, colormaps.get(cmap.lower()))
+
     if isinstance(cmap, ListedColormap):
         if categorical:
             palette = [rgb2hex(cmap.colors[i%cmap.N]) for i in range(ncolors)]
@@ -615,7 +626,7 @@ def bokeh_palette_to_palette(cmap, ncolors=None, categorical=False):
     else:
         palette = getattr(palettes, cmap, getattr(palettes, cmap.capitalize(), None))
     if palette is None:
-        raise ValueError("Supplied palette %s not found among bokeh palettes" % cmap)
+        raise ValueError(f"Supplied palette {cmap} not found among bokeh palettes")
     elif isinstance(palette, dict) and (cmap in palette or cmap.capitalize() in palette):
         # Some bokeh palettes are doubly nested
         palette = palette.get(cmap, palette.get(cmap.capitalize()))
@@ -696,7 +707,7 @@ def _list_cmaps(provider=None, records=False):
             cmaps += info('matplotlib', mpl_cmaps)
             cmaps += info('matplotlib', [cmap+'_r' for cmap in mpl_cmaps
                                          if not cmap.endswith('_r')])
-        except:
+        except ImportError:
             pass
     if 'bokeh' in provider:
         try:
@@ -704,7 +715,7 @@ def _list_cmaps(provider=None, records=False):
             cmaps += info('bokeh', palettes.all_palettes)
             cmaps += info('bokeh', [p+'_r' for p in palettes.all_palettes
                                     if not p.endswith('_r')])
-        except:
+        except ImportError:
             pass
     if 'colorcet' in provider:
         try:
@@ -713,7 +724,7 @@ def _list_cmaps(provider=None, records=False):
             cet_maps['glasbey_hv'] = glasbey_hv # Add special hv-specific map
             cmaps += info('colorcet', cet_maps)
             cmaps += info('colorcet', [p+'_r' for p in cet_maps if not p.endswith('_r')])
-        except:
+        except ImportError:
             pass
     return sorted(unique_iterator(cmaps))
 
@@ -884,9 +895,6 @@ register_cmaps('Uniform Categorical', 'colorcet', 'cet', 'light',
     ['glasbey_dark'])
 
 
-
-
-
 def process_cmap(cmap, ncolors=None, provider=None, categorical=False):
     """
     Convert valid colormap specifications to a list of colors.
@@ -916,7 +924,7 @@ def process_cmap(cmap, ncolors=None, provider=None, categorical=False):
         try:
             # Try processing as matplotlib colormap
             palette = mplcmap_to_palette(cmap, ncolors)
-        except:
+        except Exception:
             palette = None
     if not isinstance(palette, list):
         raise TypeError("cmap argument %s expects a list, Cycle or valid %s colormap or palette."
@@ -1001,7 +1009,7 @@ def scale_fontsize(size, scaling):
         size = size * scaling
 
     if ext is not None:
-        size = ('%.3f' % size).rstrip('0').rstrip('.') + ext
+        size = f'{size:.3f}'.rstrip('0').rstrip('.') + ext
     return size
 
 
@@ -1048,7 +1056,7 @@ def get_min_distance(element):
     try:
         from scipy.spatial.distance import pdist
         return pdist(element.array([0, 1])).min()
-    except:
+    except Exception:
         return _get_min_distance_numpy(element)
 
 
@@ -1080,7 +1088,7 @@ def rgb2hex(rgb):
     """
     if len(rgb) > 3:
         rgb = rgb[:-1]
-    return "#{0:02x}{1:02x}{2:02x}".format(*(int(v*255) for v in rgb))
+    return "#{:02x}{:02x}{:02x}".format(*(int(v*255) for v in rgb))
 
 
 def dim_range_key(eldim):
@@ -1285,5 +1293,51 @@ fire_colors = linear_kryw_0_100_c71 = [\
 [1,        0.99989,     0.93683   ],  [1,        1,           1         ]]
 
 # Bokeh palette
-fire = [str('#{0:02x}{1:02x}{2:02x}'.format(int(r*255),int(g*255),int(b*255)))
+fire = [f'#{int(r * 255):02x}{int(g * 255):02x}{int(b * 255):02x}'
         for r,g,b in fire_colors]
+
+
+class categorical_legend(Operation):
+    """
+    Generates a Points element which contains information for generating
+    a legend by inspecting the pipeline of a datashaded RGB element.
+    """
+
+    backend = param.String()
+
+    def _process(self, element, key=None):
+        import datashader as ds
+        from ..operation.datashader import shade, rasterize, datashade
+        rasterize_op = element.pipeline.find(rasterize, skip_nonlinked=False)
+        if isinstance(rasterize_op, datashade):
+            shade_op = rasterize_op
+        else:
+            shade_op = element.pipeline.find(shade, skip_nonlinked=False)
+        if None in (shade_op, rasterize_op):
+            return None
+        hvds = element.dataset
+        input_el = element.pipeline.operations[0](hvds)
+        agg = rasterize_op._get_aggregator(input_el, rasterize_op.aggregator)
+        if not isinstance(agg, (ds.count_cat, ds.by)):
+            return
+        column = agg.column
+        if hasattr(hvds.data, 'dtypes'):
+            cats = list(hvds.data.dtypes[column].categories)
+            if cats == ['__UNKNOWN_CATEGORIES__']:
+                cats = list(hvds.data[column].cat.as_known().categories)
+        else:
+            cats = list(hvds.dimension_values(column, expanded=False))
+        colors = shade_op.color_key or ds.colors.Sets1to3
+        color_data = [(0, 0, cat) for cat in cats]
+        if isinstance(colors, list):
+            cat_colors = {cat: colors[i] for i, cat in enumerate(cats)}
+        else:
+            cat_colors = {cat: colors[cat] for cat in cats}
+        cmap = {}
+        for cat, color in cat_colors.items():
+            if isinstance(color, tuple):
+                color = rgb2hex([v/256 for v in color[:3]])
+            cmap[cat] = color
+        return Points(color_data, vdims=['category']).opts(
+            cmap=cmap, color='category', show_legend=True,
+            backend=self.p.backend, visible=False)

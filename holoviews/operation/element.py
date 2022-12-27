@@ -2,19 +2,20 @@
 Collection of either extremely generic or simple Operation
 examples.
 """
-from distutils.version import LooseVersion
+import warnings
 
 import numpy as np
 import param
 
+from packaging.version import Version
 from param import _is_number
 
 from ..core import (Operation, NdOverlay, Overlay, GridMatrix,
                     HoloMap, Dataset, Element, Collator, Dimension)
-from ..core.data import ArrayInterface, DictInterface, default_datatype
+from ..core.data import ArrayInterface, DictInterface, PandasInterface, default_datatype
 from ..core.data.util import dask_array_module
 from ..core.util import (
-    group_sanitizer, label_sanitizer, pd, datetime_types, isfinite,
+    group_sanitizer, label_sanitizer, datetime_types, isfinite,
     dt_to_int, isdatetime, is_dask_array, is_cupy_array, is_ibis_expr
 )
 from ..element.chart import Histogram, Scatter
@@ -23,10 +24,7 @@ from ..element.path import Contours, Polygons
 from ..element.util import categorical_aggregate2d # noqa (API import)
 from ..streams import RangeXY
 
-column_interfaces = [ArrayInterface, DictInterface]
-if pd:
-    from ..core.data import PandasInterface
-    column_interfaces.append(PandasInterface)
+column_interfaces = [ArrayInterface, DictInterface, PandasInterface]
 
 
 def identity(x,k): return x
@@ -228,6 +226,20 @@ class chain(Operation):
             return processed
         else:
             return processed.clone(group=self.p.group)
+
+    def find(self, operation, skip_nonlinked=True):
+        """
+        Returns the first found occurrence of an operation while
+        performing a backward traversal of the chain pipeline.
+        """
+        found = None
+        for op in self.operations[::-1]:
+            if isinstance(op, operation):
+                found = op
+                break
+            if not op.link_inputs and skip_nonlinked:
+                break
+        return found
 
 
 class transform(Operation):
@@ -716,7 +728,7 @@ class histogram(Operation):
         is_cupy = is_cupy_array(data)
         if is_cupy:
             import cupy
-            full_cupy_support = LooseVersion(cupy.__version__) > '8.0'
+            full_cupy_support = Version(cupy.__version__) > Version('8.0')
             if not full_cupy_support and (normed or self.p.weight_dimension):
                 data = cupy.asnumpy(data)
                 is_cupy = False
@@ -760,8 +772,17 @@ class histogram(Operation):
                 edges = edges.astype('datetime64[ns]').astype('int64')
         else:
             hist_range = self.p.bin_range or element.range(selected_dim)
+            # Suppress a warning emitted by Numpy when datetime or timedelta scalars
+            # are compared. See https://github.com/numpy/numpy/issues/10095 and
+            # https://github.com/numpy/numpy/issues/9210.
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    action='ignore', message='elementwise comparison failed',
+                    category=DeprecationWarning
+                )
+                null_hist_range = hist_range == (0, 0)
             # Avoids range issues including zero bin range and empty bins
-            if hist_range == (0, 0) or any(not isfinite(r) for r in hist_range):
+            if null_hist_range or any(not isfinite(r) for r in hist_range):
                 hist_range = (0, 1)
             steps = self.p.num_bins + 1
             start, end = hist_range
@@ -814,7 +835,7 @@ class histogram(Operation):
             params['vdims'] = [Dimension('Frequency', label=label)]
         else:
             label = 'Frequency' if normed else 'Count'
-            params['vdims'] = [Dimension('{0}_{1}'.format(dim.name, label.lower()),
+            params['vdims'] = [Dimension(f'{dim.name}_{label.lower()}',
                                          label=label)]
 
         if element.group != element.__class__.__name__:
@@ -886,7 +907,8 @@ class decimate(Operation):
 
         if len(sliced) > self.p.max_samples:
             prng = np.random.RandomState(self.p.random_seed)
-            return sliced.iloc[prng.choice(len(sliced), self.p.max_samples, False)]
+            choice = prng.choice(len(sliced), self.p.max_samples, False)
+            return sliced.iloc[np.sort(choice)]
         return sliced
 
     def _process(self, element, key=None):

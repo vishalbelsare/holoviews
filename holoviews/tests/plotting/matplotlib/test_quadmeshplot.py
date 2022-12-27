@@ -9,7 +9,7 @@ class TestQuadMeshPlot(TestMPLPlot):
 
     def test_quadmesh_invert_axes(self):
         arr = np.array([[0, 1, 2], [3, 4,  5]])
-        qmesh = QuadMesh(Image(arr)).opts(plot=dict(invert_axes=True))
+        qmesh = QuadMesh(Image(arr)).opts(invert_axes=True)
         plot = mpl_renderer.get_plot(qmesh)
         artist = plot.handles['artist']
         self.assertEqual(artist.get_array().data, arr.T[:, ::-1].flatten())
@@ -36,9 +36,15 @@ class TestQuadMeshPlot(TestMPLPlot):
         XS, YS, ZS = np.meshgrid(xs, ys, zs)
         values = np.sin(XS) * ZS
         ds = Dataset((xs, ys, zs, values.T), ['x', 'y', 'z'], 'values')
-        hmap = ds.to(QuadMesh).options(colorbar=True, framewise=True)
+        hmap = ds.to(QuadMesh).opts(colorbar=True, framewise=True)
         plot = mpl_renderer.get_plot(hmap)
         cbar = plot.handles['cbar']
-        self.assertEqual((cbar.vmin, cbar.vmax), (-0.9989549170979283, 0.9719379013633128))
+        self.assertEqual(
+            np.allclose([cbar.vmin, cbar.vmax], [-0.9989549170979283, 0.9719379013633128]),
+            True
+        )
         plot.update(3)
-        self.assertEqual((cbar.vmin, cbar.vmax), (-1.7481711049213744, 1.7008913273857975))
+        self.assertEqual(
+            np.allclose([cbar.vmin, cbar.vmax], [-1.7481711049213744, 1.7008913273857975]),
+            True
+        )

@@ -237,7 +237,7 @@ class BokehPlot(DimensionedPlot, CallbackPlot):
         fontsize in pt.
         """
         size = super()._fontsize(key, label, common)
-        return {k: v if isinstance(v, str) else '%spt' % v
+        return {k: v if isinstance(v, str) else f'{v}pt'
                 for k, v in size.items()}
 
     def _get_title_div(self, key, default_fontsize='15pt', width=450):
@@ -310,12 +310,7 @@ class BokehPlot(DimensionedPlot, CallbackPlot):
                 shared_sources.append(new_source)
                 source_cols[id(new_source)] = [c for c in new_source.data]
         for plot in plots:
-            if plot.hooks and plot.finalize_hooks:
-                self.param.warning(
-                    "Supply either hooks or finalize_hooks not both; "
-                    "using hooks and ignoring finalize_hooks.")
-            hooks = plot.hooks or plot.finalize_hooks
-            for hook in hooks:
+            for hook in plot.hooks:
                 hook(plot, plot.current_frame)
             for callback in plot.callbacks:
                 callback.initialize(plot_id=self.id)
@@ -725,7 +720,7 @@ class LayoutPlot(CompositePlot, GenericLayoutPlot):
             if empty or view.main is None:
                 continue
             elif not view.traverse(lambda x: x, [Element]):
-                self.param.warning('%s is empty, skipping subplot.' % view.main)
+                self.param.warning(f'{view.main} is empty, skipping subplot.')
                 continue
             else:
                 layout_count += 1

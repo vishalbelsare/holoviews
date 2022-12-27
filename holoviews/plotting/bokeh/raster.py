@@ -1,4 +1,4 @@
-from __future__ import absolute_import, division, unicode_literals
+import sys
 
 import numpy as np
 import param
@@ -7,7 +7,9 @@ from bokeh.models import DatetimeAxis, CustomJSHover
 
 from ...core.util import cartesian_product, dimension_sanitizer, isfinite
 from ...element import Raster
-from .element import ElementPlot, ColorbarPlot
+from ..util import categorical_legend
+from .chart import PointPlot
+from .element import ColorbarPlot, LegendPlot
 from .selection import BokehOverlaySelectionDisplay
 from .styles import base_properties, fill_properties, line_properties, mpl_to_bokeh
 from .util import colormesh
@@ -42,7 +44,7 @@ class RasterPlot(ColorbarPlot):
         tooltips.append((vdims[0].pprint_label, '@image'))
         for vdim in vdims[1:]:
             vname = dimension_sanitizer(vdim.name)
-            tooltips.append((vdim.pprint_label, '@{0}'.format(vname)))
+            tooltips.append((vdim.pprint_label, f'@{vname}'))
         return tooltips, {}
 
     def _postprocess_hover(self, renderer, source):
@@ -52,7 +54,7 @@ class RasterPlot(ColorbarPlot):
             return
 
         element = self.current_frame
-        xdim, ydim = [dimension_sanitizer(kd.name) for kd in element.kdims]
+        xdim, ydim = (dimension_sanitizer(kd.name) for kd in element.kdims)
         xaxis = self.handles['xaxis']
         yaxis = self.handles['yaxis']
 
@@ -128,7 +130,7 @@ class RasterPlot(ColorbarPlot):
 
 
 
-class RGBPlot(ElementPlot):
+class RGBPlot(LegendPlot):
 
     padding = param.ClassSelector(default=0, class_=(int, float, tuple))
 
@@ -140,10 +142,31 @@ class RGBPlot(ElementPlot):
 
     selection_display = BokehOverlaySelectionDisplay()
 
+    def __init__(self, hmap, **params):
+        super().__init__(hmap, **params)
+        self._legend_plot = None
+
     def _hover_opts(self, element):
         xdim, ydim = element.kdims
         return [(xdim.pprint_label, '$x'), (ydim.pprint_label, '$y'),
                 ('RGBA', '@image')], {}
+
+    def _init_glyphs(self, plot, element, ranges, source):
+        super()._init_glyphs(plot, element, ranges, source)
+        if not ('holoviews.operation.datashader' in sys.modules and self.show_legend):
+            return
+        try:
+            legend = categorical_legend(element, backend=self.backend)
+        except Exception:
+            return
+        if legend is None:
+            return
+        legend_params = {k: v for k, v in self.param.get_param_values()
+                         if k.startswith('legend')}
+        self._legend_plot = PointPlot(legend, keys=[], overlaid=1, **legend_params)
+        self._legend_plot.initialize_plot(plot=plot)
+        self._legend_plot.handles['glyph_renderer'].tags.append('hv_legend')
+        self.handles['rgb_color_mapper'] = self._legend_plot.handles['color_color_mapper']
 
     def get_data(self, element, ranges, style):
         mapping = dict(image='image', x='x', y='y', dw='dw', dh='dh')
@@ -250,8 +273,8 @@ class QuadMeshPlot(ColorbarPlot):
         if irregular:
             dims = element.kdims
             if self.invert_axes: dims = dims[::-1]
-            X, Y = [element.interface.coords(element, d, expanded=True, edges=True)
-                    for d in dims]
+            X, Y = (element.interface.coords(element, d, expanded=True, edges=True)
+                    for d in dims)
             X, Y = colormesh(X, Y)
             zvals = zdata.T.flatten() if self.invert_axes else zdata.flatten()
             XS, YS = [], []

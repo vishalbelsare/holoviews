@@ -7,7 +7,19 @@ on:
     - 'v[0-9]+.[0-9]+.[0-9]+b[0-9]+'
     - 'v[0-9]+.[0-9]+.[0-9]+rc[0-9]+'
   workflow_dispatch:
-    
+    inputs:
+      target:
+        description: 'Site to build and deploy, or dry-run'
+        type: choice
+        options:
+        - dev
+        - main
+        - dryrun
+        required: true
+        default: dryrun
+  schedule:
+    - cron: '0 14 * * SUN'
+
 jobs:
   build_docs:
     name: Documentation
@@ -18,9 +30,6 @@ jobs:
         shell: bash -l {0}
     env:
       DESC: "Documentation build"
-      HV_REQUIREMENTS: "doc"
-      CHANS_DEV: "-c pyviz/label/dev -c bokeh"
-      CHANS: "-c pyviz"
       MPLBACKEND: "Agg"
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -31,68 +40,66 @@ jobs:
       PANEL_EMBED_JSON: "true"
       PANEL_EMBED_JSON_PREFIX: "json"
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: "100"
-      - uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.python-version }}
       - uses: conda-incubator/setup-miniconda@v2
         with:
           miniconda-version: "latest"
+          mamba-version: "*"
+          channels: pyviz/label/dev,conda-forge
       - name: Fetch unshallow
         run: git fetch --prune --tags --unshallow -f
       - name: Set output
         id: vars
-        run: echo ::set-output name=tag::${GITHUB_REF#refs/*/}
+        run: echo "tag=${GITHUB_REF#refs/*/}" >> $GITHUB_OUTPUT
       - name: conda setup
         run: |
-          conda config --set always_yes True
-          conda install -c pyviz "pyctdev>=0.5"
-          doit ecosystem_setup
-          doit env_create ${{ env.CHANS_DEV}} --python=3.7
+          conda config --remove channels defaults
+          conda config --set channel_priority strict
+          conda create -n test-environment python=3.9 pyctdev
+          conda create -n push-environment python=3.9 awscli
+      - name: conda info and show sources
+        run: |
+          conda activate test-environment
+          conda info
+          conda config --show-sources
+          conda config --show
       - name: doit develop_install
         run: |
-          eval "$(conda shell.bash hook)"
           conda activate test-environment
-          conda list
-          doit develop_install ${{ env.CHANS_DEV}} -o doc
-          conda install -c pyviz "jupyter_client<7"
-          conda install -c conda-forge geckodriver selenium awscli
+          doit develop_install -o doc --conda-mode=mamba
       - name: doit env_capture
         run: |
-          eval "$(conda shell.bash hook)"
           conda activate test-environment
           doit env_capture
       - name: bokeh sampledata
         run: |
-          eval "$(conda shell.bash hook)"
           conda activate test-environment
           bokeh sampledata
       - name: generate rst
         run: |
-          eval "$(conda shell.bash hook)"
           conda activate test-environment
           nbsite generate-rst --org holoviz --project-name holoviews
       - name: refmanual
         run: |
-          eval "$(conda shell.bash hook)"
           conda activate test-environment
           python ./doc/generate_modules.py holoviews -d ./doc/reference_manual -n holoviews -e tests
       - name: build docs
         run: |
-          eval "$(conda shell.bash hook)"
           conda activate test-environment
           nbsite build --what=html --output=builtdocs --org holoviz --project-name holoviews
       - name: upload dev
-        if: (contains(steps.vars.outputs.tag, 'a') || contains(steps.vars.outputs.tag, 'b') || contains(steps.vars.outputs.tag, 'rc'))
+        if: |
+          (github.event_name == 'workflow_dispatch' && github.event.inputs.target == 'dev') ||
+          (github.event_name == 'push' && (contains(steps.vars.outputs.tag, 'a') || contains(steps.vars.outputs.tag, 'b') || contains(steps.vars.outputs.tag, 'rc')))
         run: |
-          eval "$(conda shell.bash hook)"
-          conda activate test-environment
+          conda activate push-environment
           aws s3 sync --quiet ./builtdocs s3://dev.holoviews.org/
       - name: upload main
-        if: (!(contains(steps.vars.outputs.tag, 'a') || contains(steps.vars.outputs.tag, 'b') || contains(steps.vars.outputs.tag, 'rc')))
+        if: |
+          (github.event_name == 'workflow_dispatch' && github.event.inputs.target == 'main') ||
+          (github.event_name == 'push' && !(contains(steps.vars.outputs.tag, 'a') || contains(steps.vars.outputs.tag, 'b') || contains(steps.vars.outputs.tag, 'rc')))
         run: |
-          eval "$(conda shell.bash hook)"
-          conda activate test-environment
+          conda activate push-environment
           aws s3 sync --quiet ./builtdocs s3://holoviews.org/

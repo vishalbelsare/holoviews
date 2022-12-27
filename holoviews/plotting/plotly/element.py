@@ -140,8 +140,8 @@ class ElementPlot(PlotlyPlot, GenericElementPlot):
 
         if is_geo and not self._supports_geo:
             raise ValueError(
-                "Elements of type {typ} cannot be overlaid with Tiles elements "
-                "using the plotly backend".format(typ=type(element))
+                f"Elements of type {type(element)} cannot be overlaid "
+                "with Tiles elements using the plotly backend"
             )
 
         if element is None:
@@ -439,6 +439,7 @@ class ElementPlot(PlotlyPlot, GenericElementPlot):
             xaxis = dict(range=xrange, title=xlabel)
             if self.logx:
                 xaxis['type'] = 'log'
+                xaxis['range'] = np.log10(xaxis['range'])
             self._get_ticks(xaxis, self.xticks)
 
             if self.projection != '3d' and self.xaxis:
@@ -446,10 +447,10 @@ class ElementPlot(PlotlyPlot, GenericElementPlot):
 
                 # Create dimension string used to compute matching axes
                 if isinstance(xdim, (list, tuple)):
-                    dim_str = "-".join(["%s^%s^%s" % (d.name, d.label, d.unit)
+                    dim_str = "-".join([f"{d.name}^{d.label}^{d.unit}"
                                         for d in xdim])
                 else:
-                    dim_str = "%s^%s^%s" % (xdim.name, xdim.label, xdim.unit)
+                    dim_str = f"{xdim.name}^{xdim.label}^{xdim.unit}"
 
                 xaxis['_dim'] = dim_str
 
@@ -476,6 +477,7 @@ class ElementPlot(PlotlyPlot, GenericElementPlot):
             yaxis = dict(range=yrange, title=ylabel)
             if self.logy:
                 yaxis['type'] = 'log'
+                yaxis['range'] = np.log10(yaxis['range'])
             self._get_ticks(yaxis, self.yticks)
 
             if self.projection != '3d' and self.yaxis:
@@ -483,10 +485,10 @@ class ElementPlot(PlotlyPlot, GenericElementPlot):
 
                 # Create dimension string used to compute matching axes
                 if isinstance(ydim, (list, tuple)):
-                    dim_str = "-".join(["%s^%s^%s" % (d.name, d.label, d.unit)
+                    dim_str = "-".join([f"{d.name}^{d.label}^{d.unit}"
                                         for d in ydim])
                 else:
-                    dim_str = "%s^%s^%s" % (ydim.name, ydim.label, ydim.unit)
+                    dim_str = f"{ydim.name}^{ydim.label}^{ydim.unit}"
 
                 yaxis['_dim'] = dim_str,
                 if 'bare' in self.yaxis:
@@ -518,14 +520,15 @@ class ElementPlot(PlotlyPlot, GenericElementPlot):
                 x_delta = r - l
                 y_delta = t - b
 
-                max_x_zoom = (np.log2(max_delta / x_delta) -
-                              np.log2(mapbox_tile_size / viewport_width))
-                max_y_zoom = (np.log2(max_delta / y_delta) -
-                              np.log2(mapbox_tile_size / viewport_height))
+                with np.errstate(divide="ignore"):
+                    max_x_zoom = (np.log2(max_delta / x_delta) -
+                                np.log2(mapbox_tile_size / viewport_width))
+                    max_y_zoom = (np.log2(max_delta / y_delta) -
+                                np.log2(mapbox_tile_size / viewport_height))
                 mapbox["zoom"] = min(max_x_zoom, max_y_zoom)
             layout["mapbox"] = mapbox
 
-        if self.projection == '3d':
+        if isinstance(self.projection, str) and self.projection == '3d':
             scene = dict(xaxis=xaxis, yaxis=yaxis)
             if zdim:
                 zrange = [z1, z0] if self.invert_zaxis else [z0, z1]

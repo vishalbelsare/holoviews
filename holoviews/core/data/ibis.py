@@ -1,10 +1,7 @@
 import sys
 import numpy
-
-try:
-    from collections.abc import Iterable
-except ImportError:
-    from collections import Iterable
+from collections.abc import Iterable
+from packaging.version import Version
 
 from .. import util
 from ..element import Element
@@ -12,6 +9,13 @@ from ..ndmapping import NdMapping, item_check, sorted_context
 from .interface import Interface
 from . import pandas
 from .util import cached
+
+
+try:
+    import ibis
+    ibis_version =  Version(ibis.__version__)
+except ImportError:
+    pass
 
 
 class IbisInterface(Interface):
@@ -34,8 +38,11 @@ class IbisInterface(Interface):
 
     @classmethod
     def is_rowid_zero_indexed(cls, data):
-        from ibis.client import find_backends, validate_backends
-        (backend,) = validate_backends(list(find_backends(data)))
+        try:
+            from ibis.client import find_backends, validate_backends
+            (backend,) = validate_backends(list(find_backends(data)))
+        except ImportError:
+            backend = data._find_backend()
         return type(backend).__module__ in cls.zero_indexed_backend_modules
 
     @classmethod
@@ -122,9 +129,15 @@ class IbisInterface(Interface):
     ):
         dimension = dataset.get_dimension(dimension, strict=True)
         data = dataset.data[dimension.name]
+        if (
+            ibis_version > Version("3")
+            and isinstance(data, ibis.expr.types.AnyColumn)
+            and not expanded
+        ):
+            data = dataset.data[[dimension.name]]
         if not expanded:
             data = data.distinct()
-        return data if keep_index or not compute else data.execute().values
+        return data if keep_index or not compute else data.execute().values.flatten()
 
     @classmethod
     def histogram(cls, expr, bins, density=True, weights=None):

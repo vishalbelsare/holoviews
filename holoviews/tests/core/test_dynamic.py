@@ -1,8 +1,6 @@
 import uuid
 import time
-import sys
 from collections import deque
-from unittest import SkipTest
 
 import param
 import numpy as np
@@ -45,8 +43,8 @@ class DynamicMapConstructor(ComparisonTestCase):
             DynamicMap(lambda x: x)
 
     def test_simple_constructor_invalid(self):
-        regexp = ("Callback '<lambda>' signature over \['x'\] does not accommodate "
-                  "required kdims \['x', 'y'\]")
+        regexp = (r"Callback '<lambda>' signature over \['x'\] does not accommodate "
+                  r"required kdims \['x', 'y'\]")
         with self.assertRaisesRegex(KeyError, regexp):
             DynamicMap(lambda x: x, kdims=['x','y'])
 
@@ -58,8 +56,6 @@ class DynamicMapConstructor(ComparisonTestCase):
         DynamicMap(lambda x: x, streams=dict(x=pointerx.param.x))
 
     def test_simple_constructor_streams_dict_panel_widget(self):
-        if 'panel' not in sys.modules:
-            raise SkipTest('Panel not available')
         import panel
         DynamicMap(lambda x: x, streams=dict(x=panel.widgets.FloatSlider()))
 
@@ -623,14 +619,14 @@ class DynamicTransferStreams(ComparisonTestCase):
         self.assertEqual(dmap[(0, 3)].label, 'custom label')
 
     def test_dynamic_util_inherits_dim_streams_clash(self):
-        exception = ("The supplied stream objects PointerX\(x=None\) and "
-                     "PointerX\(x=0\) clash on the following parameters: \['x'\]")
+        exception = (r"The supplied stream objects PointerX\(x=None\) and "
+                     r"PointerX\(x=0\) clash on the following parameters: \['x'\]")
         with self.assertRaisesRegex(Exception, exception):
             Dynamic(self.dmap, streams=[PointerX])
 
     def test_dynamic_util_inherits_dim_streams_clash_dict(self):
-        exception = ("The supplied stream objects PointerX\(x=None\) and "
-                     "PointerX\(x=0\) clash on the following parameters: \['x'\]")
+        exception = (r"The supplied stream objects PointerX\(x=None\) and "
+                     r"PointerX\(x=0\) clash on the following parameters: \['x'\]")
         with self.assertRaisesRegex(Exception, exception):
             Dynamic(self.dmap, streams=dict(x=PointerX.param.x))
 
@@ -969,7 +965,7 @@ class DynamicStreamReset(ComparisonTestCase):
 class TestPeriodicStreamUpdate(ComparisonTestCase):
 
     def test_periodic_counter_blocking(self):
-        class Counter(object):
+        class Counter:
             def __init__(self):
                 self.count = 0
             def __call__(self):
